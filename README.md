@@ -11,50 +11,8 @@ using Java 22+ Foreign Function & Memory API via the Coffi library.
 
 ## Installing ArrayFire
 
-### Ubuntu/Debian
-
-```bash
-# Add ArrayFire repository
-sudo apt-get install -y software-properties-common
-sudo add-apt-repository ppa:arrayfire/stable
-sudo apt-get update
-
-# Install ArrayFire (CPU backend)
-sudo apt-get install arrayfire-cpu3
-
-# Or CUDA backend (requires NVIDIA GPU)
-sudo apt-get install arrayfire-cuda3
-
-# Or OpenCL backend
-sudo apt-get install arrayfire-opencl3
-```
-
-### macOS (Homebrew)
-
-```bash
-brew install arrayfire
-```
-
-### Arch Linux
-
-```bash
-yay -S arrayfire
-```
-
-### From Source
-
-See [ArrayFire Installation Guide](https://arrayfire.org/docs/installing.htm)
-
-### Verify Installation
-
-```bash
-# Check if library is available
-ldconfig -p | grep libaf
-
-# Or check standard library paths
-ls /usr/lib/libaf*
-ls /usr/local/lib/libaf*
-```
+See [ArrayFire Installer](https://arrayfire.org/docs/installing.htm) for the
+installation instructions for your operating system.
 
 ## Configuration
 
@@ -130,10 +88,8 @@ More operations will be added as needed.
 lein test
 ```
 
-### REPL Development
+## Copyright
+© 2025 Ludger Solbach
 
-```bash
-lein repl
-# or with correct JVM flags
-lein repl :jvm-opts '["-J--enable-native-access=ALL-UNNAMED"]'
-```
+## License
+Eclipse Public License 1.0 (EPL1.0)
