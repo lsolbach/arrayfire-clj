@@ -11,11 +11,13 @@ the types and functions for complex numbers.
 'arrayfire-clj' should use dtype-next for zero-copy tensors where feasable. 
 
 # Use Cases
-It will be used as the basis for linear algebra backends over real and complex 
-numbers. Other use cases may be e.g. in physics simulations, machine learning
-and AI.
+* Quantum computing
+* Physics simulations
+* Machine learning and artificial intelligence
 
 # References
-The source code for arrayfire, dtype-next and coffi is available in the reference
-folder of this project.
+The source code for the used libraries should be available in the 'reference' folder or on GitHub:
+* [arrayfire](https://github.com/arrayfire/arrayfire)
+* [coffi](https://github.com/IGJoshua/coffi)
+* [dtype-next](https://github.com/cnuernber/dtype-next)
 
