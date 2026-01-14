@@ -62,11 +62,50 @@
   "af_add" [::mem/pointer ::mem/pointer ::mem/pointer ::mem/int] ::mem/int)
 
 ;; Data transfer functions
+;; af_err af_eval(af_array arr)
+(defcfn af-eval
+  "Evaluate any pending operations on the array.
+   This ensures the array is computed before data transfer.
+   Required for asynchronous backends like CUDA.
+   Parameters: arr (array handle)"
+  "af_eval" [::mem/pointer] ::mem/int)
+
+;; af_err af_sync(const int device)
+(defcfn af-sync
+  "Blocks until all operations on the specified device are complete.
+   Use -1 to sync all devices.
+   Parameters: device (device ID or -1 for all)"
+  "af_sync" [::mem/int] ::mem/int)
+
 ;; af_err af_get_data_ptr(void *data, const af_array arr)
 (defcfn af-get-data-ptr
   "Copy array data to host memory.
    Parameters: data (out pointer to host buffer), arr (array handle)"
   "af_get_data_ptr" [::mem/pointer ::mem/pointer] ::mem/int)
+
+;; af_err af_alloc_host(void **ptr, const dim_t bytes)
+(defcfn af-alloc-host
+  "Allocate host-accessible memory.
+   Parameters: ptr (out pointer to pointer), bytes (size in bytes)"
+  "af_alloc_host" [::mem/pointer ::mem/long] ::mem/int)
+
+;; af_err af-free_host(void *ptr)
+(defcfn af-free-host
+  "Free host memory allocated by af_alloc_host.
+   Parameters: ptr (pointer to free)"
+  "af_free_host" [::mem/pointer] ::mem/int)
+
+;; af_err af_alloc_pinned(void **ptr, const dim_t bytes)
+(defcfn af-alloc-pinned
+  "Allocate pinned (page-locked) memory for efficient device-host transfer.
+   Parameters: ptr (out pointer to pointer), bytes (size in bytes)"
+  "af_alloc_pinned" [::mem/pointer ::mem/long] ::mem/int)
+
+;; af_err af_free_pinned(void *ptr)
+(defcfn af-free-pinned
+  "Free pinned memory allocated by af_alloc_pinned.
+   Parameters: ptr (pointer to free)"
+  "af_free_pinned" [::mem/pointer] ::mem/int)
 
 ;;
 ;; Helper functions

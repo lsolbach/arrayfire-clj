@@ -303,12 +303,19 @@
    Example:
    (to-host array 100) ; copies 100 elements from the array"
   [handle n]
-  (let [buf (mem/alloc (* n 8))] ; 8 bytes per double
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (let [arr (double-array n)]
-      (doseq [i (range n)]
-        (aset-double arr i (mem/read-double buf (* i 8))))
-      arr)))
+  (let [n-bytes (* n 8) ; 8 bytes per double
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (let [arr (double-array n)]
+        (doseq [i (range n)]
+          (aset-double arr i (mem/read-double buf (* i 8))))
+        arr)
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-f32
@@ -324,9 +331,16 @@
    Example:
    (to-host-f32 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-float buf (* % 4)) (range n))))
+  (let [n-bytes (* n 4)
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-float buf (* % 4)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-f64
@@ -342,9 +356,16 @@
    Example:
    (to-host-f64 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-double buf (* % 8)) (range n))))
+  (let [n-bytes (* n 8)
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-double buf (* % 8)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-c32
@@ -360,9 +381,16 @@
    Example:
    (to-host-c32 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 8))] ; 8 bytes per complex float
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-complex-float buf (* % 8)) (range n))))
+  (let [n-bytes (* n 8) ; 8 bytes per complex float
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-complex-float buf (* % 8)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-c64
@@ -378,9 +406,16 @@
    Example:
    (to-host-c64 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 16))] ; 16 bytes per complex double
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-complex-double buf (* % 16)) (range n))))
+  (let [n-bytes (* n 16) ; 16 bytes per complex double
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-complex-double buf (* % 16)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-s32
@@ -396,9 +431,16 @@
    Example:
    (to-host-s32 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-int buf (* % 4)) (range n))))
+  (let [n-bytes (* n 4)
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-int buf (* % 4)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-u32
@@ -414,9 +456,16 @@
    Example:
    (to-host-u32 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-int buf (* % 4)) (range n))))
+  (let [n-bytes (* n 4)
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-int buf (* % 4)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-s64
@@ -432,9 +481,16 @@
    Example:
    (to-host-s64 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-long buf (* % 8)) (range n))))
+  (let [n-bytes (* n 8)
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-long buf (* % 8)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 
 (defn to-host-u64
@@ -450,9 +506,16 @@
    Example:
    (to-host-u64 array 100)"
   [handle n]
-  (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-long buf (* % 8)) (range n))))
+  (let [n-bytes (* n 8)
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)]
+    (try
+      (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+      (mapv #(ffi/read-long buf (* % 8)) (range n))
+      (finally
+        (ffi/af-free-pinned buf)))))
 
 ;;
 ;; Zero-copy integration with dtype-next
@@ -536,8 +599,11 @@
   [handle dtype-kw n]
   (let [type-size (get ffi/type-sizes (dtype->af-dtype dtype-kw))
         n-bytes (* n type-size)
-        ;; Allocate coffi memory
-        buf (mem/alloc n-bytes)
+        ;; Allocate host-accessible memory via ArrayFire for NVIDIA GPU compatibility
+        bufptr (mem/alloc mem/pointer-size)
+        _ (ffi/check! (ffi/af-alloc-pinned bufptr n-bytes) "af_alloc_pinned")
+        buf-raw (mem/read-address bufptr)
+        buf (mem/reinterpret buf-raw n-bytes)
         _ (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
         ;; Get the address and wrap it in a dtype-next native buffer (zero-copy)
         address (mem/address-of buf)
@@ -548,6 +614,7 @@
                (dtype-proto/platform-endianness) 
                buf)]
     ;; Return as a dtype-next tensor/container
+    ;; Note: The caller is responsible for eventually calling af-free-host on buf
     (dtype-proto/->buffer nbuf)))
 
 
