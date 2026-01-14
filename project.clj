@@ -6,7 +6,9 @@
                  [techascent/tech.resource "5.09"] ; generalized resource management
                  ]
   :source-paths ["src"]
-  :jvm-opts ["-Djava.library.path=/opt/arrayfire/lib64"  ; Adjust path as needed
+  :jvm-opts [  ; Adjust library path as needed
+             "-Djava.library.path=/opt/arrayfire/lib64"
+             ;"-Djava.library.path=/Program Files/ArrayFire/v3/lib"
              "--enable-native-access=ALL-UNNAMED"]
   ;
   )
