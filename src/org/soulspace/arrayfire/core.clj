@@ -1,6 +1,9 @@
 (ns org.soulspace.arrayfire.core
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi :as ffi]
+            [org.soulspace.arrayfire.ffi.device :as af-device]
+            [org.soulspace.arrayfire.ffi.array :as af-array]
+            [org.soulspace.arrayfire.ffi.binary :as af-binary]
             [tech.v3.datatype :as dtype]
             [tech.v3.datatype.native-buffer :as native-buf]
             [tech.v3.datatype.protocols :as dtype-proto]))
@@ -12,7 +15,7 @@
    Returns:
    true on success."
   []
-  (ffi/check! (ffi/af-init) "af_init")
+  (ffi/check! (af-device/af-init) "af_init")
   true)
 
 
@@ -22,7 +25,7 @@
    Returns:
    :ok on success."
   []
-  (ffi/check! (ffi/af-info) "af_info")
+  (ffi/check! (af-device/af-info) "af_info")
   :ok)
 
 
@@ -50,7 +53,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F64)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F64)
      "af_create_array")
     ;; Return the array handle
     (mem/read-address outptr)))
@@ -76,7 +79,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F32)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -101,7 +104,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F64)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -126,7 +129,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_C32)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_C32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -151,7 +154,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_C64)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_C64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -176,7 +179,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_S32)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_S32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -201,7 +204,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_U32)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_U32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -226,7 +229,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_S64)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_S64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -251,7 +254,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_U64)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_U64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -265,7 +268,7 @@
    Returns:
    true on success."
   [handle]
-  (ffi/check! (ffi/af-release-array handle) "af_release_array")
+  (ffi/check! (af-array/af-release-array handle) "af_release_array")
   true)
 
 
@@ -283,7 +286,7 @@
    (add array1 array2)"
   [a b]
   (let [outptr (mem/alloc mem/pointer-size)]
-    (ffi/check! (ffi/af-add outptr a b 0) "af_add") ; 0 = false for batch parameter
+    (ffi/check! (af-binary/af-add outptr a b 0) "af_add") ; 0 = false for batch parameter
     (mem/read-address outptr)))
 
 
@@ -304,7 +307,7 @@
    (to-host array 100) ; copies 100 elements from the array"
   [handle n]
   (let [buf (mem/alloc (* n 8))] ; 8 bytes per double
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (let [arr (double-array n)]
       (doseq [i (range n)]
         (aset-double arr i (mem/read-double buf (* i 8))))
@@ -325,7 +328,7 @@
    (to-host-f32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-float buf (* % 4)) (range n))))
 
 
@@ -343,7 +346,7 @@
    (to-host-f64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-double buf (* % 8)) (range n))))
 
 
@@ -361,7 +364,7 @@
    (to-host-c32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))] ; 8 bytes per complex float
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-complex-float buf (* % 8)) (range n))))
 
 
@@ -379,7 +382,7 @@
    (to-host-c64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 16))] ; 16 bytes per complex double
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-complex-double buf (* % 16)) (range n))))
 
 
@@ -397,7 +400,7 @@
    (to-host-s32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-int buf (* % 4)) (range n))))
 
 
@@ -415,7 +418,7 @@
    (to-host-u32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-int buf (* % 4)) (range n))))
 
 
@@ -433,7 +436,7 @@
    (to-host-s64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-long buf (* % 8)) (range n))))
 
 
@@ -451,7 +454,7 @@
    (to-host-u64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (mapv #(ffi/read-long buf (* % 8)) (range n))))
 
 ;;
@@ -512,7 +515,7 @@
         dimsbuf (ffi/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
     (ffi/check!
-     (ffi/af-create-array outptr host (int (count dims)) dimsbuf af-dtype)
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf af-dtype)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -538,7 +541,7 @@
         n-bytes (* n type-size)
         ;; Allocate coffi memory
         buf (mem/alloc n-bytes)
-        _ (ffi/check! (ffi/af-get-data-ptr buf handle) "af_get_data_ptr")
+        _ (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
         ;; Get the address and wrap it in a dtype-next native buffer (zero-copy)
         address (mem/address-of buf)
         nbuf (native-buf/wrap-address 
