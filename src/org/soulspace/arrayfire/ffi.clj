@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.ffi.ffi
+(ns org.soulspace.arrayfire.ffi
   "ArrayFire FFI declarations"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]))
