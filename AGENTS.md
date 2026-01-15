@@ -41,6 +41,7 @@ keep arrayfire-clj in sync with future ArrayFire versions.
 ### Integration Layer
 The integration layer provides the integration of ArrayFire in the Clojure and
 JVM ecosystem: 
+* loading and initalition of the ArrayFire libraries
 * resource management of the created ArrayFire resources (e.g. array memory
   and handles) in Clojure on the JVM.
 * error and exception handling
