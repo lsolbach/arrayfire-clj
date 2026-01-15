@@ -20,7 +20,7 @@ The source code for the used libraries should be available in the 'reference' fo
 * [arrayfire](https://github.com/arrayfire/arrayfire)
 * [coffi](https://github.com/IGJoshua/coffi)
 * [dtype-next](https://github.com/cnuernber/dtype-next)
-* [tech.resource]()
+* [tech.resource](https://github.com/techascent/tech.resource)
 
 # Architecture and Design
 
