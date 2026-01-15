@@ -51,6 +51,6 @@ JVM ecosystem:
 * dtype-next integration
 
 ### Clojure API Layer
-The Clojure API layer provides an ideomatic Clojure API for the ArrayFire
+The Clojure API layer provides an idiomatic Clojure API for the ArrayFire
 features.
 
