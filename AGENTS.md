@@ -24,13 +24,16 @@ The source code for the used libraries should be available in the 'reference' fo
 
 # Architecture and Design
 
-## Principles
+## Design Principles
 
 ### Zero-Copy
 No unneccessary copying of data.
 
+### Simplicity and Composeability
+Features should be simple, uncomplected and composeable.
+
 ## Layers
-arrayfire-clj should have a layered architecture.
+arrayfire-clj has a layered architecture.
 
 ### FFI Layer
 The FFI Layer provides only the FFI bindings to the ArrayFire API, as true to
@@ -41,7 +44,7 @@ keep arrayfire-clj in sync with future ArrayFire versions.
 ### Integration Layer
 The integration layer provides the integration of ArrayFire in the Clojure and
 JVM ecosystem: 
-* loading and initalition of the ArrayFire libraries
+* loading and initialization of the ArrayFire libraries
 * resource management of the created ArrayFire resources (e.g. array memory
   and handles) in Clojure on the JVM.
 * error and exception handling
