@@ -113,7 +113,9 @@ lein test
 ```
 
 ## Copyright
-© 2025 Ludger Solbach
+© 2026 Ludger Solbach
+
+arrayfire-clj is not affiliated with or endorsed by ArrayFire. The ArrayFire literal mark is used under a limited license granted by ArrayFire the trademark holder in the United States and other countries.
 
 ## License
 Eclipse Public License 1.0 (EPL1.0)
