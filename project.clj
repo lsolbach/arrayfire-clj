@@ -1,5 +1,7 @@
 (defproject org.soulspace/arrayfire-clj "0.1.0-SNAPSHOT"
   :description "Clojure wrapper for the ArrayFire tensor math library"
+  :license {:name "Eclipse Public License 1.0"
+            :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.12.3"]
                  [org.suskalo/coffi "1.0.615"]
                  [cnuernber/dtype-next "11.004"]
