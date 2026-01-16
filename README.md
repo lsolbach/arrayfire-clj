@@ -8,7 +8,7 @@ ArrayFire is a general-purpose tensor library that simplifies the software devel
 ## Requirements
 
 - **Java 22+** with FFM API support
-- **ArrayFire library** installed (CPU, CUDA, or OpenCL backend)
+- **ArrayFire 3.10 library** installed (CPU, CUDA, or OpenCL backend)
 - **JVM flags**: `--enable-native-access=ALL-UNNAMED`
 
 ## Installing ArrayFire
@@ -91,33 +91,18 @@ Example usage:
 
 ## Implementation Status
 
-*Experimental* Currently implemented functions:
+*Experimental* 
 
-- `init!` - Initialize ArrayFire runtime
-- `info` - Display device information
-- `create-array-f32` - Create float32 arrays
-- `create-array-f64` - Create float64 arrays
-- `create-array-c32` - Create complex32 arrays
-- `create-array-c64` - Create complex64 arrays
-- `create-array-s32` - Create int32 arrays
-- `create-array-u32` - Create uint32 arrays
-- `create-array-s64` - Create int64 arrays
-- `create-array-u64` - Create uint64 arrays
-- `to-host-f32` - Copy float32 array to host
-- `to-host-f64` - Copy float64 array to host
-- `to-host-c32` - Copy complex32 array to host
-- `to-host-c64` - Copy complex64 array to host
-- `to-host-s32` - Copy int32 array to host
-- `to-host-u32` - Copy uint32 array to host
-- `to-host-s64` - Copy int64 array to host
-- `to-host-u64` - Copy uint64 array to host
-- `create-array-from-native` - Create array from dtype-next native buffer (zero-copy)
-- `create-array-from-tensor` - Create array from dtype-next tensor
-- `to-native-buffer` - Copy array to dtype-next native buffer
-- `release` - Release array memory
-- `add` - Element-wise array addition
+Done:
+* All ArrayFire C API bindings
 
-More operations will be added as needed.
+Not done:
+* Deeper JVM/Clojure integration
+  * error/exception handling 
+  * resource management
+  * dtype-next integration
+* Idiomatic Clojure API
+
 
 ## Development
 
