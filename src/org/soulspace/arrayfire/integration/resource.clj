@@ -9,8 +9,16 @@
            [java.lang.foreign Arena MemorySegment ValueLayout]))
 
 
+;;;
+;;; AFArray resource management
+;;;
 (defn af-release-array!
-  "Release one reference to an af_array."
+  "Release one reference to an af_array.
+   
+   Parameters:
+   - handle: af_array* handle
+   
+   Returns: nil"
   [^long handle]
   (let [seg (MemorySegment/ofAddress handle 0 mem/global-arena)
         err (af-release-array seg)]
@@ -21,7 +29,12 @@
     nil))
 
 (defn af-retain-array!
-  "Increment the refcount of an af_array."
+  "Increment the refcount of an af_array.
+   
+   Parameters:
+   - handle: af_array* handle
+   
+   Returns: nil"
   [^long handle]
   (let [arena (Arena/ofConfined)]
     (try
@@ -69,7 +82,13 @@
       (str "#<AFArray 0x" (Long/toHexString handle) ">"))))
 
 (defn af-array-new
-  "Wrap an af_array returned from ArrayFire (refcount = 1)."
+  "Wrap an af_array returned from ArrayFire (refcount = 1).
+   
+   Parameters:
+   - handle: af_array* handle
+   
+   Returns:
+   AFArray instance"
   ^AFArray
   [^long handle]
   (let [released (AtomicBoolean. false)
@@ -78,13 +97,26 @@
     (AFArray. handle released cleanable)))
 
 (defn af-array-retained
-  "Wrap an existing af_array; retains before wrapping."
+  "Wrap an existing af_array; retains before wrapping.
+   
+   Parameters:
+   - handle: af_array* handle
+   
+   Returns:
+   AFArray instance"
   ^AFArray
   [^long handle]
   (af-retain-array! handle)
   (af-array-new handle))
 
 (defn af-handle
+  "Get the native af_array* handle from AFArray.
+   
+   Parameters:
+   - arr: AFArray instance
+   
+   Returns:
+   af_array* handle as long"
   ^long [^AFArray arr]
   (when (.get ^AtomicBoolean (.-released arr))
     (throw (IllegalStateException.
