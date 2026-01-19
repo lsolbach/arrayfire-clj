@@ -1,8 +1,8 @@
-(ns org.soulspace.arrayfire.ffi-test
+(ns org.soulspace.arrayfire.integration.ffi-test
   "Tests for FFI declarations - validates syntax without requiring ArrayFire library"
   (:require [clojure.test :refer [deftest is run-tests testing]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi :as ffi]))
+            [org.soulspace.arrayfire.integration.ffi :as ffi]))
 
 (deftest test-ffi-syntax-validation
   (testing "FFI namespace can be loaded (syntax is valid)"

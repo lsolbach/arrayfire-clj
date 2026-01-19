@@ -1,19 +1,27 @@
-(ns org.soulspace.arrayfire.ffi
+(ns org.soulspace.arrayfire.integration.ffi
   "ArrayFire FFI declarations"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [tech.v3.resource :as tr])
+  (:import [java.lang AutoCloseable]
+           [java.lang.ref Cleaner Cleaner$Cleanable]
+           [java.util.concurrent.atomic AtomicBoolean]
+           [java.lang.foreign MemorySegment]))
 
-;;
-;; Load ArrayFire library
-;;
+;;;
+;;; Load ArrayFire library
+;;;
 (def ^:private lib-name
   (or (System/getenv "ARRAYFIRE_LIB") "af"))
 
 (ffi/load-system-library lib-name)
 
+;;;
+;;; Type definitions
+;;;
+
 ;;
-;; ArrayFire dtype constants
-;; From af/defines.h enum af_dtype
+;; ArrayFire dtype constants (af/defines.h - enum af_dtype)
 ;;
 (def AF_DTYPE_F32 0)   ; float
 (def AF_DTYPE_C32 1)   ; complex float
@@ -45,13 +53,38 @@
    AF_DTYPE_U16 2})  ; unsigned short
    
 ;;
-;; API declarations
-;; Each function is declared separately with correct coffi syntax
+;; ArrayFire error codes (af/defines.h - enum af_err)
 ;;
+(def AF_SUCCESS 0)
+(def AF_ERR_NO_MEM 101)
+(def AF_ERR_DRIVER 102)
+(def AF_ERR_RUNTIME 103)
+(def AF_ERR_INVALID_ARRAY 201)
+(def AF_ERR_ARG 202)
+(def AF_ERR_SIZE 203)
+(def AF_ERR_TYPE 204)
+(def AF_ERR_DIFF_TYPE 205)
+(def AF_ERR_BATCH 207)
+(def AF_ERR_DEVICE 208)
+(def AF_ERR_NOT_SUPPORTED 301)
+(def AF_ERR_NOT_CONFIGURED 302)
+(def AF_ERR_NONFREE 303)
+(def AF_ERR_NO_DBL 401)
+(def AF_ERR_NO_GFX 402)
+(def AF_ERR_NO_HALF 403)
+(def AF_ERR_LOAD_LIB 501)
+(def AF_ERR_LOAD_SYM 502)
+(def AF_ERR_ARR_BKND_MISMATCH 503)
+(def AF_ERR_INTERNAL 998)
+(def AF_ERR_UNKNOWN 999)
 
-;;
-;; Helper functions
-;;
+;;;
+;;; Error handling
+;;;
+(def errors
+  "Mapping of ArrayFire error codes to messages."
+  {})
+
 (defn check!
   "Check ArrayFire error code and throw exception if non-zero.
    
@@ -64,25 +97,9 @@
   (when (not (zero? rc))
     (throw (ex-info (str "ArrayFire error at " where) {:code rc :where where}))))
 
-(defn dims->native
-  "Convert Clojure vector of dimensions to native dim_t array.
-   dim_t is typically long long (64-bit) on most platforms.
-   
-   Parameters:
-   - dims: vector of dimension sizes
-   
-   Returns:
-   pointer to native dim_t array"
-  [dims]
-  (let [buf (mem/alloc (* 8 (count dims)))] ; dim_t is 64-bit
-    (doseq [i (range (count dims))]
-      (mem/write-long buf (* i 8) (long (nth dims i))))
-    buf))
-
-;;
-;; Type-specific memory operations
-;;
-
+;;;
+;;; Type-specific memory operations
+;;;
 (defn write-float!
   "Write a float value to buffer at offset.
    
@@ -291,3 +308,23 @@
   [buf offset]
   [(mem/read-double buf offset)
    (mem/read-double buf (+ offset 8))])
+
+;;;
+;;; Conversion functions
+;;;
+; TODO define dim_t type via coffi
+(defn dims->native
+  "Convert Clojure vector of dimensions to native dim_t array.
+   dim_t is typically long long (64-bit) on most platforms.
+   
+   Parameters:
+   - dims: vector of dimension sizes
+   
+   Returns:
+   pointer to native dim_t array"
+  [dims]
+  (let [buf (mem/alloc (* 8 (count dims)))] ; dim_t is 64-bit
+    (doseq [i (range (count dims))]
+      (mem/write-long buf (* i 8) (long (nth dims i))))
+    buf))
+
