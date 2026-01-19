@@ -1,12 +1,84 @@
 (ns org.soulspace.arrayfire.core
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi :as ffi]
+            [org.soulspace.arrayfire.integration.ffi :as ffi]
             [org.soulspace.arrayfire.ffi.device :as af-device]
             [org.soulspace.arrayfire.ffi.array :as af-array]
             [org.soulspace.arrayfire.ffi.binary :as af-binary]
             [tech.v3.datatype :as dtype]
             [tech.v3.datatype.native-buffer :as native-buf]
             [tech.v3.datatype.protocols :as dtype-proto]))
+
+;;;
+;;; Definitions
+;;;
+(def dtype->constant
+  "Mapping of Clojure keywords to ArrayFire dtype constants."
+  {::f32 ffi/AF_DTYPE_F32 ; float
+   ::c32 ffi/AF_DTYPE_C32 ; complex float
+   ::f64 ffi/AF_DTYPE_F64 ; double
+   ::c64 ffi/AF_DTYPE_C64 ; complex double
+   ::b8  ffi/AF_DTYPE_B8  ; bool
+   ::s32 ffi/AF_DTYPE_S32 ; int
+   ::u32 ffi/AF_DTYPE_U32 ; unsigned int
+   ::u8  ffi/AF_DTYPE_U8  ; unsigned char
+   ::s64 ffi/AF_DTYPE_S64 ; long
+   ::u64 ffi/AF_DTYPE_U64 ; unsigned long
+   ::s16 ffi/AF_DTYPE_S16 ; short
+   ::u16 ffi/AF_DTYPE_U16 ; unsigned short
+   })
+
+(def constant->dtype
+  "Mapping of ArrayFire dtype constants to Clojure keywords."
+    (into {}
+        (map (fn [[k v]] [v k]) dtype->constant)))
+
+(def dtype->size
+  "Mapping of Clojure keywords to sizes in bytes for each ArrayFire dtype."
+  {::f32 4  ; float
+   ::c32 8  ; complex float (2 floats)
+   ::f64 8  ; double
+   ::c64 16 ; complex double (2 doubles)
+   ::b8  1  ; bool
+   ::s32 4  ; int
+   ::u32 4  ; unsigned int
+   ::u8  1  ; unsigned char
+   ::s64 8  ; long
+   ::u64 8  ; unsigned long
+   ::s16 2  ; short
+   ::u16 2  ; unsigned short
+   })
+
+(def return->constant
+  "Mapping of error keywords to ArrayFire error codes."
+  {::success                ffi/AF_SUCCESS
+   ::no-mem                 ffi/AF_ERR_NO_MEM
+   ::driver                 ffi/AF_ERR_DRIVER
+   ::runtime                ffi/AF_ERR_RUNTIME
+   ::invalid-array          ffi/AF_ERR_INVALID_ARRAY
+   ::arg                    ffi/AF_ERR_ARG
+   ::size                   ffi/AF_ERR_SIZE
+   ::type                   ffi/AF_ERR_TYPE
+   ::diff-type              ffi/AF_ERR_DIFF_TYPE
+   ::batch                  ffi/AF_ERR_BATCH
+   ::device                 ffi/AF_ERR_DEVICE
+   ::not-supported          ffi/AF_ERR_NOT_SUPPORTED
+   ::not-configured         ffi/AF_ERR_NOT_CONFIGURED
+   ::non-free               ffi/AF_ERR_NONFREE
+   ::no-double              ffi/AF_ERR_NO_DBL
+   ::no-gfx                 ffi/AF_ERR_NO_GFX
+   ::no-half                ffi/AF_ERR_NO_HALF
+   ::load-lib               ffi/AF_ERR_LOAD_LIB
+   ::load-sym               ffi/AF_ERR_LOAD_SYM
+   ::array-backend-mismatch ffi/AF_ERR_ARR_BKND_MISMATCH
+   ::internal               ffi/AF_ERR_INTERNAL
+   ::unknown                ffi/AF_ERR_UNKNOWN
+   ;
+   })
+
+(def constant->return
+  "Mapping of ArrayFire return codes to error keywords."
+  (into {}
+        (map (fn [[k v]] [v k]) return->constant)))
 
 (defn init!
   "Initialize ArrayFire runtime.
