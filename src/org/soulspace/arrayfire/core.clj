@@ -1,6 +1,6 @@
 (ns org.soulspace.arrayfire.core
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.integration.ffi :as ffi]
+            [org.soulspace.arrayfire.integration.jvm-integration :as int]
             [org.soulspace.arrayfire.ffi.device :as af-device]
             [org.soulspace.arrayfire.ffi.array :as af-array]
             [org.soulspace.arrayfire.ffi.binary :as af-binary]
@@ -13,18 +13,18 @@
 ;;;
 (def dtype->constant
   "Mapping of Clojure keywords to ArrayFire dtype constants."
-  {::f32 ffi/AF_DTYPE_F32 ; float
-   ::c32 ffi/AF_DTYPE_C32 ; complex float
-   ::f64 ffi/AF_DTYPE_F64 ; double
-   ::c64 ffi/AF_DTYPE_C64 ; complex double
-   ::b8  ffi/AF_DTYPE_B8  ; bool
-   ::s32 ffi/AF_DTYPE_S32 ; int
-   ::u32 ffi/AF_DTYPE_U32 ; unsigned int
-   ::u8  ffi/AF_DTYPE_U8  ; unsigned char
-   ::s64 ffi/AF_DTYPE_S64 ; long
-   ::u64 ffi/AF_DTYPE_U64 ; unsigned long
-   ::s16 ffi/AF_DTYPE_S16 ; short
-   ::u16 ffi/AF_DTYPE_U16 ; unsigned short
+  {::f32 int/AF_DTYPE_F32 ; float
+   ::c32 int/AF_DTYPE_C32 ; complex float
+   ::f64 int/AF_DTYPE_F64 ; double
+   ::c64 int/AF_DTYPE_C64 ; complex double
+   ::b8  int/AF_DTYPE_B8  ; bool
+   ::s32 int/AF_DTYPE_S32 ; int
+   ::u32 int/AF_DTYPE_U32 ; unsigned int
+   ::u8  int/AF_DTYPE_U8  ; unsigned char
+   ::s64 int/AF_DTYPE_S64 ; long
+   ::u64 int/AF_DTYPE_U64 ; unsigned long
+   ::s16 int/AF_DTYPE_S16 ; short
+   ::u16 int/AF_DTYPE_U16 ; unsigned short
    })
 
 (def constant->dtype
@@ -50,28 +50,28 @@
 
 (def return->constant
   "Mapping of error keywords to ArrayFire error codes."
-  {::success                ffi/AF_SUCCESS
-   ::err-no-mem                 ffi/AF_ERR_NO_MEM
-   ::err-driver                 ffi/AF_ERR_DRIVER
-   ::err-runtime                ffi/AF_ERR_RUNTIME
-   ::err-invalid-array          ffi/AF_ERR_INVALID_ARRAY
-   ::err-arg                    ffi/AF_ERR_ARG
-   ::err-size                   ffi/AF_ERR_SIZE
-   ::err-type                   ffi/AF_ERR_TYPE
-   ::err-diff-type              ffi/AF_ERR_DIFF_TYPE
-   ::err-batch                  ffi/AF_ERR_BATCH
-   ::err-device                 ffi/AF_ERR_DEVICE
-   ::err-not-supported          ffi/AF_ERR_NOT_SUPPORTED
-   ::err-not-configured         ffi/AF_ERR_NOT_CONFIGURED
-   ::err-non-free               ffi/AF_ERR_NONFREE
-   ::err-no-double              ffi/AF_ERR_NO_DBL
-   ::err-no-gfx                 ffi/AF_ERR_NO_GFX
-   ::err-no-half                ffi/AF_ERR_NO_HALF
-   ::err-load-lib               ffi/AF_ERR_LOAD_LIB
-   ::err-load-sym               ffi/AF_ERR_LOAD_SYM
-   ::err-array-backend-mismatch ffi/AF_ERR_ARR_BKND_MISMATCH
-   ::err-internal               ffi/AF_ERR_INTERNAL
-   ::err-unknown                ffi/AF_ERR_UNKNOWN
+  {::success                    int/AF_SUCCESS
+   ::err-no-mem                 int/AF_ERR_NO_MEM
+   ::err-driver                 int/AF_ERR_DRIVER
+   ::err-runtime                int/AF_ERR_RUNTIME
+   ::err-invalid-array          int/AF_ERR_INVALID_ARRAY
+   ::err-arg                    int/AF_ERR_ARG
+   ::err-size                   int/AF_ERR_SIZE
+   ::err-type                   int/AF_ERR_TYPE
+   ::err-diff-type              int/AF_ERR_DIFF_TYPE
+   ::err-batch                  int/AF_ERR_BATCH
+   ::err-device                 int/AF_ERR_DEVICE
+   ::err-not-supported          int/AF_ERR_NOT_SUPPORTED
+   ::err-not-configured         int/AF_ERR_NOT_CONFIGURED
+   ::err-non-free               int/AF_ERR_NONFREE
+   ::err-no-double              int/AF_ERR_NO_DBL
+   ::err-no-gfx                 int/AF_ERR_NO_GFX
+   ::err-no-half                int/AF_ERR_NO_HALF
+   ::err-load-lib               int/AF_ERR_LOAD_LIB
+   ::err-load-sym               int/AF_ERR_LOAD_SYM
+   ::err-array-backend-mismatch int/AF_ERR_ARR_BKND_MISMATCH
+   ::err-internal               int/AF_ERR_INTERNAL
+   ::err-unknown                int/AF_ERR_UNKNOWN
    ;
    })
 
@@ -80,6 +80,10 @@
   (into {}
         (map (fn [[k v]] [v k]) return->constant)))
 
+;(def messages
+;  "Mapping of ArrayFire return codes to messages."
+;  {})
+
 (defn init!
   "Initialize ArrayFire runtime.
    Must be called before any other ArrayFire functions.
@@ -87,7 +91,7 @@
    Returns:
    true on success."
   []
-  (ffi/check! (af-device/af-init) "af_init")
+  (int/check! (af-device/af-init) "af_init")
   true)
 
 
@@ -97,7 +101,7 @@
    Returns:
    :ok on success."
   []
-  (ffi/check! (af-device/af-info) "af_info")
+  (int/check! (af-device/af-info) "af_info")
   :ok)
 
 
@@ -122,10 +126,10 @@
         host (mem/alloc (* n 8)) ; 8 bytes per double
         _ (doseq [i (range n)]
             (mem/write-double host (* i 8) (double (nth values i))))
-        dimsbuf (ffi/dims->native dims)
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F64)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_F64)
      "af_create_array")
     ;; Return the array handle
     (mem/read-address outptr)))
@@ -147,11 +151,11 @@
   (let [n (count values)
         host (mem/alloc (* n 4))
         _ (doseq [i (range n)]
-            (ffi/write-float! host (* i 4) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-float! host (* i 4) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F32)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_F32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -172,11 +176,11 @@
   (let [n (count values)
         host (mem/alloc (* n 8))
         _ (doseq [i (range n)]
-            (ffi/write-double! host (* i 8) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-double! host (* i 8) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_F64)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_F64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -197,11 +201,11 @@
   (let [n (count values)
         host (mem/alloc (* n 8)) ; 8 bytes per complex float (2 floats)
         _ (doseq [i (range n)]
-            (ffi/write-complex-float! host (* i 8) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-complex-float! host (* i 8) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_C32)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_C32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -222,11 +226,11 @@
   (let [n (count values)
         host (mem/alloc (* n 16)) ; 16 bytes per complex double (2 doubles)
         _ (doseq [i (range n)]
-            (ffi/write-complex-double! host (* i 16) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-complex-double! host (* i 16) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_C64)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_C64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -247,11 +251,11 @@
   (let [n (count values)
         host (mem/alloc (* n 4))
         _ (doseq [i (range n)]
-            (ffi/write-int! host (* i 4) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-int! host (* i 4) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_S32)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_S32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -272,11 +276,11 @@
   (let [n (count values)
         host (mem/alloc (* n 4))
         _ (doseq [i (range n)]
-            (ffi/write-int! host (* i 4) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-int! host (* i 4) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_U32)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_U32)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -297,11 +301,11 @@
   (let [n (count values)
         host (mem/alloc (* n 8))
         _ (doseq [i (range n)]
-            (ffi/write-long! host (* i 8) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-long! host (* i 8) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_S64)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_S64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -322,11 +326,11 @@
   (let [n (count values)
         host (mem/alloc (* n 8))
         _ (doseq [i (range n)]
-            (ffi/write-long! host (* i 8) (nth values i)))
-        dimsbuf (ffi/dims->native dims)
+            (int/write-long! host (* i 8) (nth values i)))
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf ffi/AF_DTYPE_U64)
+    (int/check!
+     (af-array/af-create-array outptr host (int (count dims)) dimsbuf int/AF_DTYPE_U64)
      "af_create_array")
     (mem/read-address outptr)))
 
@@ -340,7 +344,7 @@
    Returns:
    true on success."
   [handle]
-  (ffi/check! (af-array/af-release-array handle) "af_release_array")
+  (int/check! (af-array/af-release-array handle) "af_release_array")
   true)
 
 
@@ -358,7 +362,7 @@
    (add array1 array2)"
   [a b]
   (let [outptr (mem/alloc mem/pointer-size)]
-    (ffi/check! (af-binary/af-add outptr a b 0) "af_add") ; 0 = false for batch parameter
+    (int/check! (af-binary/af-add outptr a b 0) "af_add") ; 0 = false for batch parameter
     (mem/read-address outptr)))
 
 
@@ -379,7 +383,7 @@
    (to-host array 100) ; copies 100 elements from the array"
   [handle n]
   (let [buf (mem/alloc (* n 8))] ; 8 bytes per double
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
     (let [arr (double-array n)]
       (doseq [i (range n)]
         (aset-double arr i (mem/read-double buf (* i 8))))
@@ -400,8 +404,8 @@
    (to-host-f32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-float buf (* % 4)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-float buf (* % 4)) (range n))))
 
 
 (defn to-host-f64
@@ -418,8 +422,8 @@
    (to-host-f64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-double buf (* % 8)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-double buf (* % 8)) (range n))))
 
 
 (defn to-host-c32
@@ -436,8 +440,8 @@
    (to-host-c32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))] ; 8 bytes per complex float
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-complex-float buf (* % 8)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-complex-float buf (* % 8)) (range n))))
 
 
 (defn to-host-c64
@@ -454,8 +458,8 @@
    (to-host-c64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 16))] ; 16 bytes per complex double
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-complex-double buf (* % 16)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-complex-double buf (* % 16)) (range n))))
 
 
 (defn to-host-s32
@@ -472,8 +476,8 @@
    (to-host-s32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-int buf (* % 4)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-int buf (* % 4)) (range n))))
 
 
 (defn to-host-u32
@@ -490,8 +494,8 @@
    (to-host-u32 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 4))]
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-int buf (* % 4)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-int buf (* % 4)) (range n))))
 
 
 (defn to-host-s64
@@ -508,8 +512,8 @@
    (to-host-s64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-long buf (* % 8)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-long buf (* % 8)) (range n))))
 
 
 (defn to-host-u64
@@ -526,8 +530,8 @@
    (to-host-u64 array 100)"
   [handle n]
   (let [buf (mem/alloc (* n 8))]
-    (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (mapv #(ffi/read-long buf (* % 8)) (range n))))
+    (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+    (mapv #(int/read-long buf (* % 8)) (range n))))
 
 ;;
 ;; Zero-copy integration with dtype-next
@@ -543,16 +547,16 @@
    ArrayFire dtype constant."
   [dtype]
   (case dtype
-    :float32 ffi/AF_DTYPE_F32
-    :float64 ffi/AF_DTYPE_F64
-    :int32   ffi/AF_DTYPE_S32
-    :uint32  ffi/AF_DTYPE_U32
-    :int64   ffi/AF_DTYPE_S64
-    :uint64  ffi/AF_DTYPE_U64
-    :int16   ffi/AF_DTYPE_S16
-    :uint16  ffi/AF_DTYPE_U16
-    :int8    ffi/AF_DTYPE_S32  ; dtype-next int8 maps to s32
-    :uint8   ffi/AF_DTYPE_U8
+    :float32 int/AF_DTYPE_F32
+    :float64 int/AF_DTYPE_F64
+    :int32   int/AF_DTYPE_S32
+    :uint32  int/AF_DTYPE_U32
+    :int64   int/AF_DTYPE_S64
+    :uint64  int/AF_DTYPE_U64
+    :int16   int/AF_DTYPE_S16
+    :uint16  int/AF_DTYPE_U16
+    :int8    int/AF_DTYPE_S32  ; dtype-next int8 maps to s32
+    :uint8   int/AF_DTYPE_U8
     (throw (ex-info (str "Unsupported dtype: " dtype) {:dtype dtype}))))
 
 
@@ -581,12 +585,12 @@
             (throw (ex-info "Buffer must be native-backed for zero-copy operation" 
                            {:dtype dtype-kw})))
         address (.address nbuf)
-        n-bytes (* (dtype/ecount native-buffer) (get ffi/type-sizes af-dtype))
+        n-bytes (* (dtype/ecount native-buffer) (get int/type-sizes af-dtype))
         ;; Wrap the address in a coffi MemorySegment (zero-copy)
         host (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress address) n-bytes)
-        dimsbuf (ffi/dims->native dims)
+        dimsbuf (int/dims->native dims)
         outptr (mem/alloc mem/pointer-size)]
-    (ffi/check!
+    (int/check!
      (af-array/af-create-array outptr host (int (count dims)) dimsbuf af-dtype)
      "af_create_array")
     (mem/read-address outptr)))
@@ -609,11 +613,11 @@
    Example:
    (to-native-buffer array :float64 100)"
   [handle dtype-kw n]
-  (let [type-size (get ffi/type-sizes (dtype->af-dtype dtype-kw))
+  (let [type-size (get int/type-sizes (dtype->af-dtype dtype-kw))
         n-bytes (* n type-size)
         ;; Allocate coffi memory
         buf (mem/alloc n-bytes)
-        _ (ffi/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
+        _ (int/check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
         ;; Get the address and wrap it in a dtype-next native buffer (zero-copy)
         address (mem/address-of buf)
         nbuf (native-buf/wrap-address 
