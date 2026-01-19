@@ -51,27 +51,27 @@
 (def return->constant
   "Mapping of error keywords to ArrayFire error codes."
   {::success                ffi/AF_SUCCESS
-   ::no-mem                 ffi/AF_ERR_NO_MEM
-   ::driver                 ffi/AF_ERR_DRIVER
-   ::runtime                ffi/AF_ERR_RUNTIME
-   ::invalid-array          ffi/AF_ERR_INVALID_ARRAY
-   ::arg                    ffi/AF_ERR_ARG
-   ::size                   ffi/AF_ERR_SIZE
-   ::type                   ffi/AF_ERR_TYPE
-   ::diff-type              ffi/AF_ERR_DIFF_TYPE
-   ::batch                  ffi/AF_ERR_BATCH
-   ::device                 ffi/AF_ERR_DEVICE
-   ::not-supported          ffi/AF_ERR_NOT_SUPPORTED
-   ::not-configured         ffi/AF_ERR_NOT_CONFIGURED
-   ::non-free               ffi/AF_ERR_NONFREE
-   ::no-double              ffi/AF_ERR_NO_DBL
-   ::no-gfx                 ffi/AF_ERR_NO_GFX
-   ::no-half                ffi/AF_ERR_NO_HALF
-   ::load-lib               ffi/AF_ERR_LOAD_LIB
-   ::load-sym               ffi/AF_ERR_LOAD_SYM
-   ::array-backend-mismatch ffi/AF_ERR_ARR_BKND_MISMATCH
-   ::internal               ffi/AF_ERR_INTERNAL
-   ::unknown                ffi/AF_ERR_UNKNOWN
+   ::err-no-mem                 ffi/AF_ERR_NO_MEM
+   ::err-driver                 ffi/AF_ERR_DRIVER
+   ::err-runtime                ffi/AF_ERR_RUNTIME
+   ::err-invalid-array          ffi/AF_ERR_INVALID_ARRAY
+   ::err-arg                    ffi/AF_ERR_ARG
+   ::err-size                   ffi/AF_ERR_SIZE
+   ::err-type                   ffi/AF_ERR_TYPE
+   ::err-diff-type              ffi/AF_ERR_DIFF_TYPE
+   ::err-batch                  ffi/AF_ERR_BATCH
+   ::err-device                 ffi/AF_ERR_DEVICE
+   ::err-not-supported          ffi/AF_ERR_NOT_SUPPORTED
+   ::err-not-configured         ffi/AF_ERR_NOT_CONFIGURED
+   ::err-non-free               ffi/AF_ERR_NONFREE
+   ::err-no-double              ffi/AF_ERR_NO_DBL
+   ::err-no-gfx                 ffi/AF_ERR_NO_GFX
+   ::err-no-half                ffi/AF_ERR_NO_HALF
+   ::err-load-lib               ffi/AF_ERR_LOAD_LIB
+   ::err-load-sym               ffi/AF_ERR_LOAD_SYM
+   ::err-array-backend-mismatch ffi/AF_ERR_ARR_BKND_MISMATCH
+   ::err-internal               ffi/AF_ERR_INTERNAL
+   ::err-unknown                ffi/AF_ERR_UNKNOWN
    ;
    })
 
