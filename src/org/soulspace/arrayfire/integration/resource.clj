@@ -1,5 +1,18 @@
 (ns org.soulspace.arrayfire.integration.resource
-  "Resource management for ArrayFire objects using Tech Resource."
+  "Resource management for ArrayFire resources on the JVM.
+   
+   ArrayFire uses reference counting for its array resources (af_array).
+   This module provides wrappers to manage the lifecycle of these resources
+   by integrating with AutoCloseable and Java's Cleaner mechanism to ensure
+   proper release of resources when they are no longer needed.
+   
+   ArrayFire provides reference counting for its resources (e.g. af_array)
+   and functions for the creation and release of these resources. 
+   
+   This namespace defines the AFArray type which encapsulates an af_array
+   handle along with automatic cleanup. It relies on the reference counting
+   functions provided by ArrayFire to manage the lifecycle of the resources
+   and does not introduce additional reference counting."
   (:require [tech.v3.resource :as tr]
             [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.array :refer [af-release-array af-retain-array]])
