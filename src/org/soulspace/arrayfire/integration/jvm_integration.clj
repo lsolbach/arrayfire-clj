@@ -129,6 +129,25 @@
 ;;;
 ;;; AFArray resource management
 ;;;
+(defn native-af-array-pointer
+  "Allocate an af_array* for use as an out-parameter.
+   Must be used within a dynamic Arena."
+  ^MemorySegment
+  ([]
+   ;; One pointer-sized slot
+   (.allocate (Arena/ofAuto) ValueLayout/ADDRESS))
+  ([^Arena arena]
+   ;; One pointer-sized slot
+   (.allocate arena ValueLayout/ADDRESS)))
+
+(defn deref-af-array
+  "Read an af_array value from an af_array* out-parameter
+   and return it as a raw address (long)."
+  ^long
+  [^MemorySegment af-array-ptr]
+  ;; Read the pointer stored at offset 0
+  (.get af-array-ptr ValueLayout/ADDRESS 0))
+
 (defn af-release-array!
   "Release one reference to an af_array.
    
@@ -150,7 +169,7 @@
    Returns: nil"
   [^long handle]
   (let [arena (Arena/ofConfined)]
-    (try
+    (try 
       (let [out (MemorySegment/allocateNative ValueLayout/ADDRESS arena)
             in  (MemorySegment/ofAddress handle 0 arena)]
         (check! (af-retain-array out in) "af_retain_array")
