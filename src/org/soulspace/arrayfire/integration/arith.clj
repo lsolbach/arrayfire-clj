@@ -15,6 +15,8 @@
 (defn trunc
   "Truncate the values of an array to their integer parts.
 
+   Supported types: f32, f64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -27,6 +29,8 @@
 
 (defn sign
   "Compute the sign of each element in the array.
+
+   Supported types: f32, f64, s32, s64
 
    Parameters:
    - a: Input array (AFArray)
@@ -44,6 +48,8 @@
 (defn round
   "Round the elements of the array to the nearest integer.
 
+   Supported types: f32, f64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -56,6 +62,8 @@
 
 (defn floor
   "Compute the floor of each element in the array.
+
+   Supported types: f32, f64
 
    Parameters:
    - a: Input array (AFArray)
@@ -70,6 +78,8 @@
 (defn ceil
   "Compute the ceiling of each element in the array.
    
+   Supported types: f32, f64
+
    Parameters:
    - a: Input array (AFArray)
     
@@ -87,6 +97,8 @@
 (defn sigmoid
   "Compute the sigmoid activation function for each element in the array.
 
+   Supported types: f32, f64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -100,6 +112,8 @@
 
 (defn expm1
   "Compute exp(x) - 1 for each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -115,6 +129,8 @@
 (defn erf
   "Compute the error function for each element in the array.
 
+   Supported types: f32, f64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -128,6 +144,8 @@
 
 (defn erfc
   "Compute the complementary error function for each element in the array.
+
+   Supported types: f32, f64
 
    Parameters:
    - a: Input array (AFArray)
@@ -143,6 +161,8 @@
 (defn log10
   "Compute the base-10 logarithm for each element in the array.
 
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -156,6 +176,8 @@
 
 (defn log1p
   "Compute log(1 + x) for each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -171,6 +193,8 @@
 (defn log2
   "Compute the base-2 logarithm for each element in the array.
 
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -184,6 +208,8 @@
 
 (defn cbrt
   "Compute the cube root for each element in the array.
+
+   Supported types: f32, f64
 
    Parameters:
    - a: Input array (AFArray)
@@ -199,6 +225,8 @@
 (defn rsqrt
   "Compute the reciprocal square root for each element in the array.
 
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -212,6 +240,8 @@
 
 (defn tgamma
   "Compute the truncated gamma function for each element in the array.
+
+   Supported types: f32, f64
 
    Parameters:
    - a: Input array (AFArray)
@@ -227,6 +257,8 @@
   "Compute the natural logarithm of the absolute value of the gamma function
    for each element in the array.
 
+   Supported types: f32, f64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -240,6 +272,8 @@
 
 (defn sin
   "Compute the sine of each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -255,6 +289,8 @@
 (defn cos
   "Compute the cosine of each element in the array.
    
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -269,6 +305,8 @@
 (defn tan
   "Compute the tangent of each element in the array.
    
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
     
@@ -282,6 +320,8 @@
 
 (defn asin
   "Compute the arcsine of each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -297,6 +337,8 @@
 (defn acos
   "Compute the arccosine of each element in the array.
    
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -311,6 +353,8 @@
 (defn atan
   "Compute the arctangent of each element in the array.
    
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
     
@@ -324,6 +368,8 @@
 
 (defn sinh
   "Compute the hyperbolic sine of each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -339,6 +385,8 @@
 (defn cosh
   "Compute the hyperbolic cosine of each element in the array.
    
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -353,6 +401,8 @@
 (defn tanh
   "Compute the hyperbolic tangent of each element in the array.
    
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
      
@@ -366,6 +416,8 @@
 
 (defn asinh
   "Compute the inverse hyperbolic sine of each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -381,6 +433,8 @@
 (defn acosh
   "Compute the inverse hyperbolic cosine of each element in the array.
    
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -395,6 +449,8 @@
 (defn atanh
   "Compute the inverse hyperbolic tangent of each element in the array.
     
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
      
@@ -408,6 +464,8 @@
 
 (defn exp
   "Compute the exponential of each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -423,6 +481,8 @@
 (defn log
   "Compute the natural logarithm of each element in the array.
 
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -436,6 +496,8 @@
 
 (defn sqrt
   "Compute the square root of each element in the array.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - a: Input array (AFArray)
@@ -451,6 +513,9 @@
 (defn nan?
   "Check for NaN (Not a Number) values in the array.
 
+   Supported types: f32, f64, c32, c64
+   Output type: b8 (boolean)
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -464,6 +529,9 @@
 
 (defn inf?
   "Check for infinite values in the array.
+
+   Supported types: f32, f64, c32, c64
+   Output type: b8 (boolean)
 
    Parameters:
    - a: Input array (AFArray)
@@ -479,6 +547,9 @@
 (defn zero?
   "Check for zero values in the array.
 
+   Supported types: f32, f64, c32, c64, b8, s32, u32, u8, s64, u64, s16, u16
+   Output type: b8 (boolean)
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -493,6 +564,9 @@
 (defn not
   "Compute the logical NOT of each element in the array.
 
+   Supported types: b8
+   Output type: b8 (boolean)
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -506,6 +580,8 @@
 
 (defn bitnot
   "Compute the bitwise NOT of each element in the array.
+
+   Supported types: b8, s32, u32, u8, s64, u64, s16, u16
 
    Parameters:
    - a: Input array (AFArray)
@@ -525,6 +601,9 @@
 (defn arg
   "Compute the argument (phase angle) of each complex element in the array.
 
+   Supported types: c32, c64
+   Output types: f32 (from c32), f64 (from c64)
+
    Parameters:
    - a: Input complex array (AFArray)
 
@@ -539,6 +618,8 @@
 (defn pow2
   "Compute 2 raised to the power of each element in the array.
 
+   Supported types: f32, f64
+
    Parameters:
    - a: Input array (AFArray)
 
@@ -552,6 +633,8 @@
 
 (defn factorial
   "Compute the factorial of each element in the array.
+
+   Supported types: f32, f64
 
    Parameters:
    - a: Input array (AFArray)
@@ -573,6 +656,8 @@
 ;;
 (defn add
   "Add two arrays element-wise.
+
+   Supported types: f32, f64, c32, c64, s32, u32, u8, s64, u64, s16, u16
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -597,6 +682,8 @@
 (defn sub
   "Subtract two arrays element-wise.
 
+   Supported types: f32, f64, c32, c64, s32, u32, u8, s64, u64, s16, u16
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -619,6 +706,8 @@
 
 (defn mul
   "Multiply two arrays element-wise.
+
+   Supported types: f32, f64, c32, c64, s32, u32, u8, s64, u64, s16, u16
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -643,6 +732,8 @@
 (defn div
   "Divide two arrays element-wise.
 
+   Supported types: f32, f64, c32, c64, s32, u32, u8, s64, u64, s16, u16
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -665,6 +756,8 @@
 
 (defn mod
   "Compute the modulo operation on two arrays element-wise.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -689,6 +782,8 @@
 (defn rem
   "Compute the remainder operation on two arrays element-wise.
 
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -708,6 +803,8 @@
 
 (defn pow
   "Raise elements of lhs to the power of elements in rhs.
+
+   Supported types: f32, f64, c32, c64
 
    Parameters:
    - lhs: Base array (AFArray)
@@ -732,6 +829,8 @@
 (defn root
   "Calculate the nth root element-wise.
 
+   Supported types: f32, f64, c32, c64
+
    Parameters:
    - lhs: Array containing the root order (AFArray)
    - rhs: Array containing the values (AFArray)
@@ -755,6 +854,8 @@
 (defn minof
   "Compute the element-wise minimum of two arrays.
 
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -777,6 +878,8 @@
 
 (defn maxof
   "Compute the element-wise maximum of two arrays.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -804,6 +907,9 @@
 (defn eq
   "Element-wise equality comparison.
 
+   Supported types: f32, f64, c32, c64, b8, s32, u32, u8, s64, u64, s16, u16
+   Output type: b8 (boolean)
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -826,6 +932,9 @@
 
 (defn neq
   "Element-wise inequality comparison.
+
+   Supported types: f32, f64, c32, c64, b8, s32, u32, u8, s64, u64, s16, u16
+   Output type: b8 (boolean)
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -850,6 +959,9 @@
 (defn lt
   "Element-wise less than comparison.
 
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+   Output type: b8 (boolean)
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -872,6 +984,9 @@
 
 (defn le
   "Element-wise less than or equal comparison.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+   Output type: b8 (boolean)
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -896,6 +1011,9 @@
 (defn gt
   "Element-wise greater than comparison.
 
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+   Output type: b8 (boolean)
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -918,6 +1036,9 @@
 
 (defn ge
   "Element-wise greater than or equal comparison.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+   Output type: b8 (boolean)
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -945,6 +1066,9 @@
 (defn and
   "Element-wise logical AND.
 
+   Supported types: b8
+   Output type: b8 (boolean)
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -967,6 +1091,9 @@
 
 (defn or
   "Element-wise logical OR.
+
+   Supported types: b8
+   Output type: b8 (boolean)
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -994,6 +1121,8 @@
 (defn bitand
   "Element-wise bitwise AND.
 
+   Supported types: b8, s32, u32, u8, s64, u64, s16, u16
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -1016,6 +1145,8 @@
 
 (defn bitor
   "Element-wise bitwise OR.
+
+   Supported types: b8, s32, u32, u8, s64, u64, s16, u16
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
@@ -1040,6 +1171,8 @@
 (defn bitxor
   "Element-wise bitwise XOR.
 
+   Supported types: b8, s32, u32, u8, s64, u64, s16, u16
+
    Parameters:
    - lhs: Left-hand side array (AFArray)
    - rhs: Right-hand side array (AFArray)
@@ -1063,6 +1196,8 @@
 (defn bitshiftl
   "Element-wise bitwise left shift.
 
+   Supported types: s32, u32, u8, s64, u64, s16, u16
+
    Parameters:
    - lhs: Array containing values to shift (AFArray)
    - rhs: Array containing shift amounts (AFArray)
@@ -1085,6 +1220,8 @@
 
 (defn bitshiftr
   "Element-wise bitwise right shift.
+
+   Supported types: s32, u32, u8, s64, u64, s16, u16
 
    Parameters:
    - lhs: Array containing values to shift (AFArray)
@@ -1112,6 +1249,9 @@
 (defn cplx2
   "Create a complex array from real and imaginary parts.
 
+   Supported types: f32, f64
+   Output types: c32 (from f32 inputs), c64 (from f64 inputs)
+
    Parameters:
    - real: Array containing real parts (AFArray)
    - imag: Array containing imaginary parts (AFArray)
@@ -1134,6 +1274,8 @@
 
 (defn atan2
   "Element-wise two-argument arctangent (atan2).
+
+   Supported types: f32, f64
 
    Parameters:
    - y: Array containing y values (AFArray)
@@ -1160,6 +1302,8 @@
 
 (defn hypot
   "Element-wise hypotenuse calculation.
+
+   Supported types: f32, f64
 
    Parameters:
    - lhs: Left-hand side array (AFArray)
