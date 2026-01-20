@@ -563,3 +563,622 @@
   (let [out (jvm/native-af-array-pointer)]
     (jvm/check! (unary/af-factorial out (jvm/af-handle a)) "af-factorial")
     (jvm/af-array-new (jvm/deref-af-array out))))
+
+;;;
+;;; Binary Arithmetic Operations
+;;;
+
+;;
+;; Arithmetic operations
+;;
+(defn add
+  "Add two arrays element-wise.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise sum of lhs and rhs.
+
+   Example:
+   (let [a (af/array [1 2 3])
+         b (af/array [4 5 6])
+         result (add a b)]
+     result) ; => [5 7 9]"
+  ([^AFArray lhs ^AFArray rhs]
+   (add lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-add out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-add")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn sub
+  "Subtract two arrays element-wise.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise difference (lhs - rhs).
+
+   Example:
+   (let [a (af/array [5 7 9])
+         b (af/array [1 2 3])
+         result (sub a b)]
+     result) ; => [4 5 6]"
+  ([^AFArray lhs ^AFArray rhs]
+   (sub lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-sub out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-sub")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn mul
+  "Multiply two arrays element-wise.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise product of lhs and rhs.
+
+   Example:
+   (let [a (af/array [2 3 4])
+         b (af/array [5 6 7])
+         result (mul a b)]
+     result) ; => [10 18 28]"
+  ([^AFArray lhs ^AFArray rhs]
+   (mul lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-mul out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-mul")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn div
+  "Divide two arrays element-wise.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise quotient (lhs / rhs).
+
+   Example:
+   (let [a (af/array [10 20 30])
+         b (af/array [2 4 5])
+         result (div a b)]
+     result) ; => [5 5 6]"
+  ([^AFArray lhs ^AFArray rhs]
+   (div lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-div out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-div")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn mod
+  "Compute the modulo operation on two arrays element-wise.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise modulo (lhs mod rhs).
+
+   Example:
+   (let [a (af/array [10 11 12])
+         b (af/array [3 3 3])
+         result (mod a b)]
+     result) ; => [1 2 0]"
+  ([^AFArray lhs ^AFArray rhs]
+   (mod lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-mod out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-mod")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn rem
+  "Compute the remainder operation on two arrays element-wise.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise remainder (lhs rem rhs).
+
+   Note: The difference between rem and mod is in how they handle negative numbers.
+   rem uses truncated division while mod uses floored division."
+  ([^AFArray lhs ^AFArray rhs]
+   (rem lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-rem out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-rem")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn pow
+  "Raise elements of lhs to the power of elements in rhs.
+
+   Parameters:
+   - lhs: Base array (AFArray)
+   - rhs: Exponent array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is lhs[i]^rhs[i].
+
+   Example:
+   (let [a (af/array [2 3 4])
+         b (af/array [2 3 2])
+         result (pow a b)]
+     result) ; => [4 27 16]"
+  ([^AFArray lhs ^AFArray rhs]
+   (pow lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-pow out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-pow")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn root
+  "Calculate the nth root element-wise.
+
+   Parameters:
+   - lhs: Array containing the root order (AFArray)
+   - rhs: Array containing the values (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is the lhs[i]-th root of rhs[i].
+
+   Example:
+   (let [n (af/array [2 3 2])
+         v (af/array [4 27 16])
+         result (root n v)]
+     result) ; => [2 3 4]"
+  ([^AFArray lhs ^AFArray rhs]
+   (root lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-root out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-root")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn minof
+  "Compute the element-wise minimum of two arrays.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise minimum values.
+
+   Example:
+   (let [a (af/array [1 5 3])
+         b (af/array [2 4 6])
+         result (minof a b)]
+     result) ; => [1 4 3]"
+  ([^AFArray lhs ^AFArray rhs]
+   (minof lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-minof out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-minof")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn maxof
+  "Compute the element-wise maximum of two arrays.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray containing the element-wise maximum values.
+
+   Example:
+   (let [a (af/array [1 5 3])
+         b (af/array [2 4 6])
+         result (maxof a b)]
+     result) ; => [2 5 6]"
+  ([^AFArray lhs ^AFArray rhs]
+   (maxof lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-maxof out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-maxof")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+;;
+;; Comparison operations
+;;
+(defn eq
+  "Element-wise equality comparison.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is true if lhs[i] == rhs[i].
+
+   Example:
+   (let [a (af/array [1 2 3])
+         b (af/array [1 5 3])
+         result (eq a b)]
+     result) ; => [true false true]"
+  ([^AFArray lhs ^AFArray rhs]
+   (eq lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-eq out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-eq")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn neq
+  "Element-wise inequality comparison.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is true if lhs[i] != rhs[i].
+
+   Example:
+   (let [a (af/array [1 2 3])
+         b (af/array [1 5 3])
+         result (neq a b)]
+     result) ; => [false true false]"
+  ([^AFArray lhs ^AFArray rhs]
+   (neq lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-neq out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-neq")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn lt
+  "Element-wise less than comparison.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is true if lhs[i] < rhs[i].
+
+   Example:
+   (let [a (af/array [1 5 3])
+         b (af/array [2 4 3])
+         result (lt a b)]
+     result) ; => [true false false]"
+  ([^AFArray lhs ^AFArray rhs]
+   (lt lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-lt out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-lt")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn le
+  "Element-wise less than or equal comparison.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is true if lhs[i] <= rhs[i].
+
+   Example:
+   (let [a (af/array [1 5 3])
+         b (af/array [2 4 3])
+         result (le a b)]
+     result) ; => [true false true]"
+  ([^AFArray lhs ^AFArray rhs]
+   (le lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-le out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-le")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn gt
+  "Element-wise greater than comparison.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is true if lhs[i] > rhs[i].
+
+   Example:
+   (let [a (af/array [3 5 3])
+         b (af/array [2 6 3])
+         result (gt a b)]
+     result) ; => [true false false]"
+  ([^AFArray lhs ^AFArray rhs]
+   (gt lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-gt out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-gt")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn ge
+  "Element-wise greater than or equal comparison.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is true if lhs[i] >= rhs[i].
+
+   Example:
+   (let [a (af/array [3 5 3])
+         b (af/array [2 6 3])
+         result (ge a b)]
+     result) ; => [true false true]"
+  ([^AFArray lhs ^AFArray rhs]
+   (ge lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-ge out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-ge")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+;;
+;; Logical operations
+;;
+(defn and
+  "Element-wise logical AND.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is (lhs[i] && rhs[i]).
+
+   Example:
+   (let [a (af/array [true true false false])
+         b (af/array [true false true false])
+         result (and a b)]
+     result) ; => [true false false false]"
+  ([^AFArray lhs ^AFArray rhs]
+   (and lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-and out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-and")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn or
+  "Element-wise logical OR.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of boolean values where each element is (lhs[i] || rhs[i]).
+
+   Example:
+   (let [a (af/array [true true false false])
+         b (af/array [true false true false])
+         result (or a b)]
+     result) ; => [true true true false]"
+  ([^AFArray lhs ^AFArray rhs]
+   (or lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-or out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-or")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+;;
+;; Bitwise operations
+;;
+(defn bitand
+  "Element-wise bitwise AND.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is the bitwise AND of lhs[i] and rhs[i].
+
+   Example:
+   (let [a (af/array [0b1100 0b1010])
+         b (af/array [0b1010 0b1100])
+         result (bitand a b)]
+     result) ; => [0b1000 0b1000] or [8 8]"
+  ([^AFArray lhs ^AFArray rhs]
+   (bitand lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-bitand out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitand")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn bitor
+  "Element-wise bitwise OR.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is the bitwise OR of lhs[i] and rhs[i].
+
+   Example:
+   (let [a (af/array [0b1100 0b1010])
+         b (af/array [0b1010 0b1100])
+         result (bitor a b)]
+     result) ; => [0b1110 0b1110] or [14 14]"
+  ([^AFArray lhs ^AFArray rhs]
+   (bitor lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-bitor out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitor")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn bitxor
+  "Element-wise bitwise XOR.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is the bitwise XOR of lhs[i] and rhs[i].
+
+   Example:
+   (let [a (af/array [0b1100 0b1010])
+         b (af/array [0b1010 0b1100])
+         result (bitxor a b)]
+     result) ; => [0b0110 0b0110] or [6 6]"
+  ([^AFArray lhs ^AFArray rhs]
+   (bitxor lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-bitxor out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitxor")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn bitshiftl
+  "Element-wise bitwise left shift.
+
+   Parameters:
+   - lhs: Array containing values to shift (AFArray)
+   - rhs: Array containing shift amounts (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is lhs[i] << rhs[i].
+
+   Example:
+   (let [a (af/array [4 8 16])
+         b (af/array [1 2 1])
+         result (bitshiftl a b)]
+     result) ; => [8 32 32]"
+  ([^AFArray lhs ^AFArray rhs]
+   (bitshiftl lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-bitshiftl out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitshiftl")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn bitshiftr
+  "Element-wise bitwise right shift.
+
+   Parameters:
+   - lhs: Array containing values to shift (AFArray)
+   - rhs: Array containing shift amounts (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is lhs[i] >> rhs[i].
+
+   Example:
+   (let [a (af/array [8 32 32])
+         b (af/array [1 2 1])
+         result (bitshiftr a b)]
+     result) ; => [4 8 16]"
+  ([^AFArray lhs ^AFArray rhs]
+   (bitshiftr lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-bitshiftr out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitshiftr")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+;;
+;; Complex and math operations
+;;
+(defn cplx2
+  "Create a complex array from real and imaginary parts.
+
+   Parameters:
+   - real: Array containing real parts (AFArray)
+   - imag: Array containing imaginary parts (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray of complex numbers where result[i] = real[i] + imag[i]*j.
+
+   Example:
+   (let [r (af/array [1.0 2.0 3.0])
+         i (af/array [4.0 5.0 6.0])
+         result (cplx2 r i)]
+     result) ; => [1+4j, 2+5j, 3+6j]"
+  ([^AFArray real ^AFArray imag]
+   (cplx2 real imag false))
+  ([^AFArray real ^AFArray imag batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-cplx2 out (jvm/af-handle real) (jvm/af-handle imag) (if batch 1 0)) "af-cplx2")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn atan2
+  "Element-wise two-argument arctangent (atan2).
+
+   Parameters:
+   - y: Array containing y values (AFArray)
+   - x: Array containing x values (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is the angle θ in radians such that
+   x[i] = r*cos(θ) and y[i] = r*sin(θ).
+
+   The result is in the range [-π, π].
+
+   Example:
+   (let [y (af/array [1.0 1.0 -1.0])
+         x (af/array [1.0 -1.0 1.0])
+         result (atan2 y x)]
+     result) ; => [π/4, 3π/4, -π/4]"
+  ([^AFArray y ^AFArray x]
+   (atan2 y x false))
+  ([^AFArray y ^AFArray x batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-atan2 out (jvm/af-handle y) (jvm/af-handle x) (if batch 1 0)) "af-atan2")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn hypot
+  "Element-wise hypotenuse calculation.
+
+   Parameters:
+   - lhs: Left-hand side array (AFArray)
+   - rhs: Right-hand side array (AFArray)
+   - batch: Boolean indicating batch mode (optional, defaults to false)
+
+   Returns:
+   An AFArray where each element is sqrt(lhs[i]² + rhs[i]²).
+
+   This function avoids overflow/underflow for large/small values.
+
+   Example:
+   (let [a (af/array [3.0 5.0 8.0])
+         b (af/array [4.0 12.0 15.0])
+         result (hypot a b)]
+     result) ; => [5.0 13.0 17.0]"
+  ([^AFArray lhs ^AFArray rhs]
+   (hypot lhs rhs false))
+  ([^AFArray lhs ^AFArray rhs batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (binary/af-hypot out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-hypot")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
