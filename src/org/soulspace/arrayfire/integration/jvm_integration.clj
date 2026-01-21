@@ -482,3 +482,31 @@
       (mem/write-long buf (* i 8) (long (nth dims i))))
     buf))
 
+(defn dims->segment
+  "Convert Clojure vector of dimensions to MemorySegment of dim_t array.
+   dim_t is typically long long (64-bit) on most platforms.
+   
+   Parameters:
+   - dims: vector of dimension sizes
+   
+   Returns:
+   MemorySegment containing dim_t array"
+  ^MemorySegment
+  [dims]
+  (let [arena (Arena/ofAuto)
+        seg   (.allocateArray arena ValueLayout/JAVA_LONG (count dims))]
+    (dotimes [i (count dims)]
+      (.set seg ValueLayout/JAVA_LONG i (long (nth dims i))))
+    seg))
+
+(defn float-array->segment
+  "Convert Clojure float array to MemorySegment.
+   
+   Parameters:
+   - data: Clojure float array
+   
+   Returns:
+   MemorySegment containing float array"
+  ^MemorySegment
+  [^floats data]
+  (MemorySegment/ofArray data))
