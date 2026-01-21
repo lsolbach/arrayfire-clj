@@ -9,6 +9,7 @@
 ;;;
 ;;; ArrayFire array integration on the JVM
 ;;; 
+; TODO: generalize data handling and add type specific cases in other functions
 (defn create-array
   "Create a new ArrayFire array from host data.
    Owns exactly one af_array reference."
