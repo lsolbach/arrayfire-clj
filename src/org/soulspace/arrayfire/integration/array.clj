@@ -6,6 +6,33 @@
             [coffi.mem :as mem])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
+(defn floats?
+  "Check if data is a float array or a collection of floats."
+  [data]
+  (or (instance? (Class/forName "[F") data)
+      (and (coll? data)
+           (every? float? data))))
+
+(defn ints?
+  "Check if data is an int array or a collection of ints."
+  [data]
+  (or (instance? (Class/forName "[I") data)
+      (and (coll? data)
+           (every? int? data))))
+
+(defn short?
+  "Check if x is a short."
+  [x]
+  (and (integer? x)
+       (<= Short/MIN_VALUE x Short/MAX_VALUE)))
+
+(defn shorts?
+  "Check if data is a short array or a collection of shorts."
+  [data]
+  (or (instance? (Class/forName "[S") data)
+      (and (coll? data)
+           (every? short? data))))
+
 ;;;
 ;;; ArrayFire array integration on the JVM
 ;;; 
