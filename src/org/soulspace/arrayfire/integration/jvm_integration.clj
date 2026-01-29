@@ -15,14 +15,12 @@
 
    Resource Management for ArrayFire Resources:
    
-   ArrayFire uses reference counting for its array resources (af_array).
+   ArrayFire uses reference counting for its array resources (af_array) and
+   provides functions for the creation and release of these resources.
    This module provides wrappers to manage the lifecycle of these resources
    by integrating with AutoCloseable and Java's Cleaner mechanism to ensure
    proper release of resources when they are no longer needed.
-   
-   ArrayFire provides reference counting for its resources (e.g. af_array)
-   and functions for the creation and release of these resources. 
-   
+      
    This namespace defines the AFArray type which encapsulates an af_array
    handle along with automatic cleanup. It relies on the reference counting
    functions provided by ArrayFire to manage the lifecycle of the resources
