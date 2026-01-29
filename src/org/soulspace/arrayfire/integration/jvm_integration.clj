@@ -437,7 +437,6 @@
 
 (defn write-complex-double!
   "Write a complex double to buffer at offset.
-
    
    Parameters:
    - buf: buffer pointer
