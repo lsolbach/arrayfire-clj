@@ -50,6 +50,8 @@ JVM ecosystem:
 * error and exception handling
 * dtype-next integration
 
+The structure of the integration layer follows the ArrayFire Unified API.
+
 ### Clojure API Layer
 The Clojure API layer provides an idiomatic Clojure API for the ArrayFire
 features.
