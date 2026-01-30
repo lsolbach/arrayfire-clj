@@ -44,6 +44,14 @@
 ;;;
 
 ;;
+;; Null pointer helper for optional FFI parameters
+;;
+(def null-ptr
+  "A null MemorySegment (address 0) for passing NULL to FFI functions.
+   Many ArrayFire functions accept NULL for optional parameters."
+  (mem/as-segment 0))
+
+;;
 ;; ArrayFire dtype constants (af/defines.h - enum af_dtype)
 ;;
 (def AF_DTYPE_F32 0)   ; float
