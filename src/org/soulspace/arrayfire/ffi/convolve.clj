@@ -432,3 +432,141 @@
    Returns:
    ArrayFire error code"
   "af_fft_convolve3" [::mem/pointer ::mem/pointer ::mem/pointer ::mem/int] ::mem/int)
+
+;; Neural network gradient computation
+
+;; af_err af_convolve2_gradient_nn(af_array *out, const af_array incoming_gradient, const af_array original_signal, const af_array original_filter, const af_array convolved_output, const unsigned stride_dims, const dim_t *strides, const unsigned padding_dims, const dim_t *paddings, const unsigned dilation_dims, const dim_t *dilations, af_conv_gradient_type grad_type)
+(defcfn af-convolve2-gradient-nn
+  "Calculate backward pass gradient of 2D convolution for neural networks.
+   
+   This function computes the gradient with respect to the output of the
+   af_convolve2_nn function. It's the essential backpropagation operation
+   for training convolutional neural networks.
+   
+   Gradient Types (af_conv_gradient_type):
+   - 0 (AF_CONV_GRADIENT_DEFAULT): Same as FILTER
+   - 1 (AF_CONV_GRADIENT_FILTER): Gradient wrt filter/weights (∂L/∂W)
+   - 2 (AF_CONV_GRADIENT_DATA): Gradient wrt input signal/data (∂L/∂X)
+   - 3 (AF_CONV_GRADIENT_BIAS): Gradient wrt bias term (∂L/∂b)
+   
+   Parameters:
+   - out: Output pointer for gradient array
+   - incoming_gradient: Gradient from next layer (∂L/∂output)
+     * Dimensions: same as convolved_output
+   - original_signal: Input signal from forward pass [d0 × d1 × d2 × Ns]
+   - original_filter: Filter from forward pass [d0 × d1 × d2 × Nf]
+   - convolved_output: Output from forward pass convolution
+   - stride_dims: Number of stride dimensions (typically 2)
+   - strides: Array of stride values (must match forward pass)
+   - padding_dims: Number of padding dimensions (typically 2)
+   - paddings: Array of padding values (must match forward pass)
+   - dilation_dims: Number of dilation dimensions (typically 2)
+   - dilations: Array of dilation values (must match forward pass)
+   - grad_type: Type of gradient to compute (0=DEFAULT, 1=FILTER, 2=DATA, 3=BIAS)
+   
+   Output Dimensions:
+   - GRADIENT_FILTER: Same as original_filter [d0 × d1 × d2 × Nf]
+   - GRADIENT_DATA: Same as original_signal [d0 × d1 × d2 × Ns]
+   - GRADIENT_BIAS: [1 × 1 × Nf × 1]
+   
+   Mathematical Context:
+   
+   During the forward pass:
+     output = convolve2_nn(signal, filter, stride, padding, dilation)
+   
+   During the backward pass (this function):
+     Given ∂L/∂output (incoming_gradient), compute:
+     - ∂L/∂filter (GRADIENT_FILTER): Used to update filter weights
+     - ∂L/∂signal (GRADIENT_DATA): Backpropagated to previous layer
+     - ∂L/∂bias (GRADIENT_BIAS): If bias exists
+   
+   Gradient Computation:
+   
+   1. **Filter Gradient** (type=1):
+      For each filter f and input channel c:
+        ∂L/∂W[f,c] = Σ_batch conv2d(signal[:,:,c,n], incoming_gradient[:,:,f,n])
+      
+      Accumulates gradients across the batch dimension.
+      Used to update convolutional layer weights during training.
+   
+   2. **Data Gradient** (type=2):
+      For each batch n and channel c:
+        ∂L/∂X[:,:,c,n] = conv2d_transpose(incoming_gradient[:,:,:,n], filter[:,:,c,:])
+      
+      Transposed convolution (deconvolution) operation.
+      Propagates gradients backward through the network.
+   
+   3. **Bias Gradient** (type=3):
+      For each filter f:
+        ∂L/∂b[f] = Σ_{spatial,batch} incoming_gradient[:,:,f,:]
+      
+      Sum gradients over all spatial positions and batch samples.
+   
+   Typical CNN Training Loop:
+   
+   1. Forward pass:
+      ```clojure
+      (let [output (af-convolve2-nn signal filter 2 stride 2 padding 2 dilation)]
+        ;; Compute loss...
+        )
+      ```
+   
+   2. Compute loss gradient:
+      ```clojure
+      (let [loss-gradient (compute-loss-gradient output target)]
+        ;; Backpropagate...
+        )
+      ```
+   
+   3. Backward pass (this function):
+      ```clojure
+      ;; Get filter gradient for weight update
+      (let [filter-grad (af-convolve2-gradient-nn
+                          out loss-gradient signal filter output
+                          2 stride 2 padding 2 dilation
+                          1)]  ; GRADIENT_FILTER
+        ;; Update: filter = filter - learning-rate × filter-grad
+        )
+      
+      ;; Get data gradient for previous layer
+      (let [data-grad (af-convolve2-gradient-nn
+                        out loss-gradient signal filter output
+                        2 stride 2 padding 2 dilation
+                        2)]  ; GRADIENT_DATA
+        ;; Propagate to previous layer
+        )
+      ```
+   
+   Performance Considerations:
+   - Filter gradient often slower (accumulation across batch)
+   - Data gradient similar to transposed convolution
+   - Larger batches amortize overhead
+   
+   Constraints:
+   - All parameters (stride, padding, dilation) must match forward pass
+   - Signal, filter, output dimensions must be consistent
+   
+   Common Pitfalls:
+   - Dimension mismatch between forward and backward pass
+   - Forgetting to match stride/padding/dilation
+   - Numerical instability with large/small gradients
+   
+   Returns:
+   ArrayFire error code (0 = AF_SUCCESS)
+   
+   See Also:
+   - af_convolve2_nn: Forward pass convolution"
+  "af_convolve2_gradient_nn"
+  [::mem/pointer    ; out
+   ::mem/pointer    ; incoming_gradient
+   ::mem/pointer    ; original_signal
+   ::mem/pointer    ; original_filter
+   ::mem/pointer    ; convolved_output
+   ::mem/int        ; stride_dims
+   ::mem/pointer    ; strides
+   ::mem/int        ; padding_dims
+   ::mem/pointer    ; paddings
+   ::mem/int        ; dilation_dims
+   ::mem/pointer    ; dilations
+   ::mem/int]       ; grad_type
+  ::mem/int)
