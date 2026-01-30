@@ -1,7 +1,11 @@
 (ns org.soulspace.arrayfire.integration.arith
-  (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.unary :as unary]
+  "Integration of the ArrayFire Arithmetic related FFI bindings with the error
+   handling and resource management on the JVM."
+  (:refer-clojure :exclude [cast not zero? mod rem and or])
+  (:require [org.soulspace.arrayfire.ffi.unary :as unary]
             [org.soulspace.arrayfire.ffi.binary :as binary]
+            [org.soulspace.arrayfire.ffi.cast :as ffi-cast]
+            [org.soulspace.arrayfire.ffi.clamp :as ffi-clamp]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
@@ -1325,4 +1329,104 @@
   ([^AFArray lhs ^AFArray rhs batch]
    (let [out (jvm/native-af-array-pointer)]
      (jvm/check! (binary/af-hypot out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-hypot")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+;;;
+;;; Type Conversion and Clamping
+;;;
+
+(defn cast
+  "Cast an array from one type to another.
+   
+   Converts array elements from one data type to another. The function performs
+   element-wise type conversion and creates a new array with the target type.
+   
+   Important: Casting from complex (c32/c64) to real (f16/f32/f64) is not allowed.
+   Use abs, real, imag, etc. to convert complex to real types instead.
+   
+   Supported types (use jvm/AF_DTYPE_* constants):
+   - AF_DTYPE_F32 (0): 32-bit floating point
+   - AF_DTYPE_C32 (1): 32-bit complex floating point
+   - AF_DTYPE_F64 (2): 64-bit floating point
+   - AF_DTYPE_C64 (3): 64-bit complex floating point
+   - AF_DTYPE_B8 (4): 8-bit boolean
+   - AF_DTYPE_S32 (5): 32-bit signed integer
+   - AF_DTYPE_U32 (6): 32-bit unsigned integer
+   - AF_DTYPE_U8 (7): 8-bit unsigned integer
+   - AF_DTYPE_S64 (8): 64-bit signed integer
+   - AF_DTYPE_U64 (9): 64-bit unsigned integer
+   - AF_DTYPE_S16 (10): 16-bit signed integer
+   - AF_DTYPE_U16 (11): 16-bit unsigned integer
+   
+   For sparse arrays, only floating point types (f32, f64, c32, c64) are supported.
+   
+   Parameters:
+   - in: Input array (AFArray)
+   - dtype: Target data type (integer constant)
+   
+   Returns:
+   AFArray with elements cast to the target type
+   
+   Example:
+   (let [a (af/array [1.5 2.7 3.9])
+         result (cast a jvm/AF_DTYPE_S32)]
+     result) ; => [1 2 3] (as 32-bit integers)"
+  [^AFArray in dtype]
+  (let [out (jvm/native-af-array-pointer)]
+    (jvm/check! (ffi-cast/af-cast out (jvm/af-handle in) (int dtype)) "af-cast")
+    (jvm/af-array-new (jvm/deref-af-array out))))
+
+(defn clamp
+  "Clamp an array between lower and upper limits.
+   
+   For each element in the input array, this function returns:
+   - lo[i] if in[i] < lo[i]
+   - hi[i] if in[i] > hi[i]
+   - in[i] otherwise
+   
+   Effectively: out[i] = max(lo[i], min(in[i], hi[i]))
+   
+   The clamp operation constrains array elements to lie within a specified range,
+   useful for:
+   - Image processing (e.g., constraining pixel values to valid ranges)
+   - Signal processing (limiting amplitude)
+   - Machine learning (gradient clipping)
+   - Physics simulations (enforcing physical constraints)
+   
+   All three arrays (in, lo, hi) can be:
+   - Full arrays (same size)
+   - Scalar arrays (single element, broadcasted)
+   - Different sizes when batch mode is enabled
+   
+   Requirements:
+   - lo and hi arrays must have the same dimensions
+   - lo and hi arrays must have the same type
+   - Output type is determined by implicit type promotion between in and lo/hi
+   
+   Batch mode:
+   - When batch=false: All arrays must have compatible dimensions (same or broadcast)
+   - When batch=true: Allows different batch dimensions for broadcasting
+   
+   Supported types: All numeric types
+   
+   Parameters:
+   - in: Input array (AFArray)
+   - lo: Lower limit array (AFArray)
+   - hi: Upper limit array (AFArray)
+   - batch: Boolean for batch mode (default false)
+   
+   Returns:
+   AFArray with clamped values
+   
+   Example:
+   (let [a (af/array [1.0 5.0 10.0 15.0])
+         lo (af/array [3.0])  ; scalar, broadcasted
+         hi (af/array [12.0]) ; scalar, broadcasted
+         result (clamp a lo hi)]
+     result) ; => [3.0 5.0 10.0 12.0]"
+  ([^AFArray in ^AFArray lo ^AFArray hi]
+   (clamp in lo hi false))
+  ([^AFArray in ^AFArray lo ^AFArray hi batch]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (ffi-clamp/af-clamp out (jvm/af-handle in) (jvm/af-handle lo) (jvm/af-handle hi) (if batch 1 0)) "af-clamp")
      (jvm/af-array-new (jvm/deref-af-array out)))))
