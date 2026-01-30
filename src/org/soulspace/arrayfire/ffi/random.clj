@@ -64,7 +64,24 @@
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]))
 
-;; Random engine management
+;;;
+;;; Random Engine Type Constants
+;;;
+
+;; af_random_engine_type enum values (from af/defines.h)
+(def AF-RANDOM-ENGINE-PHILOX-4X32-10 100)
+(def AF-RANDOM-ENGINE-THREEFRY-2X32-16 200)
+(def AF-RANDOM-ENGINE-MERSENNE-GP11213 300)
+
+;; Convenience aliases
+(def AF-RANDOM-ENGINE-PHILOX AF-RANDOM-ENGINE-PHILOX-4X32-10)
+(def AF-RANDOM-ENGINE-THREEFRY AF-RANDOM-ENGINE-THREEFRY-2X32-16)
+(def AF-RANDOM-ENGINE-MERSENNE AF-RANDOM-ENGINE-MERSENNE-GP11213)
+(def AF-RANDOM-ENGINE-DEFAULT AF-RANDOM-ENGINE-PHILOX)
+
+;;;
+;;; Random Engine Management
+;;;
 
 ;; af_err af_create_random_engine(af_random_engine *engine, af_random_engine_type rtype, unsigned long long seed)
 (defcfn af-create-random-engine
