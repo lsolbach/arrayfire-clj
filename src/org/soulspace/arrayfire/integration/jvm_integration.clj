@@ -463,6 +463,37 @@
 ;;;
 ;;; Conversion functions
 ;;;
+
+;;
+;; C String conversions
+;;
+
+(defn string->c-string
+  "Allocate a null-terminated C string from a Clojure string.
+   
+   Parameters:
+   - s: Clojure string
+   - arena: Arena for allocation (optional, defaults to auto arena)
+   
+   Returns:
+   MemorySegment containing the null-terminated C string"
+  ([^String s]
+   (string->c-string s (Arena/ofAuto)))
+  ([^String s ^Arena arena]
+   (.allocateUtf8String arena s)))
+
+(defn c-string->string
+  "Read a null-terminated C string from a MemorySegment.
+   
+   Parameters:
+   - segment: MemorySegment containing the C string
+   
+   Returns:
+   Clojure string"
+  [^MemorySegment segment]
+  (.getUtf8String segment 0))
+
+
 ; TODO define dim_t type via coffi
 (defn dims->native
   "Convert Clojure vector of dimensions to native dim_t array.
