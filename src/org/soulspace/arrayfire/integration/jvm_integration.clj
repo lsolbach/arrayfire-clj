@@ -507,3 +507,89 @@
   ^MemorySegment
   [^floats data]
   (MemorySegment/ofArray data))
+
+(defn double-array->segment
+  "Convert Clojure double array to MemorySegment.
+   
+   Parameters:
+   - data: Clojure double array
+   
+   Returns:
+   MemorySegment containing double array"
+  ^MemorySegment
+  [^doubles data]
+  (MemorySegment/ofArray data))
+
+(defn int-array->segment
+  "Convert Clojure int array to MemorySegment.
+   
+   Parameters:
+   - data: Clojure int array
+   
+   Returns:
+   MemorySegment containing int array"
+  ^MemorySegment
+  [^ints data]
+  (MemorySegment/ofArray data))
+
+(defn long-array->segment
+  "Convert Clojure long array to MemorySegment.
+   
+   Parameters:
+   - data: Clojure long array
+   
+   Returns:
+   MemorySegment containing long array"
+  ^MemorySegment
+  [^longs data]
+  (MemorySegment/ofArray data))
+
+(defn short-array->segment
+  "Convert Clojure short array to MemorySegment.
+   
+   Parameters:
+   - data: Clojure short array
+   
+   Returns:
+   MemorySegment containing short array"
+  ^MemorySegment
+  [^shorts data]
+  (MemorySegment/ofArray data))
+
+(defn byte-array->segment
+  "Convert Clojure byte array to MemorySegment.
+   
+   Parameters:
+   - data: Clojure byte array
+   
+   Returns:
+   MemorySegment containing byte array"
+  ^MemorySegment
+  [^bytes data]
+  (MemorySegment/ofArray data))
+
+(defn complex-float-array->segment
+  "Convert collection of [real imag] pairs to interleaved float array MemorySegment.
+   
+   Parameters:
+   - data: Collection of [real imag] pairs for complex numbers
+   
+   Returns:
+   MemorySegment containing interleaved float array [real1 imag1 real2 imag2 ...]"
+  ^MemorySegment
+  [data]
+  (let [interleaved (float-array (mapcat identity data))]
+    (MemorySegment/ofArray interleaved)))
+
+(defn complex-double-array->segment
+  "Convert collection of [real imag] pairs to interleaved double array MemorySegment.
+   
+   Parameters:
+   - data: Collection of [real imag] pairs for complex numbers
+   
+   Returns:
+   MemorySegment containing interleaved double array [real1 imag1 real2 imag2 ...]"
+  ^MemorySegment
+  [data]
+  (let [interleaved (double-array (mapcat identity data))]
+    (MemorySegment/ofArray interleaved)))
