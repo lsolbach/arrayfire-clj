@@ -89,19 +89,29 @@ Example usage:
   (af/release arr))
 ```
 
-## Implementation Status
+## Rationale
+Complex tensors are at the heart of the simulation of quantum systems, e.g.
+quantum computers. Many other physical systems are also described by
+formulas involving complex numbers. 
 
+The JVM and Clojure are lacking a fast, GPU enabled tensor library supporting
+tensors over the field of complex numbers. By adapting ArrayFire to Clojure
+on the JVM, this gap is closed.
+
+## Implementation Status
 *Experimental* 
 
 Done:
-* All ArrayFire C API bindings
+* All ArrayFire 3.10 C API bindings
 
-Not done:
+Work in progress:
 * Deeper JVM/Clojure integration
   * error/exception handling 
   * resource management
-  * dtype-next integration
+
+Not done:
 * Idiomatic Clojure API
+* dtype-next integration
 
 
 ## Development
