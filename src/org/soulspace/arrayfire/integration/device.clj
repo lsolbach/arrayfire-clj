@@ -390,7 +390,7 @@
         ;; Create array of array handles
         handles-buf (mem/alloc (* n 8))] ; 8 bytes per pointer
     (doseq [[i arr] (map-indexed vector arrays)]
-      (mem/write-long handles-buf (* i 8) (jvm/af-handle arr)))
+      (mem/write-long handles-buf (* i 8) (jvm/af-handle-value arr)))
     (jvm/check! (device-ffi/af-eval-multiple n handles-buf)
                 "af-eval-multiple")
     nil))
