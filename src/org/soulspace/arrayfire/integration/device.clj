@@ -19,13 +19,13 @@
    It initializes the runtime and selects an appropriate backend.
    
    Returns:
-   nil
+   true on successful initialization
    
    Example:
    (init!)"
   []
   (jvm/check! (device-ffi/af-init) "af-init")
-  nil)
+  true)
 
 (defn info
   "Print ArrayFire device information to standard output.
@@ -132,8 +132,7 @@
    Map with :device-id, :name, :platform, :toolkit, and :compute keys
    
    Example:
-   (device-info 0)
-   ;; => {:device-id 0 :name "..." :platform "..." :toolkit "..." :compute "..."}"
+   (device-info 0)"
   ([]
    (device-info (get-device)))
   ([device-id]
