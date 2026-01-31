@@ -256,12 +256,26 @@
    - arr: AFArray instance
    
    Returns:
+   af_array* handle as MemorySegment"
+  ^MemorySegment [arr]
+  (let [released (clojure.lang.Reflector/getInstanceField arr "released")
+        handle   (clojure.lang.Reflector/getInstanceField arr "handle")
+        handle-value (long handle)]
+    (when (and released (.get ^AtomicBoolean released))
+      (throw (IllegalStateException.
+              "AFArray has already been closed")))
+    (MemorySegment/ofAddress handle-value)))
+
+(defn af-handle-value
+  "Get the native af_array* handle from AFArray.
+   
+   Parameters:
+   - arr: AFArray instance
+   
+   Returns:
    af_array* handle as long"
-  ^long [^AFArray arr]
-  (when (.get ^AtomicBoolean (.-released arr))
-    (throw (IllegalStateException.
-            "AFArray has already been closed")))
-  (.-handle arr))
+  ^long [arr]
+  (mem/address-of (af-handle arr)))
 
 ;;;
 ;;; Type-specific memory operations
