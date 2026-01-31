@@ -35,7 +35,8 @@
   (:import [java.lang AutoCloseable]
            [java.lang.ref Cleaner Cleaner$Cleanable]
            [java.util.concurrent.atomic AtomicBoolean]
-           [java.lang.foreign Arena MemorySegment ValueLayout]))
+           [java.lang.foreign Arena MemorySegment ValueLayout]
+           [java.nio.charset StandardCharsets]))
 
 ;;;
 ;;; Definitions
@@ -142,7 +143,20 @@
   ^long
   [^MemorySegment af-array-ptr]
   ;; Read the pointer stored at offset 0
-  (.get af-array-ptr ValueLayout/ADDRESS 0))
+  (let [addr (mem/read-address af-array-ptr)]
+    (if (instance? MemorySegment addr)
+      (mem/address-of addr)
+      (long addr))))
+
+(defn address->long
+  "Normalize a MemorySegment or numeric address into a long value."
+  ^long
+  [addr]
+  (cond
+    (instance? MemorySegment addr) (mem/address-of addr)
+    (number? addr) (long addr)
+    :else (throw (IllegalArgumentException.
+                  (str "Unsupported address type: " (type addr))))))
 
 (defn af-release-array!
   "Release one reference to an af_array.
@@ -192,7 +206,8 @@
 (deftype AFArray
          [^long handle                      ;; native af_array*
           ^AtomicBoolean released
-          ^Cleaner$Cleanable cleanable]
+          ^Cleaner$Cleanable cleanable
+          ^Object cleanup-key]
 
   AutoCloseable
   (close [_]
@@ -217,8 +232,9 @@
   [^long handle]
   (let [released (AtomicBoolean. false)
         cleanup  (AFArrayCleanup. handle released)
-        cleanable (.register cleaner cleanup)]
-    (AFArray. handle released cleanable)))
+        cleanup-key (Object.)
+        cleanable (.register cleaner cleanup-key cleanup)]
+    (AFArray. handle released cleanable cleanup-key)))
 
 (defn af-array-retained
   "Wrap an existing af_array; retains before wrapping.
@@ -478,7 +494,13 @@
   ([^String s]
    (string->c-string s (Arena/ofAuto)))
   ([^String s ^Arena arena]
-   (.allocateUtf8String arena s)))
+   (let [bytes (.getBytes s StandardCharsets/UTF_8)
+         len   (alength bytes)
+         seg   (.allocate arena (long (inc len)))]
+     (dotimes [idx len]
+       (mem/write-byte seg idx (aget bytes idx)))
+     (mem/write-byte seg len (byte 0))
+     seg)))
 
 (defn c-string->string
   "Read a null-terminated C string from a MemorySegment.
@@ -488,8 +510,21 @@
    
    Returns:
    Clojure string"
-  [^MemorySegment segment]
-  (.getUtf8String segment 0))
+  ([^MemorySegment segment]
+   (c-string->string segment 4096))
+  ([^MemorySegment segment max-bytes]
+   (let [bounded-seg (if (pos? (.byteSize segment))
+                       segment
+                       (mem/reinterpret segment max-bytes))
+         buffer (java.io.ByteArrayOutputStream.)]
+     (loop [idx 0]
+       (when (< idx max-bytes)
+         (let [b (mem/read-byte bounded-seg idx)]
+           (if (zero? b)
+             (String. (.toByteArray buffer) StandardCharsets/UTF_8)
+             (do
+               (.write buffer (bit-and 0xFF b))
+               (recur (inc idx))))))))))
 
 
 ; TODO define dim_t type via coffi
@@ -520,9 +555,11 @@
   ^MemorySegment
   [dims]
   (let [arena (Arena/ofAuto)
-        seg   (.allocateArray arena ValueLayout/JAVA_LONG (count dims))]
-    (dotimes [i (count dims)]
-      (.set seg ValueLayout/JAVA_LONG i (long (nth dims i))))
+        n     (long (count dims))
+        seg   (.allocate arena (long (* n (.byteSize ValueLayout/JAVA_LONG))))]
+    (dotimes [i n]
+      (mem/write-long seg (* i (.byteSize ValueLayout/JAVA_LONG))
+                      (long (nth dims i))))
     seg))
 
 (defn float-array->segment
@@ -535,7 +572,11 @@
    MemorySegment containing float array"
   ^MemorySegment
   [^floats data]
-  (MemorySegment/ofArray data))
+  (let [n (alength data)
+        buf (mem/alloc (* n 4))]
+    (dotimes [i n]
+      (mem/write-float buf (* i 4) (aget data i)))
+    buf))
 
 (defn double-array->segment
   "Convert Clojure double array to MemorySegment.
@@ -547,7 +588,11 @@
    MemorySegment containing double array"
   ^MemorySegment
   [^doubles data]
-  (MemorySegment/ofArray data))
+  (let [n (alength data)
+        buf (mem/alloc (* n 8))]
+    (dotimes [i n]
+      (mem/write-double buf (* i 8) (aget data i)))
+    buf))
 
 (defn int-array->segment
   "Convert Clojure int array to MemorySegment.
@@ -559,7 +604,11 @@
    MemorySegment containing int array"
   ^MemorySegment
   [^ints data]
-  (MemorySegment/ofArray data))
+  (let [n (alength data)
+        buf (mem/alloc (* n 4))]
+    (dotimes [i n]
+      (mem/write-int buf (* i 4) (aget data i)))
+    buf))
 
 (defn long-array->segment
   "Convert Clojure long array to MemorySegment.
@@ -571,7 +620,11 @@
    MemorySegment containing long array"
   ^MemorySegment
   [^longs data]
-  (MemorySegment/ofArray data))
+  (let [n (alength data)
+        buf (mem/alloc (* n 8))]
+    (dotimes [i n]
+      (mem/write-long buf (* i 8) (aget data i)))
+    buf))
 
 (defn short-array->segment
   "Convert Clojure short array to MemorySegment.
@@ -583,7 +636,11 @@
    MemorySegment containing short array"
   ^MemorySegment
   [^shorts data]
-  (MemorySegment/ofArray data))
+  (let [n (alength data)
+        buf (mem/alloc (* n 2))]
+    (dotimes [i n]
+      (mem/write-short buf (* i 2) (aget data i)))
+    buf))
 
 (defn byte-array->segment
   "Convert Clojure byte array to MemorySegment.
@@ -595,7 +652,11 @@
    MemorySegment containing byte array"
   ^MemorySegment
   [^bytes data]
-  (MemorySegment/ofArray data))
+  (let [n (alength data)
+        buf (mem/alloc n)]
+    (dotimes [i n]
+      (mem/write-byte buf i (aget data i)))
+    buf))
 
 (defn complex-float-array->segment
   "Convert collection of [real imag] pairs to interleaved float array MemorySegment.
@@ -607,8 +668,14 @@
    MemorySegment containing interleaved float array [real1 imag1 real2 imag2 ...]"
   ^MemorySegment
   [data]
-  (let [interleaved (float-array (mapcat identity data))]
-    (MemorySegment/ofArray interleaved)))
+  (let [pairs (vec data)
+        n (* 2 (count pairs))
+        buf (mem/alloc (* n 4))]
+    (doseq [[idx [real imag]] (map-indexed vector pairs)]
+      (let [base (* idx 8)]
+        (mem/write-float buf base (float real))
+        (mem/write-float buf (+ base 4) (float imag))))
+    buf))
 
 (defn complex-double-array->segment
   "Convert collection of [real imag] pairs to interleaved double array MemorySegment.
@@ -620,5 +687,11 @@
    MemorySegment containing interleaved double array [real1 imag1 real2 imag2 ...]"
   ^MemorySegment
   [data]
-  (let [interleaved (double-array (mapcat identity data))]
-    (MemorySegment/ofArray interleaved)))
+  (let [pairs (vec data)
+        n (* 2 (count pairs))
+        buf (mem/alloc (* n 8))]
+    (doseq [[idx [real imag]] (map-indexed vector pairs)]
+      (let [base (* idx 16)]
+        (mem/write-double buf base (double real))
+        (mem/write-double buf (+ base 8) (double imag))))
+    buf))
