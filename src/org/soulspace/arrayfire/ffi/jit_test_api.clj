@@ -214,7 +214,8 @@
    Note: These functions are primarily for testing and debugging. Most
    applications should use the default JIT settings."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; JIT control functions
 

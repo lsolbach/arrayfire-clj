@@ -3,7 +3,8 @@
   
   Corresponds to src/api/c/approx.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Approximation/Interpolation functions
 

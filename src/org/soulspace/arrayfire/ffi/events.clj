@@ -275,7 +275,8 @@
    - af_set_device: Switch active device
    - af_get_device: Query active device"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Event management functions
 

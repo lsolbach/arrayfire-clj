@@ -427,7 +427,8 @@
    - af_hamming_matcher, af_nearest_neighbour: Feature matching
    - af_homography: Geometric transformation estimation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Features structure management functions
 

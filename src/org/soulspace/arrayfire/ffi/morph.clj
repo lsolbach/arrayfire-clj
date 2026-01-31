@@ -423,7 +423,8 @@
    - Connected components for region analysis
    - Watershed for segmentation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_dilate(af_array *out, const af_array in, const af_array mask)
 (defcfn af-dilate

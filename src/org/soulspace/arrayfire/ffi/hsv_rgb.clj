@@ -772,7 +772,8 @@
    4. **Use f32:** Unless precision critical, f32 is 2× faster
    5. **Async execution:** Queue multiple conversions for overlap"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_hsv2rgb(af_array* out, const af_array in)
 (defcfn af-hsv2rgb

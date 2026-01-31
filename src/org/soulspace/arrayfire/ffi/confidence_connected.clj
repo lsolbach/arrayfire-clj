@@ -3,7 +3,8 @@
    
    Maps to src/api/c/confidence_connected.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_confidence_cc(af_array *out, const af_array in, const af_array seedx,
 ;;                         const af_array seedy, const unsigned radius,

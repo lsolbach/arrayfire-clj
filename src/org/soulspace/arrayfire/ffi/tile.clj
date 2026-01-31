@@ -299,8 +299,8 @@
   - ArrayFire documentation: https://arrayfire.org/docs/group__manip__func__tile.htm
   - Broadcasting guide: https://arrayfire.org/docs/broadcasting.htm"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Array Tiling Functions

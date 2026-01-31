@@ -165,7 +165,8 @@
    - af_convolve1/2/3: General convolution (can implement custom derivatives)
    - af_sobel: Sobel edge detector (uses gradients internally)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_diff1(af_array *out, const af_array in, const int dim)
 (defcfn af-diff1

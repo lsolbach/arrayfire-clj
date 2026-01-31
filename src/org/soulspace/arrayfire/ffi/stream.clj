@@ -126,8 +126,8 @@
   - Memory management for array lifecycle
   - Type conversion for format compatibility"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Array Streaming Functions

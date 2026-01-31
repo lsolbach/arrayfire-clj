@@ -291,7 +291,8 @@
    - Complex number operations (complex.clj)
    - Statistical functions (statistics.clj)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Rounding functions
 

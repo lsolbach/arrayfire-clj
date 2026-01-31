@@ -310,7 +310,8 @@
    - af-medfilt, af-medfilt1, af-medfilt2: Median filtering (spatial filters)
    - Quantile functions (for other percentiles)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Median statistics functions
 

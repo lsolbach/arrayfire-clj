@@ -459,7 +459,8 @@
    - af-flip: Flip array along dimension
    - af-tile: Replicate array along dimensions"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Dimension modification functions
 

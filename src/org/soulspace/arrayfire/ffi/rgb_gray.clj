@@ -211,7 +211,8 @@
    - ITU-R BT.601: https://en.wikipedia.org/wiki/Rec._601
    - ITU-R BT.709: https://en.wikipedia.org/wiki/Rec._709"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; RGB to Grayscale conversion
 

@@ -329,7 +329,8 @@
    - af-lookup: Lookup values by indices
    - af-replace: Replace elements at indices"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Where function (non-zero element location)
 

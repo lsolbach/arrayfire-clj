@@ -47,8 +47,8 @@
   - Currently only ker_size=3 is supported
   - Suitable for real-time edge detection applications"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Sobel Edge Detection

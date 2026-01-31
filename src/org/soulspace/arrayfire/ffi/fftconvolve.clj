@@ -53,7 +53,8 @@
    - fft.clj for direct FFT operations
    - Regular convolve functions that use AF_CONV_AUTO domain selection"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; FFT-based convolution functions
 

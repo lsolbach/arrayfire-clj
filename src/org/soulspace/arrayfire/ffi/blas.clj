@@ -2,7 +2,8 @@
   "Bindings for ArrayFire BLAS (Basic Linear Algebra Subprograms) functions.
    Corresponds to src/api/c/blas.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; BLAS operations
 

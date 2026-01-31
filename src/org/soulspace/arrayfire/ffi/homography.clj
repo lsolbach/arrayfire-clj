@@ -754,7 +754,8 @@
    - Uses ThreadLocal random number generator state
    - Multiple simultaneous calls OK with different data"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_homography(af_array *H, int *inliers, const af_array x_src,
 ;;                      const af_array y_src, const af_array x_dst,

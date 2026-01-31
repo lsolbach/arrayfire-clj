@@ -43,7 +43,8 @@
    
    Complexity: O(n³) for n×n matrix"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_det(double *det_real, double *det_imag, const af_array in)
 (defcfn af-det

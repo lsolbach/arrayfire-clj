@@ -432,7 +432,8 @@
    - Deep learning object detection for complex scenarios
    - Optical flow for motion estimation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Template matching function
 

@@ -406,7 +406,8 @@
    - af-warp-affine: Alternative affine transformation (if available)
    - af-warp-perspective: Alternative perspective transformation (if available)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; General transformation
 

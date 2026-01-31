@@ -1,7 +1,8 @@
 (ns org.soulspace.arrayfire.ffi.array
   "Bindings for the ArrayFire array functions."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Array management functions
 
@@ -21,6 +22,7 @@
 (defcfn af-create-array
   "Create an ArrayFire array from host data.
    
+
    Parameters:
    - arr: out pointer
    - data: in pointer

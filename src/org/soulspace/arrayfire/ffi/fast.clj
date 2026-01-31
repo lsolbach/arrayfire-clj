@@ -341,7 +341,8 @@
    - af_susan: Edge-preserving corner detector
    - af_features: Structure for managing detected features"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; FAST corner detection function
 

@@ -181,7 +181,8 @@
    - Histogram for frequency analysis
    - Integral functions in blas.clj for 1D cumulative sums"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_sat(af_array *out, const af_array in)
 (defcfn af-sat

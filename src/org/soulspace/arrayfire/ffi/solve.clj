@@ -89,8 +89,8 @@
   - Inverse matrix (af_inverse) for matrix inversion
   - Least squares (af_lstsq) for overdetermined systems"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Linear System Solvers

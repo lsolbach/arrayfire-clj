@@ -795,7 +795,8 @@
    - af-nearest-neighbour: Feature matching with Hamming distance
    - af-hamming-matcher: Specialized ORB descriptor matcher"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_orb(af_features *feat, af_array *desc, const af_array in, const float fast_thr, const unsigned max_feat, const float scl_fctr, const unsigned levels, const bool blur_img)
 (defcfn af-orb

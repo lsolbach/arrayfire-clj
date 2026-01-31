@@ -369,7 +369,8 @@
    - Segmentation functions for post-processing
    - Connected components for region analysis"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Mean shift filter
 

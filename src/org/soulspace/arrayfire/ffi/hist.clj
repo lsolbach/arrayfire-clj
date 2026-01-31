@@ -1,7 +1,8 @@
 (ns org.soulspace.arrayfire.ffi.hist
   "Bindings for the ArrayFire histogram graphics/visualization functions."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_draw_hist(const af_window wind, const af_array X, const double minval, const double maxval, const af_cell* const props)
 (defcfn af-draw-hist

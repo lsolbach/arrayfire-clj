@@ -127,11 +127,12 @@
    - Image processing functions in separate namespaces
    - af-load-image-native, af-save-image-native: No type conversion"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; File I/O
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; File I/O
+;;;
 
 ;; af_err af_load_image(af_array *out, const char* filename, const bool isColor)
 (defcfn af-load-image
@@ -457,9 +458,9 @@
    src/api/c/imageio.cpp in ArrayFire source"
   "af_save_image" [::mem/pointer ::mem/pointer] ::mem/int)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Memory I/O
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Memory I/O
+;;;
 
 ;; af_err af_load_image_memory(af_array *out, const void* ptr)
 (defcfn af-load-image-memory

@@ -319,7 +319,8 @@
    - Matrix manipulation functions
    - Data rearrangement patterns"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Join functions
 

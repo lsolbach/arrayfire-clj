@@ -30,48 +30,12 @@
    release resources when done. Additionally, it uses Java's Cleaner to ensure
    that resources are released when the AFArray instance is garbage collected,
    preventing memory leaks."
-  (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem])
+  (:require [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.array :refer [af-release-array af-retain-array]])
   (:import [java.lang AutoCloseable]
            [java.lang.ref Cleaner Cleaner$Cleanable]
            [java.util.concurrent.atomic AtomicBoolean]
            [java.lang.foreign Arena MemorySegment ValueLayout]))
-
-;;;
-;;; Load ArrayFire library FIRST
-;;;
-(def ^:private lib-name
-  (or (System/getenv "ARRAYFIRE_LIB") "af"))
-
-(ffi/load-system-library lib-name)
-
-;;;
-;;; FFI Bindings for resource management
-;;; (defined here to avoid circular dependencies)
-;;;
-
-;; af_err af_release_array(af_array arr)
-(defcfn af-release-array
-  "Release an ArrayFire array handle.
-   
-   Parameters:
-   - arr: array handle
-   
-   Returns:
-   ArrayFire error code"
-  "af_release_array" [::mem/pointer] ::mem/int)
-
-;; af_err af_retain_array(af_array *out, const af_array in)
-(defcfn af-retain-array
-  "Increase reference count of the array.
-   
-   Parameters:
-   - out: out pointer to array handle
-   - in: array handle to retain
-
-   Returns:
-   ArrayFire error code"
-  "af_retain_array" [::mem/pointer ::mem/pointer] ::mem/int)
 
 ;;;
 ;;; Definitions

@@ -38,7 +38,8 @@
    - **Iterations**: Trade-off between sharpness and noise
    - **Ill-posed problem**: Small errors in data cause large errors in solution"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_iterative_deconv(af_array *out, const af_array in, const af_array ker,
 ;;                            const unsigned iterations, const float relax_factor,
