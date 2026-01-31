@@ -7,6 +7,12 @@
             [coffi.mem :as mem])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
 
+(defn- approx=
+  "Compare expected/actual values within a tolerance."
+  [expected actual tolerance]
+  (<= (Math/abs (- (double expected) (double actual)))
+      (double tolerance)))
+
 ;;;
 ;;; Unary Arithmetic Operations Tests
 ;;;
@@ -18,9 +24,9 @@
           b (arith/trunc a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= -2.0 (mem/read-float buf 4) 0.001))
-      (is (= 3.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= -2.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 3.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -31,9 +37,9 @@
           b (arith/sign a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= -1.0 (mem/read-float buf 4) 0.001))
-      (is (= 0.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 0.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 0.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -44,9 +50,9 @@
           b (arith/round a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 3.0 (mem/read-float buf 4) 0.001))
-      (is (= -4.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 3.0 (mem/read-float buf 4) 0.001))
+      (is (approx= -4.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -57,9 +63,9 @@
           b (arith/floor a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 2.0 (mem/read-float buf 4) 0.001))
-      (is (= -4.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 2.0 (mem/read-float buf 4) 0.001))
+      (is (approx= -4.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -70,9 +76,9 @@
           b (arith/ceil a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 2.0 (mem/read-float buf 0) 0.001))
-      (is (= 3.0 (mem/read-float buf 4) 0.001))
-      (is (= -3.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 2.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 3.0 (mem/read-float buf 4) 0.001))
+      (is (approx= -3.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -83,9 +89,9 @@
           b (arith/sqrt a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 2.0 (mem/read-float buf 0) 0.001))
-      (is (= 3.0 (mem/read-float buf 4) 0.001))
-      (is (= 4.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 2.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 3.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 4.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -96,9 +102,9 @@
           b (arith/exp a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 2.718 (mem/read-float buf 4) 0.01))
-      (is (= 7.389 (mem/read-float buf 8) 0.01))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 2.718 (mem/read-float buf 4) 0.01))
+      (is (approx= 7.389 (mem/read-float buf 8) 0.01))
       (.close a)
       (.close b))))
 
@@ -109,9 +115,9 @@
           b (arith/log a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 0.0 (mem/read-float buf 0) 0.001))
-      (is (= 1.0 (mem/read-float buf 4) 0.01))
-      (is (= 2.0 (mem/read-float buf 8) 0.01))
+      (is (approx= 0.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 4) 0.01))
+      (is (approx= 2.0 (mem/read-float buf 8) 0.01))
       (.close a)
       (.close b))))
 
@@ -122,9 +128,9 @@
           b (arith/sin a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 0.0 (mem/read-float buf 0) 0.001))
-      (is (= 1.0 (mem/read-float buf 4) 0.001))
-      (is (= 0.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 0.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 0.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -135,9 +141,9 @@
           b (arith/cos a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 0.0 (mem/read-float buf 4) 0.001))
-      (is (= -1.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 0.0 (mem/read-float buf 4) 0.001))
+      (is (approx= -1.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b))))
 
@@ -153,9 +159,9 @@
           c (arith/add a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 5.0 (mem/read-float buf 0) 0.001))
-      (is (= 7.0 (mem/read-float buf 4) 0.001))
-      (is (= 9.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 5.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 7.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 9.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -168,9 +174,9 @@
           c (arith/sub a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 4.0 (mem/read-float buf 0) 0.001))
-      (is (= 5.0 (mem/read-float buf 4) 0.001))
-      (is (= 6.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 4.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 5.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 6.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -183,9 +189,9 @@
           c (arith/mul a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 10.0 (mem/read-float buf 0) 0.001))
-      (is (= 18.0 (mem/read-float buf 4) 0.001))
-      (is (= 28.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 10.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 18.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 28.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -198,9 +204,9 @@
           c (arith/div a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 5.0 (mem/read-float buf 0) 0.001))
-      (is (= 5.0 (mem/read-float buf 4) 0.001))
-      (is (= 6.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 5.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 5.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 6.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -213,9 +219,9 @@
           c (arith/mod a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 3.0 (mem/read-float buf 4) 0.001))
-      (is (= 2.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 3.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 2.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -228,9 +234,9 @@
           c (arith/pow a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 8.0 (mem/read-float buf 0) 0.001))
-      (is (= 9.0 (mem/read-float buf 4) 0.001))
-      (is (= 16.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 8.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 9.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 16.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -243,9 +249,9 @@
           c (arith/minof a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 4.0 (mem/read-float buf 4) 0.001))
-      (is (= 3.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 4.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 3.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -258,9 +264,9 @@
           c (arith/maxof a b false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 2.0 (mem/read-float buf 0) 0.001))
-      (is (= 5.0 (mem/read-float buf 4) 0.001))
-      (is (= 6.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 2.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 5.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 6.0 (mem/read-float buf 8) 0.001))
       (.close a)
       (.close b)
       (.close c))))
@@ -393,9 +399,9 @@
           b (arith/cast a jvm/AF_DTYPE_F64)
           buf (mem/alloc (* 3 8))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-double buf 0) 0.001))
-      (is (= 2.0 (mem/read-double buf 8) 0.001))
-      (is (= 3.0 (mem/read-double buf 16) 0.001))
+      (is (approx= 1.0 (mem/read-double buf 0) 0.001))
+      (is (approx= 2.0 (mem/read-double buf 8) 0.001))
+      (is (approx= 3.0 (mem/read-double buf 16) 0.001))
       (is (= jvm/AF_DTYPE_F64 (array/get-type b)))
       (.close a)
       (.close b))))
@@ -407,9 +413,9 @@
           b (arith/cast a jvm/AF_DTYPE_F32)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr b buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 2.0 (mem/read-float buf 4) 0.001))
-      (is (= 3.0 (mem/read-float buf 8) 0.001))
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      (is (approx= 2.0 (mem/read-float buf 4) 0.001))
+      (is (approx= 3.0 (mem/read-float buf 8) 0.001))
       (is (= jvm/AF_DTYPE_F32 (array/get-type b)))
       (.close a)
       (.close b))))
@@ -417,15 +423,15 @@
 (deftest test-clamp
   (testing "clamp limits values to range"
     (device/init!)
-    (let [a (array/create-array (float-array [0.5 5.0 10.5]) [3] jvm/AF_DTYPE_F32)
-          lo (array/create-array (float-array [1.0]) [1] jvm/AF_DTYPE_F32)
-          hi (array/create-array (float-array [10.0]) [1] jvm/AF_DTYPE_F32)
+        (let [a (array/create-array (float-array [0.5 5.0 10.5]) [3] jvm/AF_DTYPE_F32)
+          lo (array/create-array (float-array [1.0 1.0 1.0]) [3] jvm/AF_DTYPE_F32)
+          hi (array/create-array (float-array [10.0 10.0 10.0]) [3] jvm/AF_DTYPE_F32)
           c (arith/clamp a lo hi false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))   ; 0.5 clamped to 1.0
-      (is (= 5.0 (mem/read-float buf 4) 0.001))   ; 5.0 unchanged
-      (is (= 10.0 (mem/read-float buf 8) 0.001))  ; 10.5 clamped to 10.0
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))   ; 0.5 clamped to 1.0
+      (is (approx= 5.0 (mem/read-float buf 4) 0.001))   ; 5.0 unchanged
+      (is (approx= 10.0 (mem/read-float buf 8) 0.001))  ; 10.5 clamped to 10.0
       (.close a)
       (.close lo)
       (.close hi)
