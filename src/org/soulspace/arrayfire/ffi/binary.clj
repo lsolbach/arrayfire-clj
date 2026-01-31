@@ -1,7 +1,6 @@
 (ns org.soulspace.arrayfire.ffi.binary
   "Bindings for the ArrayFire binary functions."
-  (:require [org.soulspace.arrayfire.ffi.loader]
-            [coffi.ffi :as ffi :refer [defcfn]]
+  (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.loader]))
 
