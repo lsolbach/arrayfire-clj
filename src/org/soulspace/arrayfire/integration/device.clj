@@ -40,7 +40,7 @@
    (info)"
   []
   (jvm/check! (device-ffi/af-info) "af-info")
-  nil)
+  :ok)
 
 (defn info-string
   "Get ArrayFire device information as a string.
