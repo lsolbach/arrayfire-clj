@@ -53,8 +53,8 @@
               handle (jvm/deref-af-array out-ptr)
               af-arr (jvm/af-array-new handle)]
           (is (instance? AFArray af-arr))
-          (is (number? (jvm/af-handle af-arr)))
-          (is (pos? (jvm/af-handle af-arr)))
+              (is (number? (jvm/af-handle-value af-arr)))
+              (is (pos? (jvm/af-handle-value af-arr)))
           (.close af-arr))
         (finally
           (.close arena))))))
@@ -101,7 +101,7 @@
               handle (jvm/deref-af-array out-ptr)
               af-arr (jvm/af-array-new handle)]
           (.close af-arr)
-          (is (thrown? IllegalStateException (jvm/af-handle af-arr))))
+              (is (thrown? IllegalStateException (jvm/af-handle-value af-arr))))
         (finally
           (.close arena))))))
 

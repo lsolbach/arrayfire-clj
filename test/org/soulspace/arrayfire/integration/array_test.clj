@@ -139,7 +139,7 @@
       (is (instance? AFArray copy))
       (is (= (array/get-elements original) (array/get-elements copy)))
       (is (= (array/get-type original) (array/get-type copy)))
-      (is (not= (jvm/af-handle original) (jvm/af-handle copy))) ; Different handles
+      (is (not= (jvm/af-handle-value original) (jvm/af-handle-value copy))) ; Different handles
       (.close original)
       (.close copy))))
 
@@ -317,9 +317,9 @@
           arr (array/create-array data [3] jvm/AF_DTYPE_F32)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr arr buf)
-      (is (= 1.0 (mem/read-float buf 0) 0.001))
-      (is (= 2.0 (mem/read-float buf 4) 0.001))
-      (is (= 3.0 (mem/read-float buf 8) 0.001))
+      (is (<= (Math/abs (- 1.0 (mem/read-float buf 0))) 0.001))
+      (is (<= (Math/abs (- 2.0 (mem/read-float buf 4))) 0.001))
+      (is (<= (Math/abs (- 3.0 (mem/read-float buf 8))) 0.001))
       (.close arr))))
 
 (deftest test-write-array
@@ -330,9 +330,9 @@
       (array/write-array! arr data (* 3 4))
       (let [buf (mem/alloc (* 3 4))]
         (array/get-data-ptr arr buf)
-        (is (= 1.0 (mem/read-float buf 0) 0.001))
-        (is (= 2.0 (mem/read-float buf 4) 0.001))
-        (is (= 3.0 (mem/read-float buf 8) 0.001)))
+        (is (<= (Math/abs (- 1.0 (mem/read-float buf 0))) 0.001))
+        (is (<= (Math/abs (- 2.0 (mem/read-float buf 4))) 0.001))
+        (is (<= (Math/abs (- 3.0 (mem/read-float buf 8))) 0.001)))
       (.close arr))))
 
 (comment
