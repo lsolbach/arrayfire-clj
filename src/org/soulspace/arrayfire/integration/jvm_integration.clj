@@ -30,14 +30,48 @@
    release resources when done. Additionally, it uses Java's Cleaner to ensure
    that resources are released when the AFArray instance is garbage collected,
    preventing memory leaks."
-  (:require [coffi.ffi :as ffi ]
-            [coffi.mem :as mem]
-            ; [tech.v3.resource :as tr]
-            [org.soulspace.arrayfire.ffi.array :refer [af-release-array af-retain-array]])
+  (:require [coffi.ffi :as ffi :refer [defcfn]]
+            [coffi.mem :as mem])
   (:import [java.lang AutoCloseable]
            [java.lang.ref Cleaner Cleaner$Cleanable]
            [java.util.concurrent.atomic AtomicBoolean]
            [java.lang.foreign Arena MemorySegment ValueLayout]))
+
+;;;
+;;; Load ArrayFire library FIRST
+;;;
+(def ^:private lib-name
+  (or (System/getenv "ARRAYFIRE_LIB") "af"))
+
+(ffi/load-system-library lib-name)
+
+;;;
+;;; FFI Bindings for resource management
+;;; (defined here to avoid circular dependencies)
+;;;
+
+;; af_err af_release_array(af_array arr)
+(defcfn af-release-array
+  "Release an ArrayFire array handle.
+   
+   Parameters:
+   - arr: array handle
+   
+   Returns:
+   ArrayFire error code"
+  "af_release_array" [::mem/pointer] ::mem/int)
+
+;; af_err af_retain_array(af_array *out, const af_array in)
+(defcfn af-retain-array
+  "Increase reference count of the array.
+   
+   Parameters:
+   - out: out pointer to array handle
+   - in: array handle to retain
+
+   Returns:
+   ArrayFire error code"
+  "af_retain_array" [::mem/pointer ::mem/pointer] ::mem/int)
 
 ;;;
 ;;; Definitions
@@ -110,14 +144,6 @@
 (def AF_ERR_UNKNOWN 999)
 
 ;;;
-;;; Load ArrayFire library
-;;;
-(def ^:private lib-name
-  (or (System/getenv "ARRAYFIRE_LIB") "af"))
-
-(ffi/load-system-library lib-name)
-
-;;;
 ;;; Error handling
 ;;;
 (defn check!
@@ -162,7 +188,7 @@
    
    Returns: nil"
   [^long handle]
-  (let [seg (MemorySegment/ofAddress handle 0 mem/global-arena)]
+  (let [seg (MemorySegment/ofAddress handle)]
     (check! (af-release-array seg) "af_release_array")
     nil))
 
@@ -176,8 +202,8 @@
   [^long handle]
   (let [arena (Arena/ofConfined)]
     (try 
-      (let [out (MemorySegment/allocateNative ValueLayout/ADDRESS arena)
-            in  (MemorySegment/ofAddress handle 0 arena)]
+      (let [out (.allocate arena ValueLayout/ADDRESS)
+            in  (MemorySegment/ofAddress handle)]
         (check! (af-retain-array out in) "af_retain_array")
         ;; IMPORTANT:
         ;; Intentionally discarded `out`
