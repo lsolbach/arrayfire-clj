@@ -5,6 +5,10 @@ using Java 22+ Foreign Function & Memory API via the Coffi library.
 
 ArrayFire is a general-purpose tensor library that simplifies the software development process for the parallel architectures found in CPUs, GPUs, and other hardware acceleration devices.
 
+[![Clojars Project](https://img.shields.io/clojars/v/org.soulspace/arrayfire-clj.svg)](https://clojars.org/org.soulspace/arrayfire-clj)
+[![cljdoc badge](https://cljdoc.org/badge/org.soulspace/arrayfire-clj)](https://cljdoc.org/d/org.soulspace/arrayfire-clj)
+![GitHub](https://img.shields.io/github/license/lsolbach/arrayfire-clj)
+
 ## Requirements
 
 - **Java 22+** with FFM API support
