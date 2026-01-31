@@ -1,9 +1,9 @@
 (ns org.soulspace.arrayfire.core
-  (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.integration.jvm-integration :as int]
-            [org.soulspace.arrayfire.ffi.device :as af-device]
+  (:require [org.soulspace.arrayfire.integration.jvm-integration :as int]
+            [org.soulspace.arrayfire.integration.device :as device]
             [org.soulspace.arrayfire.ffi.array :as af-array]
             [org.soulspace.arrayfire.ffi.binary :as af-binary]
+            [coffi.mem :as mem]
             [tech.v3.datatype :as dtype]
             [tech.v3.datatype.native-buffer :as native-buf]
             [tech.v3.datatype.protocols :as dtype-proto]))
@@ -11,7 +11,7 @@
 ;;;
 ;;; Definitions
 ;;;
-(def dtype->constant
+(def type->constant
   "Mapping of Clojure keywords to ArrayFire dtype constants."
   {::f32 int/AF_DTYPE_F32 ; float
    ::c32 int/AF_DTYPE_C32 ; complex float
@@ -27,12 +27,12 @@
    ::u16 int/AF_DTYPE_U16 ; unsigned short
    })
 
-(def constant->dtype
+(def constant->type
   "Mapping of ArrayFire dtype constants to Clojure keywords."
     (into {}
-        (map (fn [[k v]] [v k]) dtype->constant)))
+        (map (fn [[k v]] [v k]) type->constant)))
 
-(def dtype->size
+(def type->size
   "Mapping of Clojure keywords to sizes in bytes for each ArrayFire dtype."
   {::f32 4  ; float
    ::c32 8  ; complex float (2 floats)
@@ -91,8 +91,7 @@
    Returns:
    true on success."
   []
-  (int/check! (af-device/af-init) "af_init")
-  true)
+  (device/init!))
 
 
 (defn info
@@ -101,8 +100,12 @@
    Returns:
    :ok on success."
   []
-  (int/check! (af-device/af-info) "af_info")
-  :ok)
+  (device/info))
+
+(comment
+  (init!)
+  (info)
+  )
 
 
 (defn create-array
