@@ -454,7 +454,7 @@
          (unlock-array! arr))))
    ```"
   [^AFArray arr]
-  (jvm/check! (mem-ffi/af-lock-array (java.lang.foreign.MemorySegment/ofAddress (jvm/af-handle arr)))
+  (jvm/check! (mem-ffi/af-lock-array (jvm/af-handle arr))
               "af-lock-array")
   nil)
 
@@ -475,7 +475,7 @@
    (unlock-array! arr)
    ```"
   [^AFArray arr]
-  (jvm/check! (mem-ffi/af-unlock-array (java.lang.foreign.MemorySegment/ofAddress (jvm/af-handle arr)))
+  (jvm/check! (mem-ffi/af-unlock-array (jvm/af-handle arr))
               "af-unlock-array")
   nil)
 
@@ -504,7 +504,7 @@
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
     (jvm/check! (mem-ffi/af-is-locked-array result-buf
-                                            (java.lang.foreign.MemorySegment/ofAddress (jvm/af-handle arr)))
+                        (jvm/af-handle arr))
                 "af-is-locked-array")
     (not (zero? (mem/read-int result-buf 0)))))
 
@@ -537,7 +537,7 @@
   [^AFArray arr]
   (let [ptr-buf (mem/alloc 8)]
     (jvm/check! (mem-ffi/af-get-device-ptr ptr-buf
-                                           (java.lang.foreign.MemorySegment/ofAddress (jvm/af-handle arr)))
+                         (jvm/af-handle arr))
                 "af-get-device-ptr")
     (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))))
 
