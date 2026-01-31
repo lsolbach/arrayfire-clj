@@ -32,7 +32,7 @@
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 (defn sign
-  "Compute the sign of each element in the array.
+  "Compute the sign bit of each element in the array.
 
    Supported types: f32, f64, s32, s64
 
@@ -41,9 +41,8 @@
 
    Returns:
    An AFArray where each element is:
-   - 1 if the corresponding element in 'a' is positive
-   - -1 if the corresponding element in 'a' is negative
-   - 0 if the corresponding element in 'a' is zero."
+   - 1 if the corresponding element in 'a' is negative
+   - 0 otherwise."
   [^AFArray a]
   (let [out (jvm/native-af-array-pointer)]
     (jvm/check! (unary/af-sign out (jvm/af-handle a)) "af-sign")
