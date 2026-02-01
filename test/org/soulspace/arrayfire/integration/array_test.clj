@@ -1,5 +1,5 @@
 (ns org.soulspace.arrayfire.integration.array-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
@@ -336,6 +336,7 @@
       (.close arr))))
 
 (comment
-  ;; To run tests from REPL
-  (clojure.test/run-tests)
+  ;; run tests from REPL
+  (run-tests)
+  ;
   )

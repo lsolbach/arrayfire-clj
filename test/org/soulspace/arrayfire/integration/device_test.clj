@@ -1,5 +1,5 @@
 (ns org.soulspace.arrayfire.integration.device-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.device :as device]))
 
 ;;;
@@ -167,6 +167,7 @@
       (is (nil? (device/sync! dev-id))))))
 
 (comment
-  ;; To run tests from REPL
-  (clojure.test/run-tests)
+  ;; run tests from REPL
+  (run-tests)
+  ;
   )

@@ -1,5 +1,5 @@
 (ns org.soulspace.arrayfire.integration.arith-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.arith :as arith]
             [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.device :as device]
@@ -438,6 +438,7 @@
       (.close c))))
 
 (comment
-  ;; To run tests from REPL
-  (clojure.test/run-tests)
+  ;; run tests from REPL
+  (run-tests)
+  ;
   )

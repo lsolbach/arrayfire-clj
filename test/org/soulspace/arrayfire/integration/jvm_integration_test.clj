@@ -1,5 +1,5 @@
 (ns org.soulspace.arrayfire.integration.jvm-integration-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.device :as device]
             [org.soulspace.arrayfire.ffi.array :as af-array]
@@ -212,6 +212,7 @@
         (is (<= (Math/abs (- 2.71828 imag)) 0.00001))))))
 
 (comment
-  ;; To run tests from REPL
-  (clojure.test/run-tests)
+  ;; run tests from REPL
+  (run-tests)
+  ;
   )
