@@ -17,7 +17,6 @@
 ;;; Matrix Decompositions
 ;;;
 
-
 (defn lu
   "Compute the LU decomposition of a matrix.
    
