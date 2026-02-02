@@ -1,5 +1,5 @@
 (ns org.soulspace.arrayfire.integration.algorithm-test
-  (:require [clojure.test :refer [deftest is testing run-tests]]
+  (:require [clojure.test :refer [deftest is testing run-test run-tests]]
             [org.soulspace.arrayfire.integration.algorithm :as algo]
             [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.device :as device]
@@ -248,5 +248,9 @@
 (comment
   ;; run tests from REPL
   (run-tests)
+
+  ;; run single test
+  (run-test test-lu)
+
   ;
   )
