@@ -1,0 +1,1 @@
+If ArrayFire arrays are shared as a result of a call (e.g. slice), we have to retain the ArrayFire because we are holding a new reference on the JVM side. When ArrayFire returns a new array, that is not neccessary, because the reference counter is already increased by ArrayFire.
