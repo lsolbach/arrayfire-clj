@@ -125,8 +125,8 @@
   - BLAS operations for dense matrices
   - Solve functions for sparse linear systems"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Sparse Matrix Creation

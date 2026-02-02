@@ -193,7 +193,8 @@
    - af-hsv-rgb: HSV color space conversion
    - af-colorspace: General color space conversion"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; YCbCr standard constants (af_ycc_std enum values)
 (def AF_YCC_601 601)   ; ITU-R BT.601 (SD TV, DVD, JPEG)

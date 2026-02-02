@@ -86,7 +86,8 @@
    - af/device.h for backend management
    - af/array.h for array creation from cl_mem"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;;
 ;;; Device Type Constants (afcl_device_type enum)

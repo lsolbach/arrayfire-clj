@@ -2,7 +2,8 @@
   "Bindings for ArrayFire Canny edge detection functions.
    Corresponds to src/api/c/canny.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Canny edge detection
 

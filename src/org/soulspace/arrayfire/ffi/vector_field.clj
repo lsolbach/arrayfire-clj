@@ -288,7 +288,8 @@
    - af-draw-image: Image display
    - af-draw-surface: Surface visualization"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Vector field visualization
 

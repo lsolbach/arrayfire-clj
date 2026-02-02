@@ -102,8 +102,8 @@
   - Set operations (af_set_unique, af_set_union, af_set_intersect)
   - Reorder functions for custom permutations"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref sort]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Sorting Functions

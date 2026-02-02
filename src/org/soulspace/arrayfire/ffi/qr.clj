@@ -201,7 +201,8 @@
    - SVD (af-svd): Most general, handles rank deficiency better
    - Solve functions: Use decompositions to solve linear systems"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; QR decomposition functions
 

@@ -250,8 +250,8 @@
   - Image display: af_draw_image
   - Window management: af_create_window, af_set_visibility"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Surface Plotting Functions

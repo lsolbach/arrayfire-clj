@@ -309,7 +309,8 @@
    - Release notes for breaking changes
    - Migration guides for major version upgrades"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Version information
 

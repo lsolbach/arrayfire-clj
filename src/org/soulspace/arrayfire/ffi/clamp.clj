@@ -3,7 +3,8 @@
    
    Maps to src/api/c/clamp.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_clamp(af_array *out, const af_array in, const af_array lo, const af_array hi, const bool batch)
 (defcfn af-clamp

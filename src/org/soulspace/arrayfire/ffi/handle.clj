@@ -206,7 +206,8 @@
    - af_device_mem_info: Query memory usage including locks
    - af_print_mem_info: Print detailed memory manager state"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Memory locking functions
 

@@ -391,7 +391,8 @@
    - Solve (af-solve): Requires full rank for unique solution
    - Norm (af-norm): Used in relative tolerance computation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_rank(unsigned *rank, const af_array in, const double tol)
 (defcfn af-rank

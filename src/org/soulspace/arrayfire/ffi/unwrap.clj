@@ -503,7 +503,8 @@
    - af-moddims: Reshape arrays
    - af-tile: Replicate arrays"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Image unwrapping
 

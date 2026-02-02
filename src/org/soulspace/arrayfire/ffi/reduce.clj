@@ -312,7 +312,8 @@
    - Statistical functions: mean, var, stdev (build on reductions)
    - Matrix operations: matmul, dot (specialized reductions)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Basic reduction operations
 

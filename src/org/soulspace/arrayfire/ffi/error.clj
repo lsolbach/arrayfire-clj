@@ -152,7 +152,8 @@
    - af_info: Display device information (diagnose capability issues)
    - af_init: Initialize ArrayFire (call before other functions)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Error handling functions
 

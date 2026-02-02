@@ -1,9 +1,12 @@
 (ns org.soulspace.arrayfire.ffi.memory
   "Bindings for the ArrayFire memory functions."
-  (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+  (:require [org.soulspace.arrayfire.ffi.loader]
+            [coffi.ffi :as ffi :refer [defcfn]]
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Memory management functions
+
 ;; af_err af_alloc_pinned(void **ptr, const dim_t bytes)
 (defcfn af-alloc-pinned
   "Allocate pinned (page-locked) memory for efficient device-host transfer.

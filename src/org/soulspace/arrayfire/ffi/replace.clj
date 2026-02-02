@@ -273,7 +273,8 @@
    - assign functions for indexed assignment
    - where function for finding condition indices"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Conditional replacement functions
 

@@ -89,7 +89,8 @@
   (let [ptr-buf (mem/alloc 8)]
     (jvm/check! (mem-ffi/af-alloc-pinned ptr-buf (long bytes))
                 "af-alloc-pinned")
-    (.get ptr-buf ValueLayout/ADDRESS 0)))
+    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
+                     (long bytes))))
 
 (defn free-pinned!
   "Free pinned memory allocated by alloc-pinned.
@@ -146,7 +147,8 @@
   (let [ptr-buf (mem/alloc 8)]
     (jvm/check! (mem-ffi/af-alloc-host ptr-buf (long bytes))
                 "af-alloc-host")
-    (.get ptr-buf ValueLayout/ADDRESS 0)))
+    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
+                     (long bytes))))
 
 (defn free-host!
   "Free host memory allocated by alloc-host.
@@ -206,7 +208,8 @@
   (let [ptr-buf (mem/alloc 8)]
     (jvm/check! (mem-ffi/af-alloc-device-v2 ptr-buf (long bytes))
                 "af-alloc-device-v2")
-    (.get ptr-buf ValueLayout/ADDRESS 0)))
+    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
+                     (long bytes))))
 
 (defn free-device!
   "Free device memory (return to memory manager pool).
@@ -500,7 +503,8 @@
    ```"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (mem-ffi/af-is-locked-array result-buf (jvm/af-handle arr))
+    (jvm/check! (mem-ffi/af-is-locked-array result-buf
+                        (jvm/af-handle arr))
                 "af-is-locked-array")
     (not (zero? (mem/read-int result-buf 0)))))
 
@@ -532,9 +536,10 @@
    ```"
   [^AFArray arr]
   (let [ptr-buf (mem/alloc 8)]
-    (jvm/check! (mem-ffi/af-get-device-ptr ptr-buf (jvm/af-handle arr))
+    (jvm/check! (mem-ffi/af-get-device-ptr ptr-buf
+                         (jvm/af-handle arr))
                 "af-get-device-ptr")
-    (.get ptr-buf ValueLayout/ADDRESS 0)))
+    (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))))
 
 ;;;
 ;;; Convenience Functions

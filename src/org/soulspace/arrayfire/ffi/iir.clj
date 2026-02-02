@@ -12,7 +12,8 @@
    ### Difference Equation
    
    The IIR filter is defined by the linear difference equation:
-   
+      ```
+
    ```
    y[n] = (1/a[0]) × (b[0]×x[n] + b[1]×x[n-1] + ... + b[M]×x[n-M]
                        - a[1]×y[n-1] - a[2]×y[n-2] - ... - a[N]×y[n-N])
@@ -871,7 +872,8 @@
    6. ArrayFire Documentation: https://arrayfire.com/docs/signal.htm
       - Official IIR filter documentation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_iir(af_array *y, const af_array b, const af_array a, const af_array x)
 (defcfn af-iir

@@ -1,7 +1,8 @@
 (ns org.soulspace.arrayfire.ffi.histeq
   "Bindings for the ArrayFire histogram equalization functions."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_hist_equal(af_array *out, const af_array in, const af_array hist)
 (defcfn af-hist-equal

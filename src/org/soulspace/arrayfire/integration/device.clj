@@ -19,13 +19,13 @@
    It initializes the runtime and selects an appropriate backend.
    
    Returns:
-   nil
+   true on successful initialization
    
    Example:
    (init!)"
   []
   (jvm/check! (device-ffi/af-init) "af-init")
-  nil)
+  true)
 
 (defn info
   "Print ArrayFire device information to standard output.
@@ -40,7 +40,7 @@
    (info)"
   []
   (jvm/check! (device-ffi/af-info) "af-info")
-  nil)
+  :ok)
 
 (defn info-string
   "Get ArrayFire device information as a string.
@@ -132,8 +132,7 @@
    Map with :device-id, :name, :platform, :toolkit, and :compute keys
    
    Example:
-   (device-info 0)
-   ;; => {:device-id 0 :name "..." :platform "..." :toolkit "..." :compute "..."}"
+   (device-info 0)"
   ([]
    (device-info (get-device)))
   ([device-id]
@@ -391,7 +390,7 @@
         ;; Create array of array handles
         handles-buf (mem/alloc (* n 8))] ; 8 bytes per pointer
     (doseq [[i arr] (map-indexed vector arrays)]
-      (mem/write-long handles-buf (* i 8) (jvm/af-handle arr)))
+      (mem/write-long handles-buf (* i 8) (jvm/af-handle-value arr)))
     (jvm/check! (device-ffi/af-eval-multiple n handles-buf)
                 "af-eval-multiple")
     nil))
@@ -404,7 +403,8 @@
 (def AF_BACKEND_DEFAULT 0)
 (def AF_BACKEND_CPU 1)
 (def AF_BACKEND_CUDA 2)
-(def AF_BACKEND_OPENCL 3)
+(def AF_BACKEND_OPENCL 4)
+(def AF_BACKEND_ONEAPI 8)
 
 (defn set-backend!
   "Set the active backend for ArrayFire operations.

@@ -260,7 +260,8 @@
    - ORB: Fast alternative to SIFT with binary descriptors
    - Good Features to Track: Similar to Harris but uses min eigenvalue"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_harris(af_features *out, const af_array in,
 ;;                  const unsigned max_corners, const float min_response,

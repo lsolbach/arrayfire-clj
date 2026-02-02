@@ -508,7 +508,8 @@
    - Data format conversion for interoperability
    - Tensor operation preparation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Dimension reordering
 

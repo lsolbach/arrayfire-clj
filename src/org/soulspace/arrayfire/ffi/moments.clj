@@ -359,7 +359,8 @@
    - Contours for boundary analysis
    - Feature detectors (Harris, FAST) for keypoint moments"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Moment type enum values (from af/defines.h)
 ;; typedef enum {

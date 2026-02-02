@@ -1,7 +1,8 @@
 (ns org.soulspace.arrayfire.ffi.device
   "Bindings for the ArrayFire device functions."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Device management functions
 (defcfn af-init

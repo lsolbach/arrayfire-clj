@@ -361,7 +361,8 @@
    - af_fft_convolve: FFT-based convolution
    - af_approx1/2: Interpolation in frequency domain"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Forward FFT functions
 

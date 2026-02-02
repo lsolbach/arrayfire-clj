@@ -546,7 +546,8 @@
    - af-perspective: Perspective transformation (if available)
    - af-homography: Homography estimation (if available)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Coordinate transformation
 

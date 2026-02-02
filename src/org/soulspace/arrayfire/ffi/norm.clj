@@ -675,7 +675,8 @@
    - Boyd & Vandenberghe: \"Convex Optimization\"
    - Trefethen & Bau: \"Numerical Linear Algebra\""
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_norm_type enum constants
 ;; Defines different types of norms for vectors and matrices

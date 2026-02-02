@@ -1,7 +1,8 @@
 (ns org.soulspace.arrayfire.ffi.image
   "Bindings for the ArrayFire image visualization functions."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_draw_image(const af_window window, const af_array in, const af_cell *const props)
 (defcfn af-draw-image

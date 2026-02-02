@@ -180,7 +180,8 @@
    - af-cov, af-cov-v2: Covariance between arrays
    - af-corrcoef: Correlation coefficient"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Variance computation
 

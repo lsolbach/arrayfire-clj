@@ -3,7 +3,8 @@
    
    Maps to src/api/c/cast.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_cast(af_array *out, const af_array in, const af_dtype type)
 (defcfn af-cast

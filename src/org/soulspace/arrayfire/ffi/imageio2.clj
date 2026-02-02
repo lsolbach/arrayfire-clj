@@ -189,11 +189,12 @@
    - af-get-type: Check array type after loading
    - Type conversion functions for converting between types"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Native Image I/O (No Type Conversion)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Native Image I/O (No Type Conversion)
+;;;
 
 ;; af_err af_load_image_native(af_array *out, const char* filename)
 (defcfn af-load-image-native

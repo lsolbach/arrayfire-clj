@@ -142,6 +142,11 @@
     (jvm/check! (array-ffi/af-create-handle out (int ndims) dims-seg (int dtype))
                 "af-create-handle")
     (jvm/af-array-new (jvm/deref-af-array out))))
+(defn- handle->segment
+  "Convert an AFArray handle to a MemorySegment for FFI calls."
+  ^java.lang.foreign.MemorySegment
+  [^AFArray arr]
+  (jvm/af-handle arr))
 
 (defn copy-array
   "Create a deep copy of an array.
@@ -159,14 +164,14 @@
   ^AFArray
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (array-ffi/af-copy-array out (jvm/af-handle in))
+    (jvm/check! (array-ffi/af-copy-array out (handle->segment in))
                 "af-copy-array")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 ;;;
 ;;; Array Data Transfer
 ;;;
-
+; TODO use constants for src types, check for ArrayFire defined values or define our own
 (defn write-array!
   "Write data from host/device memory to an existing array.
    
@@ -176,7 +181,7 @@
    - arr: Target array (AFArray)
    - data: Native memory segment containing the data
    - bytes: Number of bytes to write
-   - src: Source type (0 for host, 1 for device, default 0)
+  - src: Source type (1 for host, 0 for device, default 1)
    
    Returns:
    The modified array
@@ -184,11 +189,11 @@
    Example:
    (let [arr (create-handle [4] jvm/AF_DTYPE_F32)
          data (float-array [1.0 2.0 3.0 4.0])]
-     (write-array! arr data (* 4 4) 0))"
+     (write-array! arr data (* 4 4) 1))"
   ([^AFArray arr data bytes]
-   (write-array! arr data bytes 0))
+   (write-array! arr data bytes 1))
   ([^AFArray arr data bytes src]
-   (jvm/check! (array-ffi/af-write-array (jvm/af-handle arr) data (long bytes) (int src))
+  (jvm/check! (array-ffi/af-write-array (handle->segment arr) data (long bytes) (int src))
                "af-write-array")
    arr))
 
@@ -209,7 +214,7 @@
      ;; buf now contains the array data
      )"
   [^AFArray arr data]
-  (jvm/check! (array-ffi/af-get-data-ptr data (jvm/af-handle arr))
+  (jvm/check! (array-ffi/af-get-data-ptr data (handle->segment arr))
               "af-get-data-ptr")
   nil)
 
@@ -232,7 +237,7 @@
      n) ; => 6"
   [^AFArray arr]
   (let [elems-buf (mem/alloc 8)]
-    (jvm/check! (array-ffi/af-get-elements elems-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-get-elements elems-buf (handle->segment arr))
                 "af-get-elements")
     (mem/read-long elems-buf 0)))
 
@@ -251,7 +256,7 @@
      dtype) ; => AF_DTYPE_F32 or AF_DTYPE_F64"
   [^AFArray arr]
   (let [type-buf (mem/alloc 4)]
-    (jvm/check! (array-ffi/af-get-type type-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-get-type type-buf (handle->segment arr))
                 "af-get-type")
     (mem/read-int type-buf 0)))
 
@@ -273,7 +278,7 @@
         d1 (mem/alloc 8)
         d2 (mem/alloc 8)
         d3 (mem/alloc 8)]
-    (jvm/check! (array-ffi/af-get-dims d0 d1 d2 d3 (jvm/af-handle arr))
+      (jvm/check! (array-ffi/af-get-dims d0 d1 d2 d3 (handle->segment arr))
                 "af-get-dims")
     [(mem/read-long d0 0)
      (mem/read-long d1 0)
@@ -295,7 +300,7 @@
      ndims) ; => 2"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (array-ffi/af-get-numdims result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-get-numdims result-buf (handle->segment arr))
                 "af-get-numdims")
     (mem/read-int result-buf 0)))
 
@@ -316,7 +321,7 @@
      count)"
   [^AFArray arr]
   (let [count-buf (mem/alloc 4)]
-    (jvm/check! (array-ffi/af-get-data-ref-count count-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-get-data-ref-count count-buf (handle->segment arr))
                 "af-get-data-ref-count")
     (mem/read-int count-buf 0)))
 
@@ -334,7 +339,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-empty result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-empty result-buf (handle->segment arr))
                 "af-is-empty")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -348,7 +353,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-scalar result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-scalar result-buf (handle->segment arr))
                 "af-is-scalar")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -362,7 +367,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-row result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-row result-buf (handle->segment arr))
                 "af-is-row")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -376,7 +381,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-column result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-column result-buf (handle->segment arr))
                 "af-is-column")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -390,7 +395,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-vector result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-vector result-buf (handle->segment arr))
                 "af-is-vector")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -404,7 +409,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-complex result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-complex result-buf (handle->segment arr))
                 "af-is-complex")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -418,7 +423,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-real result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-real result-buf (handle->segment arr))
                 "af-is-real")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -432,7 +437,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-double result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-double result-buf (handle->segment arr))
                 "af-is-double")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -446,7 +451,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-single result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-single result-buf (handle->segment arr))
                 "af-is-single")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -460,7 +465,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-half result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-half result-buf (handle->segment arr))
                 "af-is-half")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -474,7 +479,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-realfloating result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-realfloating result-buf (handle->segment arr))
                 "af-is-realfloating")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -488,7 +493,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-floating result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-floating result-buf (handle->segment arr))
                 "af-is-floating")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -502,7 +507,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-integer result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-integer result-buf (handle->segment arr))
                 "af-is-integer")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -516,7 +521,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-bool result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-bool result-buf (handle->segment arr))
                 "af-is-bool")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -530,7 +535,7 @@
    Boolean"
   [^AFArray arr]
   (let [result-buf (mem/alloc 1)]
-    (jvm/check! (array-ffi/af-is-sparse result-buf (jvm/af-handle arr))
+    (jvm/check! (array-ffi/af-is-sparse result-buf (handle->segment arr))
                 "af-is-sparse")
     (not (zero? (mem/read-byte result-buf 0)))))
 
@@ -556,7 +561,7 @@
      (get-scalar arr buf)
      (mem/read-double buf 0)) ; => 42.0"
   [^AFArray arr output-buffer]
-  (jvm/check! (array-ffi/af-get-scalar output-buffer (jvm/af-handle arr))
+  (jvm/check! (array-ffi/af-get-scalar output-buffer (handle->segment arr))
               "af-get-scalar")
   nil)
 

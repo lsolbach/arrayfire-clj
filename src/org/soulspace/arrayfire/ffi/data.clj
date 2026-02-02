@@ -1,7 +1,8 @@
 (ns org.soulspace.arrayfire.ffi.data
   "Bindings for the ArrayFire data functions."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Data generation functions
 

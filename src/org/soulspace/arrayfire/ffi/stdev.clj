@@ -123,8 +123,8 @@
   - Mean functions (af_mean) for average values
   - Median functions (af_median) for robust central tendency"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;
 ;; Standard Deviation Functions

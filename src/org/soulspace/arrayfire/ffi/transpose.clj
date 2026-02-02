@@ -463,7 +463,8 @@
    - af-reorder: General dimension permutation
    - af-flip: Matrix flipping (combined with transpose for rotation)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Matrix transpose
 

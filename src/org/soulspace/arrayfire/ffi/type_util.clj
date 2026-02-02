@@ -561,7 +561,8 @@
    - af-cast: Convert array to different type
    - af-get-dims: Get array dimensions for memory calculation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Type size query
 

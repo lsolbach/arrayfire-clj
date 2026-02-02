@@ -325,8 +325,7 @@
   - Pseudoinverse: af_pinverse (uses SVD)
   - Matrix rank: af_rank (uses SVD)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [deref-ptr]])
-  (:refer-clojure :exclude [deref]))
+            [coffi.mem :as mem]))
 
 ;;
 ;; Singular Value Decomposition Functions

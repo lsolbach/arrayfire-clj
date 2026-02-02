@@ -80,7 +80,8 @@
    - Convolve functions for custom kernel filtering
    - Morphological operations (dilate/erode) in image.clj"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Median filters
 

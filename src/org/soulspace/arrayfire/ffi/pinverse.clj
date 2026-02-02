@@ -807,7 +807,8 @@
    - af-rank: Compute matrix rank with tolerance
    - af-norm: Compute matrix norms for error checking"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_pinverse(af_array *out, const af_array in, const double tol, const af_mat_prop options)
 (defcfn af-pinverse

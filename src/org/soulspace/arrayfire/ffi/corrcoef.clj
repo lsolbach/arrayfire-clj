@@ -64,7 +64,8 @@
    - **Mean**: af_mean (used internally)
    - **Standard deviation**: af_stdev (used internally)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_corrcoef(double *realVal, double *imagVal, const af_array X, const af_array Y)
 (defcfn af-corrcoef

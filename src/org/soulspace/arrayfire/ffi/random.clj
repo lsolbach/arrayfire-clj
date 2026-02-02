@@ -62,7 +62,8 @@
    - ArrayFire random documentation for statistical properties
    - Counter-based RNGs paper (Salmon et al.) for Philox/Threefry details"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;;;
 ;;; Random Engine Type Constants

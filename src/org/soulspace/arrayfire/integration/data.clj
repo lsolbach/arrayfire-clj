@@ -217,10 +217,11 @@
   [dim arrays]
   (let [out (jvm/native-af-array-pointer)
         n (count arrays)
+        pointer-size mem/pointer-size
         ;; Create array of af_array handles
-        handles-buf (mem/alloc (* n mem/pointer-size))]
+        handles-buf (mem/alloc (* n pointer-size))]
     (doseq [[i arr] (map-indexed vector arrays)]
-      (mem/write-address handles-buf (* i mem/pointer-size) (jvm/af-handle arr)))
+      (mem/write-long handles-buf (* i pointer-size) (jvm/af-handle-value arr)))
     (jvm/check! (data/af-join-many out (int dim) n handles-buf)
                 "af-join-many")
     (jvm/af-array-new (jvm/deref-af-array out))))

@@ -1,6 +1,7 @@
 (ns org.soulspace.arrayfire.ffi.cuda
   "Bindings for the ArrayFire CUDA backend functions."
-  (:require [coffi.ffi :as ffi :refer [defcfn]]))
+  (:require [coffi.ffi :as ffi :refer [defcfn]]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; CUDA stream and device management functions
 

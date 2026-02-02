@@ -4,7 +4,8 @@
    Maps to src/api/c/hsv_rgb.cpp, src/api/c/rgb_gray.cpp, src/api/c/ycbcr_rgb.cpp,
    and src/api/c/colorspace.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Colorspace conversion constants (af_cspace_t enum):
 ;; AF_GRAY = 0   - Grayscale

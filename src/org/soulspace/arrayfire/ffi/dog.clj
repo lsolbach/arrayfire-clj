@@ -434,7 +434,8 @@
    - Lowe, D. G. (2004). Distinctive image features from scale-invariant keypoints (SIFT).
    - Lindeberg, T. (1998). Feature detection with automatic scale selection."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_dog(af_array *out, const af_array in, const int radius1, const int radius2)
 (defcfn af-dog

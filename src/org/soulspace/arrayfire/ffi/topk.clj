@@ -387,7 +387,8 @@
    - af-max/af-min: Single maximum/minimum
    - af-imax/af-imin: Maximum/minimum with index"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Top-k selection
 

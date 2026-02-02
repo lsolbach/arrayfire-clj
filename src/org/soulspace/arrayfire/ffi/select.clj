@@ -354,7 +354,8 @@
    - af-replace: In-place conditional replacement (not in select.cpp)
    - af-where: Get indices of true values"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_err af_select(af_array *out, const af_array cond, const af_array a, const af_array b)
 (defcfn af-select

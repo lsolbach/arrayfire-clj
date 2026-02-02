@@ -310,7 +310,8 @@
    - lu.clj: LU decomposition
    - det.clj: Determinant computation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; Matrix inverse
 

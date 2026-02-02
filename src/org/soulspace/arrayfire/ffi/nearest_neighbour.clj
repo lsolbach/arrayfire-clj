@@ -563,7 +563,8 @@
    - Garcia, V., et al. (2008). \"Fast k nearest neighbor search using GPU\"
    - Lowe, D. (2004). \"Distinctive image features from scale-invariant keypoints\" (ratio test)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; af_match_type enum constants
 ;; Used for specifying distance metric in nearest neighbour search

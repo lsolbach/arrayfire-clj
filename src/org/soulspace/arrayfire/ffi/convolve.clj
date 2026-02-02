@@ -45,7 +45,8 @@
    - Output: [d0 d1 Nf Ns]
    - Includes gradient computation via af_convolve2_gradient_nn"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem]))
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.loader]))
 
 ;; General convolution functions (auto-dispatch to 1D/2D/3D)
 
