@@ -257,6 +257,17 @@
             "AFArray has already been closed")))
   (.-handle arr))
 
+(defn duplicate-array
+  "Create a new AFArray with independent lifetime.
+   
+   Parameters:
+   - a: AFArray to duplicate
+   
+   Returns:
+   New AFArray instance with its own reference count"
+  [^AFArray a]
+  (af-array-retained (af-handle a)))
+
 ;;;
 ;;; Type-specific memory operations
 ;;;
