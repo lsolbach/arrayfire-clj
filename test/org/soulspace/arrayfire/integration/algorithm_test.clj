@@ -250,7 +250,21 @@
   (run-tests)
 
   ;; run single test
-  (run-test test-lu)
+  (run-test test-lu) ; works
+  (run-test test-qr) ; works
+  (run-test test-svd) ; works
+  (run-test test-sum) ; error 202
+  (run-test test-sum-dim) ; works, but very slow
+  (run-test test-product) ; error 202
+  (run-test test-min-max) ; error 202
+  (run-test test-all-true) ; error 202
+  (run-test test-any-true) ; error 202
+  (run-test test-count) ; error 202
+  (run-test test-sort) ; works, but very slow
+  (run-test test-sort-descending) ; works
+  (run-test test-sort-index) ; works, but very slow
+  (run-test test-set-unique) ; works, but very slow
+  (run-test test-where) ; works, but very slow
 
   ;
   )
