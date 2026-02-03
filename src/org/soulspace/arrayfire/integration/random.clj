@@ -103,7 +103,7 @@
   "Convert engine type keyword or integer to integer constant."
   [engine-type]
   (cond
-    (keyword? engine-type) (get engine-type-map engine-type
+    (keyword? engine-type) (or (get engine-type-map engine-type)
                                 (throw (ex-info "Invalid engine type keyword"
                                                 {:type engine-type
                                                  :valid-types (keys engine-type-map)})))
