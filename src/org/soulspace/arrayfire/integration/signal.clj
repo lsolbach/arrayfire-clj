@@ -758,6 +758,86 @@
                  "af-convolve2-sep")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
+(defn convolve2-nn
+  "Compute 2D convolution optimized for neural networks.
+   
+   Performs 2D convolution with stride, padding, and dilation support,
+   specifically designed for deep learning applications. This function
+   performs correlation (not convolution), which is standard in CNNs.
+   
+   Parameters:
+   - signal: Input signal/image (AFArray) [height × width × channels × batch]
+   - filter: Filter/kernel (AFArray) [kernel_h × kernel_w × channels × num_filters]
+   - strides: Stride values [stride_height stride_width] (vector)
+   - paddings: Padding values [pad_height pad_width] (vector)
+   - dilations: Dilation values [dilation_height dilation_width] (vector)
+   
+   Returns:
+   Convolved output (AFArray) [out_h × out_w × num_filters × batch]
+   
+   Output dimensions:
+   - out_h = floor((height + 2×pad_h - dil_h×(kernel_h-1) - 1) / stride_h) + 1
+   - out_w = floor((width + 2×pad_w - dil_w×(kernel_w-1) - 1) / stride_w) + 1
+   
+   Parameters explained:
+   
+   **Stride**: Controls output size by moving filter in larger steps
+   - [1 1]: Standard convolution, output nearly same size as input
+   - [2 2]: Downsamples by 2x, common in pooling layers
+   
+   **Padding**: Adds zeros around input border
+   - [0 0]: Valid convolution, output smaller than input
+   - [(k-1)/2 (k-1)/2]: Same convolution, preserves input size
+   
+   **Dilation**: Spaces out filter elements (atrous convolution)
+   - [1 1]: Standard convolution
+   - [2 2]: Dilated convolution with receptive field 2x larger
+   
+   Example:
+   ```clojure
+   ;; Standard 3×3 convolution
+   (def output (convolve2-nn input filter [1 1] [1 1] [1 1]))
+   
+   ;; Stride-2 downsampling convolution
+   (def downsampled (convolve2-nn input filter [2 2] [1 1] [1 1]))
+   
+   ;; Dilated convolution for larger receptive field
+   (def dilated (convolve2-nn input filter [1 1] [0 0] [2 2]))
+   ```
+   
+   See also:
+   - convolve2-gradient-nn in ml namespace (for backpropagation)
+   - convolve2: General purpose 2D convolution"
+  [^AFArray signal ^AFArray filter strides paddings dilations]
+  (let [;; Convert strides to native array
+        stride-count (count strides)
+        stride-buf (jvm/dims->segment strides)
+        
+        ;; Convert paddings to native array
+        padding-count (count paddings)
+        padding-buf (jvm/dims->segment paddings)
+        
+        ;; Convert dilations to native array
+        dilation-count (count dilations)
+        dilation-buf (jvm/dims->segment dilations)
+        
+        ;; Allocate output
+        out (jvm/native-af-array-pointer)]
+    
+    (jvm/check! (convolve/af-convolve2-nn
+                  out
+                  (jvm/af-handle signal)
+                  (jvm/af-handle filter)
+                  (int stride-count)
+                  stride-buf
+                  (int padding-count)
+                  padding-buf
+                  (int dilation-count)
+                  dilation-buf)
+                "af-convolve2-nn")
+    
+    (jvm/af-array-new (jvm/deref-af-array out))))
+
 (defn fft-convolve1
   "Compute 1D convolution using FFT (frequency domain).
    
