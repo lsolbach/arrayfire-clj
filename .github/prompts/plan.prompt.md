@@ -1,2 +1,3 @@
 Plan the following task in detail and describe each step clearly in a markdown document in the 'dev' folder.
-Use relevant information from the #codebase to inform your plan.
+Use relevant information from your research and the #codebase to inform your plan.
+The plan should be followable by a competent software developer or an LLM with coding capabilities.
