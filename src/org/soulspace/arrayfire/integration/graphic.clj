@@ -94,7 +94,7 @@
             [org.soulspace.arrayfire.ffi.plot :as plot-ffi]
             [org.soulspace.arrayfire.ffi.hist :as hist-ffi]
             [org.soulspace.arrayfire.ffi.surface :as surface-ffi]
-            [org.soulspace.arrayfire.ffi.vector_field :as vector-ffi]
+            [org.soulspace.arrayfire.ffi.vector-field :as vector-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (java.lang.foreign MemorySegment)))
 
