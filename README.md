@@ -14,7 +14,7 @@ ArrayFire is a general-purpose tensor library that simplifies the software devel
 ## Requirements
 
 - **Java 22+** with FFM API support
-- **ArrayFire 3.10 library** installed (CPU, CUDA, or OpenCL backend)
+- **ArrayFire 3.10 library** installed
 - **JVM flags**: `--enable-native-access=ALL-UNNAMED`
 
 ## Installing ArrayFire
