@@ -205,6 +205,9 @@
                 "af-join")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
+; TODO use mem/pointer-size, if it works in arithmetic
+(def pointer-size 8)
+
 (defn join-many
   "Join many arrays along a dimension (up to 10).
    
@@ -217,11 +220,11 @@
   [dim arrays]
   (let [out (jvm/native-af-array-pointer)
         n (count arrays)
-        pointer-size mem/pointer-size
-        ;; Create array of af_array handles
         handles-buf (mem/alloc (* n pointer-size))]
     (doseq [[i arr] (map-indexed vector arrays)]
-      (mem/write-long handles-buf (* i pointer-size) (jvm/af-handle-value arr)))
+      (mem/write-long handles-buf
+                      (* i pointer-size)
+                      (jvm/af-handle-value arr)))
     (jvm/check! (data/af-join-many out (int dim) n handles-buf)
                 "af-join-many")
     (jvm/af-array-new (jvm/deref-af-array out))))
