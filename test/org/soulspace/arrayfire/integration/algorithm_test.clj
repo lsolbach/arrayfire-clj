@@ -81,7 +81,7 @@
   (testing "sum reduces array elements"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
-          result (algo/sum a)
+          result (algo/sum a 0)
           buf (mem/alloc 4)]
       (array/get-data-ptr result buf)
       (is (approx= 10.0 (mem/read-float buf 0) 0.001))
@@ -104,7 +104,7 @@
   (testing "product multiplies array elements"
     (device/init!)
     (let [a (array/create-array (float-array [2.0 3.0 4.0]) [3] jvm/AF_DTYPE_F32)
-          result (algo/product a)
+          result (algo/product a 0)
           buf (mem/alloc 4)]
       (array/get-data-ptr result buf)
       (is (approx= 24.0 (mem/read-float buf 0) 0.001))
@@ -115,8 +115,8 @@
   (testing "min and max find extreme values"
     (device/init!)
     (let [a (array/create-array (float-array [3.0 1.0 4.0 1.0 5.0]) [5] jvm/AF_DTYPE_F32)
-          min-result (algo/min a)
-          max-result (algo/max a)
+          min-result (algo/min a 0)
+          max-result (algo/max a 0)
           min-buf (mem/alloc 4)
           max-buf (mem/alloc 4)]
       (array/get-data-ptr min-result min-buf)
@@ -132,8 +132,8 @@
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
           b (array/create-array (float-array [1.0 0.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          result-a (algo/all-true a)
-          result-b (algo/all-true b)
+          result-a (algo/all-true a 0)
+          result-b (algo/all-true b 0)
           buf-a (mem/alloc 1)
           buf-b (mem/alloc 1)]
       (array/get-data-ptr result-a buf-a)
@@ -150,8 +150,8 @@
     (device/init!)
     (let [a (array/create-array (float-array [0.0 0.0 0.0]) [3] jvm/AF_DTYPE_F32)
           b (array/create-array (float-array [0.0 1.0 0.0]) [3] jvm/AF_DTYPE_F32)
-          result-a (algo/any-true a)
-          result-b (algo/any-true b)
+          result-a (algo/any-true a 0)
+          result-b (algo/any-true b 0)
           buf-a (mem/alloc 1)
           buf-b (mem/alloc 1)]
       (array/get-data-ptr result-a buf-a)
@@ -167,7 +167,7 @@
   (testing "count counts non-zero elements"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 0.0 3.0 0.0 5.0]) [5] jvm/AF_DTYPE_F32)
-          result (algo/count a)
+          result (algo/count a 0)
           buf (mem/alloc 4)]
       (array/get-data-ptr result buf)
       (is (= 3 (mem/read-int buf 0)))
@@ -250,21 +250,21 @@
   (run-tests)
 
   ;; run single test
-  (run-test test-lu) ; works
-  (run-test test-qr) ; works
-  (run-test test-svd) ; works
-  (run-test test-sum) ; error 202
-  (run-test test-sum-dim) ; works, but very slow
-  (run-test test-product) ; error 202
-  (run-test test-min-max) ; error 202
-  (run-test test-all-true) ; error 202
-  (run-test test-any-true) ; error 202
-  (run-test test-count) ; error 202
-  (run-test test-sort) ; works, but very slow
-  (run-test test-sort-descending) ; works
-  (run-test test-sort-index) ; works, but very slow
-  (run-test test-set-unique) ; works, but very slow
-  (run-test test-where) ; works, but very slow
+  (run-test test-lu)
+  (run-test test-qr)
+  (run-test test-svd)
+  (run-test test-sum)
+  (run-test test-sum-dim)
+  (run-test test-product)
+  (run-test test-min-max)
+  (run-test test-all-true)
+  (run-test test-any-true)
+  (run-test test-count)
+  (run-test test-sort)
+  (run-test test-sort-descending)
+  (run-test test-sort-index)
+  (run-test test-set-unique)
+  (run-test test-where)
 
   ;
   )
