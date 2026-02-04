@@ -1,7 +1,9 @@
 # ArrayFire for Clojure
 
-Arrayfire-clj provides a minimal Clojure wrapper around the [ArrayFire](https://github.com/arrayfire/arrayfire) C API
-using Java 22+ Foreign Function & Memory API via the Coffi library.
+Arrayfire-clj provides a minimal Clojure wrapper around the
+[ArrayFire](https://github.com/arrayfire/arrayfire) C API
+using Java 22+ Foreign Function & Memory API via the
+[Coffi](https://github.com/IGJoshua/coffi) library.
 
 ArrayFire is a general-purpose tensor library that simplifies the software development process for the parallel architectures found in CPUs, GPUs, and other hardware acceleration devices.
 
@@ -21,18 +23,6 @@ See [ArrayFire Installer](https://arrayfire.org/docs/installing.htm) for the
 installation instructions for your operating system.
 
 ## Configuration
-
-### Environment Variables
-
-You can set `ARRAYFIRE_LIB` to specify the library name if needed:
-
-```bash
-export ARRAYFIRE_LIB="af"  # Default
-# or
-export ARRAYFIRE_LIB="afcpu"  # CPU backend specifically
-# or
-export ARRAYFIRE_LIB="afcuda" # CUDA backend specifically
-```
 
 ### JVM Options
 
