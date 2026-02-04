@@ -4,7 +4,7 @@
             [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
-  (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray AFFeatures]))
+  (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
 
 ;;;
 ;;; Feature Detection Tests
@@ -25,10 +25,10 @@
           edge 3
           features (vision/fast img threshold arc-length non-max feature-ratio edge)]
       (try
-        (is (instance? AFFeatures features))
+        (is (integer? features))
+        (is (not (zero? features)))
         (finally
-          (.close img)
-          (.close features))))))
+          (.close img))))))
 
 (deftest test-fast-parameters
   (testing "FAST with different parameter combinations"
@@ -38,12 +38,10 @@
           features-low (vision/fast img 10.0 9 true 0.1 3)
           features-high (vision/fast img 30.0 9 true 0.05 3)]
       (try
-        (is (instance? AFFeatures features-low))
-        (is (instance? AFFeatures features-high))
+        (is (integer? features-low))
+        (is (integer? features-high))
         (finally
-          (.close img)
-          (.close features-low)
-          (.close features-high))))))
+          (.close img))))))
 
 (deftest test-harris
   (testing "Harris corner detection"
@@ -59,10 +57,9 @@
           k-thr 0.04
           features (vision/harris img max-corners min-response sigma block-size k-thr)]
       (try
-        (is (instance? AFFeatures features))
+        (is (integer? features))
         (finally
-          (.close img)
-          (.close features))))))
+          (.close img))))))
 
 (deftest test-harris-parameters
   (testing "Harris with different sigma and k values"
@@ -71,12 +68,10 @@
           features-small (vision/harris img 50 1.0e4 0.5 3 0.04)
           features-large (vision/harris img 50 1.0e4 2.0 5 0.06)]
       (try
-        (is (instance? AFFeatures features-small))
-        (is (instance? AFFeatures features-large))
+        (is (integer? features-small))
+        (is (integer? features-large))
         (finally
-          (.close img)
-          (.close features-small)
-          (.close features-large))))))
+          (.close img))))))
 
 (deftest test-orb
   (testing "ORB feature detection and description"
@@ -89,11 +84,10 @@
           blur-img false
           [features descriptors] (vision/orb img fast-thr max-feat scl-fctr levels blur-img)]
       (try
-        (is (instance? AFFeatures features))
+        (is (integer? features))
         (is (instance? AFArray descriptors))
         (finally
           (.close img)
-          (.close features)
           (.close descriptors))))))
 
 (deftest test-orb-with-blur
@@ -102,11 +96,10 @@
     (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
           [features descriptors] (vision/orb img 15.0 50 1.2 4 true)]
       (try
-        (is (instance? AFFeatures features))
+        (is (integer? features))
         (is (instance? AFArray descriptors))
         (finally
           (.close img)
-          (.close features)
           (.close descriptors))))))
 
 (deftest test-sift
@@ -123,12 +116,11 @@
           [features descriptors] (vision/sift img n-layers contrast-thr edge-thr init-sigma 
                                                     double-input intensity-scale feature-ratio)]
       (try
-        (is (instance? AFFeatures features))
+        (is (integer? features))
         (is (instance? AFArray descriptors))
         (is (= 128 (first (array/get-dims descriptors)))) ;; SIFT produces 128-dim descriptors
         (finally
           (.close img)
-          (.close features)
           (.close descriptors))))))
 
 (deftest test-sift-double-input
@@ -137,11 +129,10 @@
     (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
           [features descriptors] (vision/sift img 3 0.04 10.0 1.6 true 0.00390625 0.05)]
       (try
-        (is (instance? AFFeatures features))
+        (is (integer? features))
         (is (instance? AFArray descriptors))
         (finally
           (.close img)
-          (.close features)
           (.close descriptors))))))
 
 (deftest test-gloh
@@ -158,12 +149,11 @@
           [features descriptors] (vision/gloh img n-layers contrast-thr edge-thr init-sigma 
                                                      double-input intensity-scale feature-ratio)]
       (try
-        (is (instance? AFFeatures features))
+        (is (integer? features))
         (is (instance? AFArray descriptors))
         (is (= 272 (first (array/get-dims descriptors)))) ;; GLOH produces 272-dim descriptors
         (finally
           (.close img)
-          (.close features)
           (.close descriptors))))))
 
 ;;;
@@ -287,7 +277,7 @@
     (device/init!)
     (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
           dog-fine (vision/dog img 1 2)
-          dog-coarse (vision/dog img 5 10)]
+          dog-coarse (vision/dog img 4 6)] ; radius must be ≤ 8 on OneAPI
       (try
         (is (instance? AFArray dog-fine))
         (is (instance? AFArray dog-coarse))
@@ -355,8 +345,8 @@
           [feat2 desc2] (vision/orb img2 20.0 100 1.5 4 false)
           [idx dist] (vision/hamming-matcher desc1 desc2 0 1)]
       (try
-        (is (instance? AFFeatures feat1))
-        (is (instance? AFFeatures feat2))
+        (is (integer? feat1))
+        (is (integer? feat2))
         (is (instance? AFArray desc1))
         (is (instance? AFArray desc2))
         (is (instance? AFArray idx))
@@ -364,8 +354,6 @@
         (finally
           (.close img1)
           (.close img2)
-          (.close feat1)
-          (.close feat2)
           (.close desc1)
           (.close desc2)
           (.close idx)
@@ -379,15 +367,12 @@
           [orb-feat orb-desc] (vision/orb img 20.0 100 1.5 4 false)
           harris-feat (vision/harris img 100 1.0e5 1.0 3 0.04)]
       (try
-        (is (instance? AFFeatures fast-feat))
-        (is (instance? AFFeatures orb-feat))
-        (is (instance? AFFeatures harris-feat))
+        (is (integer? fast-feat))
+        (is (integer? orb-feat))
+        (is (integer? harris-feat))
         (finally
           (.close img)
-          (.close fast-feat)
-          (.close orb-feat)
-          (.close orb-desc)
-          (.close harris-feat))))))
+          (.close orb-desc))))))
 
 (comment
   ;; run all tests from REPL
