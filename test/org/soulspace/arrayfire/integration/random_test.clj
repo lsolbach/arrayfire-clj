@@ -227,8 +227,29 @@
       (is (not (nil? (mem/read-double buf 0))))
       (.close a))))
 
-(comment 
+(comment
   ;; run tests from REPL
   (run-tests)
+
+  ;; run individual tests
+  (run-test test-create-release-engine)
+  (run-test test-engine-type)
+  (run-test test-engine-seed)
+  (run-test test-retain-engine)
+  (run-test test-engine-type-name)
+  (run-test test-get-default-engine)
+  (run-test test-set-default-engine-type)
+  (run-test test-seed-management)
+  (run-test test-randu)
+  (run-test test-randu-2d)
+  (run-test test-randn)
+  (run-test test-randn-reproducibility)
+  (run-test test-random-uniform-with-engine)
+  (run-test test-random-normal-with-engine)
+  (run-test test-multiple-engines)
+  (run-test test-engine-types)
+  (run-test test-randu-integer)
+  (run-test test-randn-double)
+  
   ;
   )
