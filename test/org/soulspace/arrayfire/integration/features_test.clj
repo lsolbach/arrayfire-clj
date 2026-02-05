@@ -109,7 +109,7 @@
       (try
         (let [x (features/get-features-xpos feat)]
           (is (instance? AFArray x))
-          (is (= [10] (array/get-dims x)))
+          (is (= [10 1 1 1] (array/get-dims x)))
           (is (= jvm/AF_DTYPE_F32 (array/get-type x))))
         (finally
           (features/release-features! feat))))))
@@ -121,7 +121,7 @@
       (try
         (let [y (features/get-features-ypos feat)]
           (is (instance? AFArray y))
-          (is (= [10] (array/get-dims y)))
+          (is (= [10 1 1 1] (array/get-dims y)))
           (is (= jvm/AF_DTYPE_F32 (array/get-type y))))
         (finally
           (features/release-features! feat))))))
@@ -133,7 +133,7 @@
       (try
         (let [score (features/get-features-score feat)]
           (is (instance? AFArray score))
-          (is (= [10] (array/get-dims score)))
+          (is (= [10 1 1 1] (array/get-dims score)))
           (is (= jvm/AF_DTYPE_F32 (array/get-type score))))
         (finally
           (features/release-features! feat))))))
@@ -145,7 +145,7 @@
       (try
         (let [ori (features/get-features-orientation feat)]
           (is (instance? AFArray ori))
-          (is (= [10] (array/get-dims ori)))
+          (is (= [10 1 1 1] (array/get-dims ori)))
           (is (= jvm/AF_DTYPE_F32 (array/get-type ori))))
         (finally
           (features/release-features! feat))))))
@@ -157,7 +157,7 @@
       (try
         (let [size (features/get-features-size feat)]
           (is (instance? AFArray size))
-          (is (= [10] (array/get-dims size)))
+          (is (= [10 1 1 1] (array/get-dims size)))
           (is (= jvm/AF_DTYPE_F32 (array/get-type size))))
         (finally
           (features/release-features! feat))))))
@@ -178,11 +178,11 @@
               ori (features/get-features-orientation feat)
               size (features/get-features-size feat)]
           (is (= n 15))
-          (is (= [n] (array/get-dims x)))
-          (is (= [n] (array/get-dims y)))
-          (is (= [n] (array/get-dims score)))
-          (is (= [n] (array/get-dims ori)))
-          (is (= [n] (array/get-dims size))))
+          (is (= [n 1 1 1] (array/get-dims x)))
+          (is (= [n 1 1 1] (array/get-dims y)))
+          (is (= [n 1 1 1] (array/get-dims score)))
+          (is (= [n 1 1 1] (array/get-dims ori)))
+          (is (= [n 1 1 1] (array/get-dims size))))
         (finally
           (features/release-features! feat))))))
 
