@@ -24,8 +24,8 @@
     (device/init!)
     (let [engine (rand/create-engine :philox 42)]
       (is (= rand/RANDOM-ENGINE-PHILOX (rand/get-engine-type engine)))
-      (rand/set-engine-type! engine :mersenne)
-      (is (= rand/RANDOM-ENGINE-MERSENNE (rand/get-engine-type engine)))
+      (rand/set-engine-type! engine :threefry)
+      (is (= rand/RANDOM-ENGINE-THREEFRY (rand/get-engine-type engine)))
       (rand/release-engine! engine))))
 
 (deftest test-engine-seed
@@ -156,7 +156,7 @@
 (deftest test-random-normal-with-engine
   (testing "random-normal with custom engine"
     (device/init!)
-    (let [engine (rand/create-engine :mersenne 123)
+    (let [engine (rand/create-engine :threefry 123)
           a (rand/random-normal [20] jvm/AF_DTYPE_F64 engine)
           buf (mem/alloc (* 20 8))]
       (array/get-data-ptr a buf)
@@ -188,19 +188,19 @@
   (testing "different engine types produce different sequences"
     (device/init!)
     (let [engine-philox (rand/create-engine :philox 42)
-          engine-mersenne (rand/create-engine :mersenne 42)
+          engine-threefry (rand/create-engine :threefry 42)
           a-philox (rand/random-uniform [5] jvm/AF_DTYPE_F32 engine-philox)
-          a-mersenne (rand/random-uniform [5] jvm/AF_DTYPE_F32 engine-mersenne)
+          a-threefry (rand/random-uniform [5] jvm/AF_DTYPE_F32 engine-threefry)
           buf-philox (mem/alloc (* 5 4))
-          buf-mersenne (mem/alloc (* 5 4))]
+          buf-threefry (mem/alloc (* 5 4))]
       (array/get-data-ptr a-philox buf-philox)
-      (array/get-data-ptr a-mersenne buf-mersenne)
+      (array/get-data-ptr a-threefry buf-threefry)
       ;; Different engines should produce different values
-      (is (not= (mem/read-float buf-philox 0) (mem/read-float buf-mersenne 0)))
+      (is (not= (mem/read-float buf-philox 0) (mem/read-float buf-threefry 0)))
       (.close a-philox)
-      (.close a-mersenne)
+      (.close a-threefry)
       (rand/release-engine! engine-philox)
-      (rand/release-engine! engine-mersenne))))
+      (rand/release-engine! engine-threefry))))
 
 ;;;
 ;;; Data Type Tests
@@ -250,6 +250,6 @@
   (run-test test-engine-types)
   (run-test test-randu-integer)
   (run-test test-randn-double)
-  
+
   ;
   )

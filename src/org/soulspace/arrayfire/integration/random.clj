@@ -253,8 +253,9 @@
    - get-engine-type: Query current type"
   [engine engine-type]
   (let [type-int (engine-type->int engine-type)
-        engine-seg (mem/as-segment engine)]
-    (jvm/check! (random/af-random-engine-set-type engine-seg type-int)
+        engine-ptr (mem/alloc 8)]
+    (mem/write-long engine-ptr 0 engine)
+    (jvm/check! (random/af-random-engine-set-type engine-ptr type-int)
                 "af-random-engine-set-type")
     engine))
 
@@ -287,7 +288,7 @@
     (jvm/check! (random/af-random-engine-get-type type-ptr (mem/as-segment engine))
                 "af-random-engine-get-type")
     (mem/read-int type-ptr 0)))
-
+   
 (defn set-engine-seed!
   "Set the seed of a random engine.
    
@@ -312,8 +313,9 @@
    See also:
    - get-engine-seed: Query current seed"
   [engine seed]
-  (let [engine-seg (mem/as-segment engine)]
-    (jvm/check! (random/af-random-engine-set-seed engine-seg (long seed))
+  (let [engine-ptr (mem/alloc 8)]
+    (mem/write-long engine-ptr 0 engine)
+    (jvm/check! (random/af-random-engine-set-seed engine-ptr (long seed))
                 "af-random-engine-set-seed")
     engine))
 
@@ -330,9 +332,9 @@
    
    Example:
    ```clojure
-   (def engine (create-engine :philox 42))
+   (def engine (create-engine :philox 12345))
    (get-engine-seed engine)
-   ; => 42
+   ; => 12345
    ```
    
    See also:
