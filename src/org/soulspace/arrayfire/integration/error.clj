@@ -130,9 +130,8 @@
    Note: The returned string is a compile-time constant and does not need
    to be freed by the caller."
   [err-code]
-  (let [str-ptr (error-ffi/af-err-to-string (int err-code))
-        str-segment (MemorySegment/ofAddress str-ptr)]
-    (jvm/c-string->string str-segment)))
+  (let [str-ptr (error-ffi/af-err-to-string (int err-code))]
+    (jvm/c-string->string str-ptr)))
 
 ;;;
 ;;; Stack Trace Control
