@@ -1,5 +1,5 @@
 (ns org.soulspace.arrayfire.integration.statistics-test
-  (:require [clojure.test :refer [deftest is testing run-tests]]
+  (:require [clojure.test :refer [deftest is testing run-test run-tests]]
             [org.soulspace.arrayfire.integration.statistics :as stats]
             [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.data :as data]
@@ -17,7 +17,7 @@
     (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
           result (stats/mean data)]
       (is (instance? AFArray result))
-      (is (= [1 3] (array/get-dims result)))
+      (is (= [1 3 1 1] (array/get-dims result)))
       (.close result)
       (.close data))))
 
@@ -29,8 +29,8 @@
           result-dim1 (stats/mean data 1)]
       (is (instance? AFArray result-dim0))
       (is (instance? AFArray result-dim1))
-      (is (= [1 3] (array/get-dims result-dim0)))
-      (is (= [2 1] (array/get-dims result-dim1)))
+      (is (= [1 3 1 1] (array/get-dims result-dim0)))
+      (is (= [2 1 1 1] (array/get-dims result-dim1)))
       (.close result-dim1)
       (.close result-dim0)
       (.close data))))
@@ -62,12 +62,8 @@
     (device/init!)
     (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
           result (stats/mean-all data)]
-      (is (map? result))
-      (is (contains? result :real))
-      (is (contains? result :imag))
-      (is (number? (:real result)))
-      (is (number? (:imag result)))
-      (is (= 2.5 (:real result)))
+      (is (number? result))
+      (is (= 2.5 result))
       (.close data))))
 
 (deftest test-mean-all-weighted
@@ -76,10 +72,7 @@
     (let [values (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
           weights (array/create-array (float-array [0.1 0.2 0.3 0.4]) [4] jvm/AF_DTYPE_F32)
           result (stats/mean-all-weighted values weights)]
-      (is (map? result))
-      (is (contains? result :real))
-      (is (contains? result :imag))
-      (is (number? (:real result)))
+      (is (number? result))
       (.close weights)
       (.close values))))
 
@@ -114,7 +107,7 @@
     (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
           result (stats/var data stats/VARIANCE_DEFAULT 1)]
       (is (instance? AFArray result))
-      (is (= [2 1] (array/get-dims result)))
+      (is (= [2 1 1 1] (array/get-dims result)))
       (.close result)
       (.close data))))
 
@@ -145,10 +138,7 @@
     (device/init!)
     (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
           result (stats/var-all data)]
-      (is (map? result))
-      (is (contains? result :real))
-      (is (contains? result :imag))
-      (is (number? (:real result)))
+      (is (number? result))
       (.close data))))
 
 (deftest test-var-all-weighted
@@ -157,8 +147,7 @@
     (let [values (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
           weights (array/create-array (float-array [0.25 0.25 0.25 0.25]) [4] jvm/AF_DTYPE_F32)
           result (stats/var-all-weighted values weights)]
-      (is (map? result))
-      (is (contains? result :real))
+      (is (number? result))
       (.close weights)
       (.close values))))
 
@@ -179,9 +168,9 @@
   (testing "stdev computes along specified dimension"
     (device/init!)
     (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
-          result (stats/stdev data 1)]
+          result (stats/stdev data stats/VARIANCE_SAMPLE 1)]
       (is (instance? AFArray result))
-      (is (= [2 1] (array/get-dims result)))
+      (is (= [2 1 1 1] (array/get-dims result)))
       (.close result)
       (.close data))))
 
@@ -190,10 +179,7 @@
     (device/init!)
     (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
           result (stats/stdev-all data)]
-      (is (map? result))
-      (is (contains? result :real))
-      (is (contains? result :imag))
-      (is (number? (:real result)))
+      (is (number? result))
       (.close data))))
 
 ;;;
@@ -215,7 +201,7 @@
     (let [data (array/create-array (float-array [1.0 3.0 2.0 5.0 4.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
           result (stats/median data 1)]
       (is (instance? AFArray result))
-      (is (= [2 1] (array/get-dims result)))
+      (is (= [2 1 1 1] (array/get-dims result)))
       (.close result)
       (.close data))))
 
@@ -224,11 +210,8 @@
     (device/init!)
     (let [data (array/create-array (float-array [1.0 3.0 2.0 5.0 4.0]) [5] jvm/AF_DTYPE_F32)
           result (stats/median-all data)]
-      (is (map? result))
-      (is (contains? result :real))
-      (is (contains? result :imag))
-      (is (number? (:real result)))
-      (is (= 3.0 (:real result)))
+      (is (number? result))
+      (is (= 3.0 result))
       (.close data))))
 
 ;;;
@@ -262,8 +245,8 @@
       (is (map? result))
       (is (instance? AFArray mean-arr))
       (is (instance? AFArray var-arr))
-      (is (= [2 1] (array/get-dims mean-arr)))
-      (is (= [2 1] (array/get-dims var-arr)))
+      (is (= [2 1 1 1] (array/get-dims mean-arr)))
+      (is (= [2 1 1 1] (array/get-dims var-arr)))
       (.close var-arr)
       (.close mean-arr)
       (.close weights)
@@ -305,12 +288,9 @@
     (let [x (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0]) [5] jvm/AF_DTYPE_F32)
           y (array/create-array (float-array [2.0 4.0 6.0 8.0 10.0]) [5] jvm/AF_DTYPE_F32)
           result (stats/corrcoef x y)]
-      (is (map? result))
-      (is (contains? result :real))
-      (is (contains? result :imag))
-      (is (number? (:real result)))
+      (is (number? result))
       ;; Perfect positive correlation should be close to 1.0
-      (is (> (:real result) 0.99))
+      (is (> result 0.99))
       (.close y)
       (.close x))))
 
@@ -322,11 +302,11 @@
   (testing "topk finds k largest values"
     (device/init!)
     (let [data (array/create-array (float-array [5.0 2.0 8.0 1.0 9.0 3.0 7.0 4.0]) [8] jvm/AF_DTYPE_F32)
-          [values indices] (stats/topk data 3 stats/TOPK_MAX 0)]
+          [values indices] (stats/topk data 3 0 stats/TOPK_MAX)]
       (is (instance? AFArray values))
       (is (instance? AFArray indices))
-      (is (= [3] (array/get-dims values)))
-      (is (= [3] (array/get-dims indices)))
+      (is (= [3 1 1 1] (array/get-dims values)))
+      (is (= [3 1 1 1] (array/get-dims indices)))
       (.close indices)
       (.close values)
       (.close data))))
@@ -335,10 +315,10 @@
   (testing "topk finds k smallest values"
     (device/init!)
     (let [data (array/create-array (float-array [5.0 2.0 8.0 1.0 9.0 3.0]) [6] jvm/AF_DTYPE_F32)
-          [values indices] (stats/topk data 3 stats/TOPK_MIN 0)]
+          [values indices] (stats/topk data 3 0 stats/TOPK_MIN)]
       (is (instance? AFArray values))
       (is (instance? AFArray indices))
-      (is (= [3] (array/get-dims values)))
+      (is (= [3 1 1 1] (array/get-dims values)))
       (.close indices)
       (.close values)
       (.close data))))
@@ -361,7 +341,7 @@
           [values indices] (stats/topk data 2 stats/TOPK_MAX 1)]
       (is (instance? AFArray values))
       (is (instance? AFArray indices))
-      (is (= [2 2] (array/get-dims values)))
+      (is (= [2 2 1 1] (array/get-dims values)))
       (.close indices)
       (.close values)
       (.close data))))
@@ -369,5 +349,36 @@
 (comment
   ;; run tests from REPL
   (run-tests)
+
+  ;; run individual tests
+  (run-test test-mean)
+  (run-test test-mean-with-dimension)
+  (run-test test-mean-weighted)
+  (run-test test-mean-weighted-with-dimension)
+  (run-test test-mean-all)
+  (run-test test-mean-all-weighted)
+  (run-test test-var)
+  (run-test test-var-with-bias)
+  (run-test test-var-with-dimension)
+  (run-test test-var-weighted)
+  (run-test test-var-weighted-with-dimension)
+  (run-test test-var-all)
+  (run-test test-var-all-weighted)
+  (run-test test-stdev)
+  (run-test test-stdev-with-dimension)
+  (run-test test-stdev-all)
+  (run-test test-median)
+  (run-test test-median-with-dimension)
+  (run-test test-median-all)
+  (run-test test-meanvar)
+  (run-test test-meanvar-with-bias-and-dimension)
+  (run-test test-cov)
+  (run-test test-cov-with-bias)
+  (run-test test-corrcoef)
+  (run-test test-topk-max)
+  (run-test test-topk-min)
+  (run-test test-topk-default)
+  (run-test test-topk-with-dimension)
+  
   ;
   )
