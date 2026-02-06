@@ -364,7 +364,8 @@
      (jvm/check! (print/af-array-to-string output-ptr c-expr (jvm/af-handle arr) 
                                            (int precision) (if transpose 1 0))
                  "af-array-to-string")
-     (let [str-segment (jvm/deref-af-array output-ptr)]
+     (let [str-addr (jvm/deref-af-array output-ptr)
+           str-segment (java.lang.foreign.MemorySegment/ofAddress str-addr)]
        (jvm/c-string->string str-segment)))))
 
 ;;;
