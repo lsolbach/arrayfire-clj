@@ -1,140 +1,18 @@
 (ns org.soulspace.arrayfire.integration.algorithm
   "Integration of the ArrayFire algorithm related FFI bindings with the error
-   handling and resource management on the JVM."
+   handling and resource management on the JVM.
+   
+   Note: Matrix decomposition functions (LU, QR, SVD) have been moved to
+   org.soulspace.arrayfire.integration.lapack to align with the ArrayFire
+   Unified API structure."
   (:refer-clojure :exclude [min max count sort])
-  (:require [org.soulspace.arrayfire.ffi.lu :as lu]
-            [org.soulspace.arrayfire.ffi.qr :as qr]
-            [org.soulspace.arrayfire.ffi.svd :as svd]
-            [org.soulspace.arrayfire.ffi.reduce :as reduce]
+  (:require [org.soulspace.arrayfire.ffi.reduce :as reduce]
             [org.soulspace.arrayfire.ffi.scan :as scan]
             [org.soulspace.arrayfire.ffi.sort :as sort]
             [org.soulspace.arrayfire.ffi.set :as set-ops]
             [org.soulspace.arrayfire.ffi.where :as where]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
-
-;;;
-;;; Matrix Decompositions
-;;;
-
-(defn lu
-  "Compute the LU decomposition of a matrix.
-   
-   Parameters:
-   - a: Input matrix (AFArray)
-   
-   Returns:
-   A vector containing three AFArray instances:
-   - L: Lower triangular matrix
-   - U: Upper triangular matrix
-   - P: Pivot indices as a permutation matrix"
-  [^AFArray a]
-  (let [l (jvm/native-af-array-pointer)
-        u (jvm/native-af-array-pointer)
-        p (jvm/native-af-array-pointer)]
-    (jvm/check! (lu/af-lu l u p (jvm/af-handle a)) "af-lu")
-    [(jvm/af-array-new (jvm/deref-af-array l))
-     (jvm/af-array-new (jvm/deref-af-array u))
-     (jvm/af-array-new (jvm/deref-af-array p))]))
-
-(defn qr
-  "Compute the QR decomposition of a matrix.
-   
-   Parameters:
-   - a: Input matrix (AFArray)
-   
-   Returns:
-   A vector containing two AFArray instances:
-   - Q: Orthogonal matrix
-   - R: Upper triangular matrix"
-  [^AFArray a]
-  (let [q (jvm/native-af-array-pointer)
-        r (jvm/native-af-array-pointer)
-        tau (jvm/native-af-array-pointer)]
-    (jvm/check! (qr/af-qr q r tau (jvm/af-handle a)) "af-qr")
-    [(jvm/af-array-new (jvm/deref-af-array q))
-     (jvm/af-array-new (jvm/deref-af-array r))
-     (jvm/af-array-new (jvm/deref-af-array tau))]))
-
-(defn svd
-  "Compute the Singular Value Decomposition (SVD) of a matrix.
-   
-   Parameters:
-   - a: Input matrix (AFArray)
-   
-   Returns:
-   A vector containing three AFArray instances:
-   - U: Left singular vectors
-   - S: Singular values (as a diagonal matrix)
-   - VT: Right singular vectors (transposed)"
-  [^AFArray a]
-  (let [u  (jvm/native-af-array-pointer)
-        s  (jvm/native-af-array-pointer)
-        vt (jvm/native-af-array-pointer)]
-    (jvm/check! (svd/af-svd u s vt (jvm/af-handle a)) "af-svd")
-    [(jvm/af-array-new (jvm/deref-af-array u))
-     (jvm/af-array-new (jvm/deref-af-array s))
-     (jvm/af-array-new (jvm/deref-af-array vt))]))
-
-(defn lu!
-  "Perform in-place LU decomposition of a matrix.
-   
-   This function modifies the input array directly, making it memory-efficient
-   for large matrices. The input is overwritten with the combined L and U matrices.
-   
-   Parameters:
-   - in: Input/output matrix (AFArray), modified in place
-   - is-lapack-piv: Boolean, use LAPACK pivot format (default false for ArrayFire format)
-   
-   Returns:
-   AFArray containing pivot indices"
-  ([^AFArray in]
-   (lu! in false))
-  ([^AFArray in is-lapack-piv]
-   (let [pivot (jvm/native-af-array-pointer)]
-     (jvm/check! (lu/af-lu-inplace pivot (jvm/af-handle in) (if is-lapack-piv 1 0))
-                 "af-lu-inplace")
-     (jvm/af-array-new (jvm/deref-af-array pivot)))))
-
-(defn qr!
-  "Perform in-place QR decomposition of a matrix.
-   
-   This function modifies the input array directly. The input is overwritten
-   with the Q and R matrices combined in a compact format.
-   
-   Parameters:
-   - in: Input/output matrix (AFArray), modified in place
-   
-   Returns:
-   AFArray containing tau values (reflector scalars)"
-  [^AFArray in]
-  (let [tau (jvm/native-af-array-pointer)]
-    (jvm/check! (qr/af-qr-inplace tau (jvm/af-handle in))
-                "af-qr-inplace")
-    (jvm/af-array-new (jvm/deref-af-array tau))))
-
-(defn svd!
-  "Perform in-place Singular Value Decomposition (SVD) of a matrix.
-   
-   This function modifies the input array directly, making it memory-efficient.
-   The input matrix is destroyed during the computation.
-   
-   Parameters:
-   - in: Input/output matrix (AFArray), destroyed during computation
-   
-   Returns:
-   A vector containing three AFArray instances:
-   - U: Left singular vectors
-   - S: Singular values (as a diagonal matrix)
-   - VT: Right singular vectors (transposed)"
-  [^AFArray in]
-  (let [u  (jvm/native-af-array-pointer)
-        s  (jvm/native-af-array-pointer)
-        vt (jvm/native-af-array-pointer)]
-    (jvm/check! (svd/af-svd-inplace u s vt (jvm/af-handle in)) "af-svd-inplace")
-    [(jvm/af-array-new (jvm/deref-af-array u))
-     (jvm/af-array-new (jvm/deref-af-array s))
-     (jvm/af-array-new (jvm/deref-af-array vt))]))
 
 ;;;
 ;;; Reduction Operations

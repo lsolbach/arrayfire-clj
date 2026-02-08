@@ -10,12 +10,188 @@
             [org.soulspace.arrayfire.ffi.norm :as norm]
             [org.soulspace.arrayfire.ffi.rank :as rank]
             [org.soulspace.arrayfire.ffi.lu :as lu]
+            [org.soulspace.arrayfire.ffi.qr :as qr]
+            [org.soulspace.arrayfire.ffi.svd :as svd]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;
 ;;; Matrix Decompositions
 ;;;
+
+(defn lu
+  "Compute the LU decomposition of a matrix.
+   
+   The LU decomposition factors a matrix A into:
+   - A = P * L * U
+   where P is a permutation matrix, L is lower triangular, and U is upper triangular.
+   
+   This is a fundamental decomposition for solving linear systems, computing
+   determinants, and matrix inversion.
+   
+   Parameters:
+   - a: Input square matrix (AFArray)
+   
+   Returns:
+   A vector containing three AFArray instances:
+   - L: Lower triangular matrix with ones on diagonal
+   - U: Upper triangular matrix
+   - P: Pivot indices as a permutation matrix
+   
+   Example:
+   (let [[l u p] (lu a)]
+     ;; Can use with solve-lu
+     (solve-lu u p b))"
+  [^AFArray a]
+  (let [l (jvm/native-af-array-pointer)
+        u (jvm/native-af-array-pointer)
+        p (jvm/native-af-array-pointer)]
+    (jvm/check! (lu/af-lu l u p (jvm/af-handle a)) "af-lu")
+    [(jvm/af-array-new (jvm/deref-af-array l))
+     (jvm/af-array-new (jvm/deref-af-array u))
+     (jvm/af-array-new (jvm/deref-af-array p))]))
+
+(defn lu!
+  "Perform in-place LU decomposition of a matrix.
+   
+   This function modifies the input array directly, making it memory-efficient
+   for large matrices. The input is overwritten with the combined L and U matrices.
+   
+   Parameters:
+   - in: Input/output matrix (AFArray), modified in place
+   - is-lapack-piv: Boolean, use LAPACK pivot format (default false for ArrayFire format)
+   
+   Returns:
+   AFArray containing pivot indices
+   
+   Example:
+   (let [pivot (lu! a)]
+     ;; a is now overwritten with L+U combined
+     pivot)"
+  ([^AFArray in]
+   (lu! in false))
+  ([^AFArray in is-lapack-piv]
+   (let [pivot (jvm/native-af-array-pointer)]
+     (jvm/check! (lu/af-lu-inplace pivot (jvm/af-handle in) (if is-lapack-piv 1 0))
+                 "af-lu-inplace")
+     (jvm/af-array-new (jvm/deref-af-array pivot)))))
+
+(defn qr
+  "Compute the QR decomposition of a matrix.
+   
+   The QR decomposition factors a matrix A into:
+   - A = Q * R
+   where Q is orthogonal and R is upper triangular.
+   
+   This decomposition is used for solving least squares problems,
+   eigenvalue algorithms, and linear system solving.
+   
+   Parameters:
+   - a: Input matrix (AFArray) - can be rectangular
+   
+   Returns:
+   A vector containing three AFArray instances:
+   - Q: Orthogonal matrix (m × min(m,n))
+   - R: Upper triangular matrix (min(m,n) × n)
+   - tau: Householder reflector scalars
+   
+   Example:
+   (let [[q r tau] (qr a)]
+     ;; Q is orthogonal, R is upper triangular
+     r)"
+  [^AFArray a]
+  (let [q (jvm/native-af-array-pointer)
+        r (jvm/native-af-array-pointer)
+        tau (jvm/native-af-array-pointer)]
+    (jvm/check! (qr/af-qr q r tau (jvm/af-handle a)) "af-qr")
+    [(jvm/af-array-new (jvm/deref-af-array q))
+     (jvm/af-array-new (jvm/deref-af-array r))
+     (jvm/af-array-new (jvm/deref-af-array tau))]))
+
+(defn qr!
+  "Perform in-place QR decomposition of a matrix.
+   
+   This function modifies the input array directly. The input is overwritten
+   with the Q and R matrices combined in a compact format.
+   
+   Parameters:
+   - in: Input/output matrix (AFArray), modified in place
+   
+   Returns:
+   AFArray containing tau values (Householder reflector scalars)
+   
+   Example:
+   (let [tau (qr! a)]
+     ;; a is now overwritten with Q+R in compact form
+     tau)"
+  [^AFArray in]
+  (let [tau (jvm/native-af-array-pointer)]
+    (jvm/check! (qr/af-qr-inplace tau (jvm/af-handle in))
+                "af-qr-inplace")
+    (jvm/af-array-new (jvm/deref-af-array tau))))
+
+(defn svd
+  "Compute the Singular Value Decomposition (SVD) of a matrix.
+   
+   The SVD factors a matrix A into:
+   - A = U * Σ * V^H
+   where U and V are orthogonal/unitary, and Σ is diagonal with non-negative singular values.
+   
+   This is the most informative matrix decomposition, used for:
+   - Dimensionality reduction (PCA)
+   - Pseudo-inverse computation
+   - Matrix approximation
+   - Condition number estimation
+   
+   Parameters:
+   - a: Input matrix (AFArray) - can be rectangular
+   
+   Returns:
+   A vector containing three AFArray instances:
+   - U: Left singular vectors (m × m orthogonal matrix)
+   - S: Singular values (min(m,n) × min(m,n) diagonal matrix)
+   - VT: Right singular vectors transposed (n × n orthogonal matrix)
+   
+   Example:
+   (let [[u s vt] (svd a)]
+     ;; A ≈ U * S * VT
+     s) ; singular values"
+  [^AFArray a]
+  (let [u  (jvm/native-af-array-pointer)
+        s  (jvm/native-af-array-pointer)
+        vt (jvm/native-af-array-pointer)]
+    (jvm/check! (svd/af-svd u s vt (jvm/af-handle a)) "af-svd")
+    [(jvm/af-array-new (jvm/deref-af-array u))
+     (jvm/af-array-new (jvm/deref-af-array s))
+     (jvm/af-array-new (jvm/deref-af-array vt))]))
+
+(defn svd!
+  "Perform in-place Singular Value Decomposition (SVD) of a matrix.
+   
+   This function modifies the input array directly, making it memory-efficient.
+   The input matrix is destroyed during the computation.
+   
+   Parameters:
+   - in: Input/output matrix (AFArray), destroyed during computation
+   
+   Returns:
+   A vector containing three AFArray instances:
+   - U: Left singular vectors
+   - S: Singular values (as a diagonal matrix)
+   - VT: Right singular vectors (transposed)
+   
+   Example:
+   (let [[u s vt] (svd! a)]
+     ;; a is destroyed, but we have U, S, VT
+     s)"
+  [^AFArray in]
+  (let [u  (jvm/native-af-array-pointer)
+        s  (jvm/native-af-array-pointer)
+        vt (jvm/native-af-array-pointer)]
+    (jvm/check! (svd/af-svd-inplace u s vt (jvm/af-handle in)) "af-svd-inplace")
+    [(jvm/af-array-new (jvm/deref-af-array u))
+     (jvm/af-array-new (jvm/deref-af-array s))
+     (jvm/af-array-new (jvm/deref-af-array vt))]))
 
 (defn cholesky
   "Perform Cholesky decomposition of a positive definite matrix.
@@ -292,8 +468,8 @@
    AFArray containing the solution x
    
    Example:
-   (let [[l u p] (algorithm/lu a)
-         x (solve-lu u p b)]
+   (let [[l u p] (lu a)
+         x (solve-lu l p b)]
      x)"
   ([^AFArray a ^AFArray pivot ^AFArray b]
    (solve-lu a pivot b {}))

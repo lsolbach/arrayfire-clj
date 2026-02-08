@@ -1,5 +1,6 @@
 (ns org.soulspace.arrayfire.integration.lapack-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.util.test :refer [approx=]]
             [org.soulspace.arrayfire.integration.lapack :as lapack]
             [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.data :as data]
@@ -8,15 +9,65 @@
             [coffi.mem :as mem])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
 
-(defn- approx=
-  "Compare expected/actual values within a tolerance."
-  [expected actual tolerance]
-  (<= (Math/abs (- (double expected) (double actual)))
-      (double tolerance)))
-
 ;;;
 ;;; Matrix Decompositions Tests
 ;;;
+
+(deftest test-lu
+  (testing "LU decomposition"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0
+                                               4.0 5.0 6.0
+                                               7.0 8.0 10.0])
+                                 [3 3] jvm/AF_DTYPE_F32)
+          [l u p] (lapack/lu a)
+          l-buf (mem/alloc (* 9 4))
+          u-buf (mem/alloc (* 9 4))]
+      (array/get-data-ptr l l-buf)
+      (array/get-data-ptr u u-buf)
+      ;; L should be lower triangular
+      (is (approx= 1.0 (mem/read-float l-buf 0) 0.001))
+      ;; U should be upper triangular
+      (is (> (Math/abs (mem/read-float u-buf 0)) 0.001))
+      (.close a)
+      (.close l)
+      (.close u)
+      (.close p))))
+
+(deftest test-qr
+  (testing "QR decomposition"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0
+                                               4.0 5.0 6.0
+                                               7.0 8.0 9.0])
+                                 [3 3] jvm/AF_DTYPE_F32)
+          [q r tau] (lapack/qr a)
+          q-buf (mem/alloc (* 9 4))]
+      (array/get-data-ptr q q-buf)
+      ;; Q should be orthogonal (values exist)
+      (is (not (nil? (mem/read-float q-buf 0))))
+      (.close a)
+      (.close q)
+      (.close r)
+      (.close tau))))
+
+(deftest test-svd
+  (testing "SVD decomposition"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0
+                                               3.0 4.0
+                                               5.0 6.0])
+                                 [3 2] jvm/AF_DTYPE_F32)
+          [u s vt] (lapack/svd a)
+          s-buf (mem/alloc (* 2 4))]
+      (array/get-data-ptr s s-buf)
+      ;; Singular values should be non-negative
+      (is (>= (mem/read-float s-buf 0) 0.0))
+      (is (>= (mem/read-float s-buf 4) 0.0))
+      (.close a)
+      (.close u)
+      (.close s)
+      (.close vt))))
 
 (deftest test-cholesky
   (testing "cholesky decomposes positive definite matrix"
@@ -323,15 +374,22 @@
     (let [a (array/create-array (float-array [1.0 2.0
                                                3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
           b (array/create-array (float-array [5.0 11.0]) [2] jvm/AF_DTYPE_F32)
-          ;; Note: Would need LU decomposition from algorithm namespace
-          ;; For now just test the function signature exists
-          ]
+          [l u p] (lapack/lu a)
+          x (lapack/solve-lu l p b)  ; Use l (lower) not u (upper)
+          buf (mem/alloc 8)]
       (try
-        ;; Function exists and can be called (would need proper LU arrays)
-        (is (fn? lapack/solve-lu))
+        (is (instance? AFArray x))
+        (array/get-data-ptr x buf)
+        ;; Solution should be approximately [1.0 2.0]
+        (is (approx= 1.0 (mem/read-float buf 0) 0.01))
+        (is (approx= 2.0 (mem/read-float buf 4) 0.01))
         (finally
           (.close a)
-          (.close b))))))
+          (.close b)
+          (.close l)
+          (.close u)
+          (.close p)
+          (.close x))))))
 
 ;;;
 ;;; Utility Functions Tests
@@ -391,13 +449,16 @@
   (run-tests)
   
   ;; run individual tests
+  (run-test test-lu)
+  (run-test test-qr)
+  (run-test test-svd)
   (run-test test-cholesky)
   (run-test test-cholesky-lower)
   (run-test test-cholesky-upper)
   (run-test test-cholesky-inplace)
   (run-test test-det)
   (run-test test-det-identity)
-  (run-test test-det-singular)
+  (run-test test-det-near-singular)
   (run-test test-rank)
   (run-test test-rank-deficient)
   (run-test test-rank-with-tolerance)

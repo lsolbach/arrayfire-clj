@@ -14,66 +14,6 @@
       (double tolerance)))
 
 ;;;
-;;; Matrix Decomposition Tests
-;;;
-
-(deftest test-lu
-  (testing "LU decomposition"
-    (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0
-                                               4.0 5.0 6.0
-                                               7.0 8.0 10.0])
-                                 [3 3] jvm/AF_DTYPE_F32)
-          [l u p] (algo/lu a)
-          l-buf (mem/alloc (* 9 4))
-          u-buf (mem/alloc (* 9 4))]
-      (array/get-data-ptr l l-buf)
-      (array/get-data-ptr u u-buf)
-      ;; L should be lower triangular
-      (is (approx= 1.0 (mem/read-float l-buf 0) 0.001))
-      ;; U should be upper triangular
-      (is (> (Math/abs (mem/read-float u-buf 0)) 0.001))
-      (.close a)
-      (.close l)
-      (.close u)
-      (.close p))))
-
-(deftest test-qr
-  (testing "QR decomposition"
-    (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0
-                                               4.0 5.0 6.0
-                                               7.0 8.0 9.0])
-                                 [3 3] jvm/AF_DTYPE_F32)
-          [q r tau] (algo/qr a)
-          q-buf (mem/alloc (* 9 4))]
-      (array/get-data-ptr q q-buf)
-      ;; Q should be orthogonal (values exist)
-      (is (not (nil? (mem/read-float q-buf 0))))
-      (.close a)
-      (.close q)
-      (.close r)
-      (.close tau))))
-
-(deftest test-svd
-  (testing "SVD decomposition"
-    (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0
-                                               5.0 6.0])
-                                 [3 2] jvm/AF_DTYPE_F32)
-          [u s vt] (algo/svd a)
-          s-buf (mem/alloc (* 2 4))]
-      (array/get-data-ptr s s-buf)
-      ;; Singular values should be non-negative
-      (is (>= (mem/read-float s-buf 0) 0.0))
-      (is (>= (mem/read-float s-buf 4) 0.0))
-      (.close a)
-      (.close u)
-      (.close s)
-      (.close vt))))
-
-;;;
 ;;; Reduction Operations Tests
 ;;;
 
