@@ -95,6 +95,7 @@
             [org.soulspace.arrayfire.ffi.fftconvolve :as fftconvolve]
             [org.soulspace.arrayfire.ffi.iir :as iir]
             [org.soulspace.arrayfire.ffi.filters :as filters]
+            [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
@@ -313,6 +314,172 @@
                                 (long output-size0) (long output-size1) (long output-size2))
                  "af-ifft3")
      (jvm/af-array-new (jvm/deref-af-array out)))))
+
+;;  
+;; Normalized FFT Operations (convenience functions)
+;;
+
+(defn fft-norm
+  "1D FFT with automatic 1/N normalization.
+   
+   Convenience wrapper that applies standard 1/N normalization automatically.
+   Useful when you want normalized frequency domain coefficients.
+   
+   Parameters:
+   - in: Input array (AFArray)
+   - output-size: Output length (default 0 = input length)
+   
+   Returns:
+   Complex AFArray with normalized frequency spectrum
+   
+   Example:
+   ```clojure
+   ;; Standard normalized FFT
+   (def freq-norm (fft-norm time-signal))
+   
+   ;; With padding
+   (def freq-padded (fft-norm time-signal 2048))
+   ```
+   
+   Notes:
+   - Normalization factor is 1/N where N is the signal length
+   - For round-trip FFT/IFFT without normalization loss, use:
+     * fft-norm + ifft (no norm), OR
+     * fft (no norm) + ifft-norm
+   
+   See also:
+   - fft: FFT with custom normalization
+   - ifft-norm: Normalized inverse FFT"
+  ([^AFArray in]
+   (fft-norm in 0))
+  ([^AFArray in output-size]
+   (let [n (array/get-elements in)
+         norm-factor (/ 1.0 (double n))]
+     (fft in norm-factor output-size))))
+
+(defn ifft-norm
+  "1D inverse FFT with automatic 1/N normalization.
+   
+   Convenience wrapper for inverse FFT with standard normalization.
+   
+   Parameters:
+   - in: Input frequency spectrum (AFArray, complex)
+   - output-size: Output length (default 0 = input length)
+   
+   Returns:
+   Complex AFArray with normalized time-domain signal
+   
+   Example:
+   ```clojure
+   ;; Standard normalized inverse FFT
+   (def time-norm (ifft-norm freq-spectrum))
+   ```
+   
+   Notes:
+   - Normalization factor is 1/N where N is the spectrum length
+   - Ensures proper scaling when doing round-trip fft/ifft
+   
+   See also:
+   - ifft: Inverse FFT with custom normalization
+   - fft-norm: Normalized forward FFT"
+  ([^AFArray in]
+   (ifft-norm in 0))
+  ([^AFArray in output-size]
+   (let [n (array/get-elements in)
+         norm-factor (/ 1.0 (double n))]
+     (ifft in norm-factor output-size))))
+
+(defn fft2-norm
+  "2D FFT with automatic 1/(N*M) normalization.
+   
+   Parameters:
+   - in: Input 2D array (AFArray)
+   - output-size0: Output size for dimension 0 (default 0)
+   - output-size1: Output size for dimension 1 (default 0)
+   
+   Returns:
+   Complex AFArray with normalized 2D frequency spectrum
+   
+   Example:
+   ```clojure
+   (def freq-2d-norm (fft2-norm image))
+   ```"
+  ([^AFArray in]
+   (fft2-norm in 0 0))
+  ([^AFArray in output-size0]
+   (fft2-norm in output-size0 0))
+  ([^AFArray in output-size0 output-size1]
+   (let [n (array/get-elements in)
+         norm-factor (/ 1.0 (double n))]
+     (fft2 in norm-factor output-size0 output-size1))))
+
+(defn ifft2-norm
+  "2D inverse FFT with automatic 1/(N*M) normalization.
+   
+   Parameters:
+   - in: Input 2D frequency spectrum (AFArray, complex)
+   - output-size0: Output size for dimension 0 (default 0)
+   - output-size1: Output size for dimension 1 (default 0)
+   
+   Returns:
+   Complex AFArray with normalized 2D spatial signal
+   
+   Example:
+   ```clojure
+   (def image-norm (ifft2-norm freq-2d))
+   ```"
+  ([^AFArray in]
+   (ifft2-norm in 0 0))
+  ([^AFArray in output-size0]
+   (ifft2-norm in output-size0 0))
+  ([^AFArray in output-size0 output-size1]
+   (let [n (array/get-elements in)
+         norm-factor (/ 1.0 (double n))]
+     (ifft2 in norm-factor output-size0 output-size1))))
+
+(defn fft3-norm
+  "3D FFT with automatic 1/(N*M*P) normalization.
+   
+   Parameters:
+   - in: Input 3D array (AFArray)
+   - output-size0: Output size for dimension 0 (default 0)
+   - output-size1: Output size for dimension 1 (default 0)
+   - output-size2: Output size for dimension 2 (default 0)
+   
+   Returns:
+   Complex AFArray with normalized 3D frequency spectrum"
+  ([^AFArray in]
+   (fft3-norm in 0 0 0))
+  ([^AFArray in output-size0]
+   (fft3-norm in output-size0 0 0))
+  ([^AFArray in output-size0 output-size1]
+   (fft3-norm in output-size0 output-size1 0))
+  ([^AFArray in output-size0 output-size1 output-size2]
+   (let [n (array/get-elements in)
+         norm-factor (/ 1.0 (double n))]
+     (fft3 in norm-factor output-size0 output-size1 output-size2))))
+
+(defn ifft3-norm
+  "3D inverse FFT with automatic 1/(N*M*P) normalization.
+   
+   Parameters:
+   - in: Input 3D frequency spectrum (AFArray, complex)
+   - output-size0: Output size for dimension 0 (default 0)
+   - output-size1: Output size for dimension 1 (default 0)
+   - output-size2: Output size for dimension 2 (default 0)
+   
+   Returns:
+   Complex AFArray with normalized 3D spatial signal"
+  ([^AFArray in]
+   (ifft3-norm in 0 0 0))
+  ([^AFArray in output-size0]
+   (ifft3-norm in output-size0 0 0))
+  ([^AFArray in output-size0 output-size1]
+   (ifft3-norm in output-size0 output-size1 0))
+  ([^AFArray in output-size0 output-size1 output-size2]
+   (let [n (array/get-elements in)
+         norm-factor (/ 1.0 (double n))]
+     (ifft3 in norm-factor output-size0 output-size1 output-size2))))
 
 ;;
 ;; Real-to-Complex FFT (optimized for real inputs)

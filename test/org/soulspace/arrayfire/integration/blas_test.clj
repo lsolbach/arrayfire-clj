@@ -210,6 +210,74 @@
       (is (identical? result a))
       (.close a))))
 
+;;;
+;;; Matrix Multiplication Convenience Functions Tests
+;;;
+
+(deftest test-matmul-nt
+  (testing "matmul-nt multiplies A * B^T"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+          b (array/create-array (float-array [5.0 6.0 7.0 8.0]) [2 2] jvm/AF_DTYPE_F32)
+          result (blas/matmul-nt a b)
+          buf (mem/alloc (* 4 4))]
+      (is (instance? AFArray result))
+      (is (= [2 2 1 1] (array/get-dims result)))
+      (array/get-data-ptr result buf)
+      ;; Column-major: A * B^T where B^T = [[5 7][6 8]]
+      ;; First element: 1*5 + 3*7 = 26
+      (is (approx= 26.0 (mem/read-float buf 0) 0.001))
+      (.close result)
+      (.close b)
+      (.close a))))
+
+(deftest test-matmul-tn
+  (testing "matmul-tn multiplies A^T * B"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+          b (array/create-array (float-array [5.0 6.0 7.0 8.0]) [2 2] jvm/AF_DTYPE_F32)
+          result (blas/matmul-tn a b)
+          buf (mem/alloc (* 4 4))]
+      (is (instance? AFArray result))
+      (is (= [2 2 1 1] (array/get-dims result)))
+      (array/get-data-ptr result buf)
+      ;; Column-major: A^T * B where A^T = [[1 3][2 4]]
+      ;; First element: 1*5 + 2*6 = 17
+      (is (approx= 17.0 (mem/read-float buf 0) 0.001))
+      (.close result)
+      (.close b)
+      (.close a))))
+
+(deftest test-matmul-tt
+  (testing "matmul-tt multiplies A^T * B^T"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+          b (array/create-array (float-array [5.0 6.0 7.0 8.0]) [2 2] jvm/AF_DTYPE_F32)
+          result (blas/matmul-tt a b)
+          buf (mem/alloc (* 4 4))]
+      (is (instance? AFArray result))
+      (is (= [2 2 1 1] (array/get-dims result)))
+      (array/get-data-ptr result buf)
+      ;; Column-major: A^T * B^T
+      ;; First element: 1*5 + 2*7 = 19
+      (is (approx= 19.0 (mem/read-float buf 0) 0.001))
+      (.close result)
+      (.close b)
+      (.close a))))
+
+(deftest test-matmul-nt-rectangle
+  (testing "matmul-nt with rectangular matrices"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
+          b (array/create-array (float-array [7.0 8.0 9.0 10.0 11.0 12.0]) [2 3] jvm/AF_DTYPE_F32)
+          result (blas/matmul-nt a b)]
+      (is (instance? AFArray result))
+      ;; A is [2x3], B is [2x3], B^T is [3x2], result is [2x2]
+      (is (= [2 2 1 1] (array/get-dims result)))
+      (.close result)
+      (.close b)
+      (.close a))))
+
 (comment
   ;; run all tests from REPL
   (run-tests)
@@ -231,6 +299,10 @@
   (run-test test-transpose-with-conjugate)
   (run-test test-transpose-inplace)
   (run-test test-transpose-inplace-with-conjugate)
+  (run-test test-matmul-nt)
+  (run-test test-matmul-tn)
+  (run-test test-matmul-tt)
+  (run-test test-matmul-nt-rectangle)
   
   ;
   )

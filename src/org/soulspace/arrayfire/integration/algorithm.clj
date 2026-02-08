@@ -11,6 +11,7 @@
             [org.soulspace.arrayfire.ffi.sort :as sort]
             [org.soulspace.arrayfire.ffi.set :as set-ops]
             [org.soulspace.arrayfire.ffi.where :as where]
+            [org.soulspace.arrayfire.ffi.diff :as diff]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
@@ -341,3 +342,231 @@
     (jvm/check! (where/af-where idx (jvm/af-handle in))
                 "af-where")
     (jvm/af-array-new (jvm/deref-af-array idx))))
+
+;;;  
+;;; By-Key Reduction Operations
+;;;
+
+(defn sum-by-key
+  "Sum values grouped by keys.
+   
+   Groups consecutive elements with the same key and sums values within
+   each group. Useful for categorical data aggregation.
+   
+   Parameters:
+   - keys: Input keys array (AFArray) - determines grouping
+   - vals: Input values array (AFArray) - to be summed
+   - dim: Dimension along which to reduce (default 0)
+   
+   Returns:
+   Vector of [keys-out vals-out] where:
+   - keys-out: AFArray with unique keys
+   - vals-out: AFArray with summed values per key
+   
+   Notes:
+   - Keys and vals must have same shape
+   - Keys should be sorted for meaningful grouping
+   - Integer keys recommended (int or uint)
+   
+   Example:
+   ```clojure
+   (let [[categories totals] (sum-by-key 
+                               (array [1 1 1 2 2 3])
+                               (array [10 20 30 40 50 60]))
+     {:categories categories  ; [1 2 3]
+      :totals totals})        ; [60 90 60]
+   ```"
+  ([^AFArray keys ^AFArray vals]
+   (sum-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (let [keys-out (jvm/native-af-array-pointer)
+         vals-out (jvm/native-af-array-pointer)]
+     (jvm/check! (reduce/af-sum-by-key keys-out vals-out 
+                                       (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
+                 "af-sum-by-key")
+     [(jvm/af-array-new (jvm/deref-af-array keys-out))
+      (jvm/af-array-new (jvm/deref-af-array vals-out))])))
+
+(defn product-by-key
+  "Multiply values grouped by keys.
+   
+   Groups consecutive elements with the same key and multiplies values
+   within each group.
+   
+   Parameters:
+   - keys: Input keys array (AFArray) - determines grouping
+   - vals: Input values array (AFArray) - to be multiplied
+   - dim: Dimension along which to reduce (default 0)
+   
+   Returns:
+   Vector of [keys-out vals-out] where:
+   - keys-out: AFArray with unique keys
+   - vals-out: AFArray with product of values per key
+   
+   Example:
+   ```clojure
+   (let [[keys products] (product-by-key
+                           (array [1 1 2 2 3])
+                           (array [2 3 4 5 6]))]
+     {:keys keys         ; [1 2 3]
+      :products products}) ; [6 20 6]
+   ```"
+  ([^AFArray keys ^AFArray vals]
+   (product-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (let [keys-out (jvm/native-af-array-pointer)
+         vals-out (jvm/native-af-array-pointer)]
+     (jvm/check! (reduce/af-product-by-key keys-out vals-out
+                                           (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
+                 "af-product-by-key")
+     [(jvm/af-array-new (jvm/deref-af-array keys-out))
+      (jvm/af-array-new (jvm/deref-af-array vals-out))])))
+
+(defn min-by-key
+  "Find minimum value per key group.
+   
+   Parameters:
+   - keys: Input keys array (AFArray) - determines grouping
+   - vals: Input values array (AFArray)
+   - dim: Dimension along which to reduce (default 0)
+   
+   Returns:
+   Vector of [keys-out vals-out] where:
+   - keys-out: AFArray with unique keys
+   - vals-out: AFArray with minimum value per key
+   
+   Example:
+   ```clojure
+   (let [[keys mins] (min-by-key
+                       (array [1 1 1 2 2])
+                       (array [5 2 8 3 7]))]
+     {:keys keys  ; [1 2]
+      :mins mins}) ; [2 3]
+   ```"
+  ([^AFArray keys ^AFArray vals]
+   (min-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (let [keys-out (jvm/native-af-array-pointer)
+         vals-out (jvm/native-af-array-pointer)]
+     (jvm/check! (reduce/af-min-by-key keys-out vals-out
+                                       (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
+                 "af-min-by-key")
+     [(jvm/af-array-new (jvm/deref-af-array keys-out))
+      (jvm/af-array-new (jvm/deref-af-array vals-out))])))
+
+(defn max-by-key
+  "Find maximum value per key group.
+   
+   Parameters:
+   - keys: Input keys array (AFArray) - determines grouping
+   - vals: Input values array (AFArray)
+   - dim: Dimension along which to reduce (default 0)
+   
+   Returns:
+   Vector of [keys-out vals-out] where:
+   - keys-out: AFArray with unique keys
+   - vals-out: AFArray with maximum value per key
+   
+   Example:
+   ```clojure
+   (let [[keys maxs] (max-by-key
+                       (array [1 1 1 2 2])
+                       (array [5 2 8 3 7]))]
+     {:keys keys  ; [1 2]
+      :maxs maxs}) ; [8 7]
+   ```"
+  ([^AFArray keys ^AFArray vals]
+   (max-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (let [keys-out (jvm/native-af-array-pointer)
+         vals-out (jvm/native-af-array-pointer)]
+     (jvm/check! (reduce/af-max-by-key keys-out vals-out
+                                       (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
+                 "af-max-by-key")
+     [(jvm/af-array-new (jvm/deref-af-array keys-out))
+      (jvm/af-array-new (jvm/deref-af-array vals-out))])))
+
+;;;  
+;;; Difference Operations
+;;;
+
+(defn diff1
+  "Compute first-order difference along a dimension.
+   
+   Computes: out[i] = in[i+1] - in[i]
+   Output size along dimension is reduced by 1.
+   
+   Parameters:
+   - in: Input array (AFArray)
+   - dim: Dimension along which to compute differences (default 0)
+   
+   Returns:
+   AFArray with first-order differences
+   
+   Example:
+   ```clojure
+   ;; Compute velocity from position
+   (let [position (array [0 1 4 9 16])  ; positions at t=0,1,2,3,4
+         velocity (diff1 position)]      ; [1 3 5 7] - velocities
+     velocity)
+   
+   ;; Image gradients
+   (let [img (load-image \"photo.jpg\")
+         dx (diff1 img 1)  ; horizontal gradient
+         dy (diff1 img 0)] ; vertical gradient
+     [dx dy])
+   ```
+   
+   Applications:
+   - Time series: Compute rates of change
+   - Signal processing: Detect discontinuities
+   - Image processing: Edge detection (gradients)
+   - Physics: Velocity from position, acceleration from velocity"
+  ([^AFArray in]
+   (diff1 in 0))
+  ([^AFArray in dim]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (diff/af-diff1 out (jvm/af-handle in) (int dim))
+                 "af-diff1")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
+(defn diff2
+  "Compute second-order difference along a dimension.
+   
+   Computes: out[i] = in[i+2] - 2*in[i+1] + in[i]
+   Output size along dimension is reduced by 2.
+   Equivalent to diff1(diff1(in)) but more numerically stable.
+   
+   Parameters:
+   - in: Input array (AFArray)
+   - dim: Dimension along which to compute differences (default 0)
+   
+   Returns:
+   AFArray with second-order differences
+   
+   Example:
+   ```clojure
+   ;; Compute acceleration from position
+   (let [position (array [0 1 4 9 16])  ; positions
+         accel (diff2 position)]         ; [2 2 2] - constant acceleration
+     accel)
+   
+   ;; Laplacian approximation
+   (let [img (load-image \"photo.jpg\")
+         laplacian-x (diff2 img 1)  ; second derivative horizontally
+         laplacian-y (diff2 img 0)] ; second derivative vertically
+     [laplacian-x laplacian-y])
+   ```
+   
+   Applications:
+   - Physics: Acceleration from position
+   - Signal processing: Curvature detection
+   - Image processing: Laplacian operator for edge detection
+   - Numerical analysis: Approximate second derivatives"
+  ([^AFArray in]
+   (diff2 in 0))
+  ([^AFArray in dim]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (diff/af-diff2 out (jvm/af-handle in) (int dim))
+                 "af-diff2")
+     (jvm/af-array-new (jvm/deref-af-array out)))))

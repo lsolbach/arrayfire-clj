@@ -147,6 +147,106 @@
           (.close reconstructed))))))
 
 ;;;
+;;; Normalized FFT Tests
+;;;
+
+(deftest test-fft-norm
+  (testing "fft-norm performs FFT with automatic 1/N normalization"
+    (device/init!)
+    (let [signal (array/create-array (float-array [1.0 1.0 1.0 1.0]) [4] jvm/AF_DTYPE_F32)
+          freq (signal/fft-norm signal)]
+      (try
+        (is (instance? AFArray freq))
+        (is (= [4] (take 1 (array/get-dims freq))))
+        (is (array/complex? freq))
+        (finally
+          (.close signal)
+          (.close freq))))))
+
+(deftest test-ifft-norm
+  (testing "ifft-norm performs inverse FFT with automatic 1/N normalization"
+    (device/init!)
+    (let [signal (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
+          freq (signal/fft signal)
+          reconstructed (signal/ifft-norm freq)]
+      (try
+        (is (instance? AFArray reconstructed))
+        (is (= [4] (take 1 (array/get-dims reconstructed))))
+        (finally
+          (.close signal)
+          (.close freq)
+          (.close reconstructed))))))
+
+(deftest test-fft-norm-roundtrip
+  (testing "fft-norm and ifft roundtrip preserves signal"
+    (device/init!)
+    (let [signal (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
+          freq (signal/fft-norm signal)
+          reconstructed (signal/ifft freq)]
+      (try
+        (is (instance? AFArray reconstructed))
+        ;; After fft-norm (scaled by 1/N) and ifft (no scaling), should get original
+        (is (= [4] (take 1 (array/get-dims reconstructed))))
+        (finally
+          (.close signal)
+          (.close freq)
+          (.close reconstructed))))))
+
+(deftest test-fft2-norm
+  (testing "fft2-norm performs 2D FFT with automatic normalization"
+    (device/init!)
+    (let [image (array/create-array (float-array (range 16)) [4 4] jvm/AF_DTYPE_F32)
+          freq (signal/fft2-norm image)]
+      (try
+        (is (instance? AFArray freq))
+        (is (= [4 4] (take 2 (array/get-dims freq))))
+        (is (array/complex? freq))
+        (finally
+          (.close image)
+          (.close freq))))))
+
+(deftest test-ifft2-norm
+  (testing "ifft2-norm performs 2D inverse FFT with automatic normalization"
+    (device/init!)
+    (let [image (array/create-array (float-array (range 16)) [4 4] jvm/AF_DTYPE_F32)
+          freq (signal/fft2 image)
+          reconstructed (signal/ifft2-norm freq)]
+      (try
+        (is (instance? AFArray reconstructed))
+        (is (= [4 4] (take 2 (array/get-dims reconstructed))))
+        (finally
+          (.close image)
+          (.close freq)
+          (.close reconstructed))))))
+
+(deftest test-fft3-norm
+  (testing "fft3-norm performs 3D FFT with automatic normalization"
+    (device/init!)
+    (let [volume (array/create-array (float-array (range 8)) [2 2 2] jvm/AF_DTYPE_F32)
+          freq (signal/fft3-norm volume)]
+      (try
+        (is (instance? AFArray freq))
+        (is (= [2 2 2] (take 3 (array/get-dims freq))))
+        (is (array/complex? freq))
+        (finally
+          (.close volume)
+          (.close freq))))))
+
+(deftest test-ifft3-norm
+  (testing "ifft3-norm performs 3D inverse FFT with automatic normalization"
+    (device/init!)
+    (let [volume (array/create-array (float-array (range 8)) [2 2 2] jvm/AF_DTYPE_F32)
+          freq (signal/fft3 volume)
+          reconstructed (signal/ifft3-norm freq)]
+      (try
+        (is (instance? AFArray reconstructed))
+        (is (= [2 2 2] (take 3 (array/get-dims reconstructed))))
+        (finally
+          (.close volume)
+          (.close freq)
+          (.close reconstructed))))))
+
+;;;
 ;;; Real-to-Complex FFT Tests
 ;;;
 
@@ -698,6 +798,15 @@
   (run-test test-ifft)
   (run-test test-ifft2)
   (run-test test-ifft3)
+  
+  ;; run individual tests - Normalized FFT
+  (run-test test-fft-norm)
+  (run-test test-ifft-norm)
+  (run-test test-fft-norm-roundtrip)
+  (run-test test-fft2-norm)
+  (run-test test-ifft2-norm)
+  (run-test test-fft3-norm)
+  (run-test test-ifft3-norm)
   
   ;; run individual tests - Real-to-Complex FFT
   (run-test test-fft-r2c)

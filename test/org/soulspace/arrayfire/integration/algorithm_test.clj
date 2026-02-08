@@ -185,14 +185,136 @@
       (.close a)
       (.close result))))
 
+;;;
+;;; By-Key Reduction Tests
+;;;
+
+(deftest test-sum-by-key
+  (testing "sum-by-key sums values grouped by keys"
+    (device/init!)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 3]) [6] jvm/AF_DTYPE_S32)
+          vals (array/create-array (float-array [10.0 20.0 30.0 40.0 50.0 60.0]) [6] jvm/AF_DTYPE_F32)
+          [keys-out vals-out] (algo/sum-by-key keys vals)
+          keys-buf (mem/alloc (* 3 4))
+          vals-buf (mem/alloc (* 3 4))]
+      (is (instance? AFArray keys-out))
+      (is (instance? AFArray vals-out))
+      (array/get-data-ptr vals-out vals-buf)
+      ;; First group (key 1): 10 + 20 + 30 = 60
+      (is (approx= 60.0 (mem/read-float vals-buf 0) 0.001))
+      (.close keys)
+      (.close vals)
+      (.close keys-out)
+      (.close vals-out))))
+
+(deftest test-product-by-key
+  (testing "product-by-key multiplies values grouped by keys"
+    (device/init!)
+    (let [keys (array/create-array (int-array [1 1 2 2 3]) [5] jvm/AF_DTYPE_S32)
+          vals (array/create-array (float-array [2.0 3.0 4.0 5.0 6.0]) [5] jvm/AF_DTYPE_F32)
+          [keys-out vals-out] (algo/product-by-key keys vals)
+          vals-buf (mem/alloc (* 3 4))]
+      (is (instance? AFArray keys-out))
+      (is (instance? AFArray vals-out))
+      (array/get-data-ptr vals-out vals-buf)
+      ;; First group (key 1): 2 * 3 = 6
+      (is (approx= 6.0 (mem/read-float vals-buf 0) 0.001))
+      (.close keys)
+      (.close vals)
+      (.close keys-out)
+      (.close vals-out))))
+
+(deftest test-min-by-key
+  (testing "min-by-key finds minimum value per key group"
+    (device/init!)
+    (let [keys (array/create-array (int-array [1 1 1 2 2]) [5] jvm/AF_DTYPE_S32)
+          vals (array/create-array (float-array [5.0 2.0 8.0 3.0 7.0]) [5] jvm/AF_DTYPE_F32)
+          [keys-out vals-out] (algo/min-by-key keys vals)
+          vals-buf (mem/alloc (* 2 4))]
+      (is (instance? AFArray keys-out))
+      (is (instance? AFArray vals-out))
+      (array/get-data-ptr vals-out vals-buf)
+      ;; First group (key 1): min(5, 2, 8) = 2
+      (is (approx= 2.0 (mem/read-float vals-buf 0) 0.001))
+      (.close keys)
+      (.close vals)
+      (.close keys-out)
+      (.close vals-out))))
+
+(deftest test-max-by-key
+  (testing "max-by-key finds maximum value per key group"
+    (device/init!)
+    (let [keys (array/create-array (int-array [1 1 1 2 2]) [5] jvm/AF_DTYPE_S32)
+          vals (array/create-array (float-array [5.0 2.0 8.0 3.0 7.0]) [5] jvm/AF_DTYPE_F32)
+          [keys-out vals-out] (algo/max-by-key keys vals)
+          vals-buf (mem/alloc (* 2 4))]
+      (is (instance? AFArray keys-out))
+      (is (instance? AFArray vals-out))
+      (array/get-data-ptr vals-out vals-buf)
+      ;; First group (key 1): max(5, 2, 8) = 8
+      (is (approx= 8.0 (mem/read-float vals-buf 0) 0.001))
+      (.close keys)
+      (.close vals)
+      (.close keys-out)
+      (.close vals-out))))
+
+;;;
+;;; Difference Operator Tests
+;;;
+
+(deftest test-diff1
+  (testing "diff1 computes first-order difference"
+    (device/init!)
+    (let [a (array/create-array (float-array [0.0 1.0 4.0 9.0 16.0]) [5] jvm/AF_DTYPE_F32)
+          result (algo/diff1 a 0)
+          buf (mem/alloc (* 4 4))]
+      (is (instance? AFArray result))
+      ;; Output size should be reduced by 1
+      (is (= [4] (take 1 (array/get-dims result))))
+      (array/get-data-ptr result buf)
+      ;; First difference: 1 - 0 = 1
+      (is (approx= 1.0 (mem/read-float buf 0) 0.001))
+      ;; Second difference: 4 - 1 = 3
+      (is (approx= 3.0 (mem/read-float buf 4) 0.001))
+      (.close a)
+      (.close result))))
+
+(deftest test-diff2
+  (testing "diff2 computes second-order difference"
+    (device/init!)
+    (let [a (array/create-array (float-array [0.0 1.0 4.0 9.0 16.0]) [5] jvm/AF_DTYPE_F32)
+          result (algo/diff2 a 0)
+          buf (mem/alloc (* 3 4))]
+      (is (instance? AFArray result))
+      ;; Output size should be reduced by 2
+      (is (= [3] (take 1 (array/get-dims result))))
+      (array/get-data-ptr result buf)
+      ;; First second-order diff: (4 - 2*1 + 0) = 2
+      (is (approx= 2.0 (mem/read-float buf 0) 0.001))
+      (.close a)
+      (.close result))))
+
+(deftest test-diff1-2d
+  (testing "diff1 along different dimensions"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
+          result-dim0 (algo/diff1 a 0)
+          result-dim1 (algo/diff1 a 1)]
+      (is (instance? AFArray result-dim0))
+      (is (instance? AFArray result-dim1))
+      ;; Dimension 0: output [1 3]
+      (is (= [1 3] (take 2 (array/get-dims result-dim0))))
+      ;; Dimension 1: output [2 2]
+      (is (= [2 2] (take 2 (array/get-dims result-dim1))))
+      (.close a)
+      (.close result-dim0)
+      (.close result-dim1))))
+
 (comment
   ;; run tests from REPL
   (run-tests)
 
   ;; run single test
-  (run-test test-lu)
-  (run-test test-qr)
-  (run-test test-svd)
   (run-test test-sum)
   (run-test test-sum-dim)
   (run-test test-product)
@@ -205,6 +327,13 @@
   (run-test test-sort-index)
   (run-test test-set-unique)
   (run-test test-where)
+  (run-test test-sum-by-key)
+  (run-test test-product-by-key)
+  (run-test test-min-by-key)
+  (run-test test-max-by-key)
+  (run-test test-diff1)
+  (run-test test-diff2)
+  (run-test test-diff1-2d)
 
   ;
   )

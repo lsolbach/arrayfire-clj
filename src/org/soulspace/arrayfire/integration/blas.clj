@@ -152,3 +152,109 @@
                "af-transpose-inplace")
    in))
 
+;;;
+;;; Matrix Multiplication Convenience Functions
+;;;
+
+(defn matmul-nt
+  "Matrix multiplication: A * B^T (B transposed).
+   
+   Convenience wrapper for matmul with second matrix transposed.
+   Equivalent to: matmul(A, B, AF_MAT_NONE, AF_MAT_TRANS)
+   
+   Parameters:
+   - lhs: Left-hand matrix A (AFArray)
+   - rhs: Right-hand matrix B (AFArray), will be transposed
+   
+   Returns:
+   AFArray containing A * B^T
+   
+   Example:
+   ```clojure
+   ;; A is [m x k], B is [n x k]
+   ;; Result is [m x n]
+   (let [a (array [[1 2]    ; 2x2
+                   [3 4]])
+         b (array [[5 6]    ; 2x2
+                   [7 8]])]
+     (matmul-nt a b))       ; A * B^T = [m x k] * [k x n] = [m x n]
+   ```
+   
+   Use when:
+   - B is stored in transposed form
+   - Avoiding explicit transpose operation for efficiency"
+  [^AFArray lhs ^AFArray rhs]
+  (let [out (jvm/native-af-array-pointer)]
+    (jvm/check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+                                0 1)  ; AF_MAT_NONE, AF_MAT_TRANS
+                "af-matmul")
+    (jvm/af-array-new (jvm/deref-af-array out))))
+
+(defn matmul-tn
+  "Matrix multiplication: A^T * B (A transposed).
+   
+   Convenience wrapper for matmul with first matrix transposed.
+   Equivalent to: matmul(A, B, AF_MAT_TRANS, AF_MAT_NONE)
+   
+   Parameters:
+   - lhs: Left-hand matrix A (AFArray), will be transposed
+   - rhs: Right-hand matrix B (AFArray)
+   
+   Returns:
+   AFArray containing A^T * B
+   
+   Example:
+   ```clojure
+   ;; A is [k x m], B is [k x n]
+   ;; Result is [m x n]
+   (let [a (array [[1 3]    ; 2x2 
+                   [2 4]])
+         b (array [[5 6]    ; 2x2
+                   [7 8]])]
+     (matmul-tn a b))       ; A^T * B = [m x k] * [k x n] = [m x n]
+   ```
+   
+   Use when:
+   - A is stored in transposed form
+   - Computing Gram matrix: A^T * A
+   - Normal equations: A^T * A * x = A^T * b"
+  [^AFArray lhs ^AFArray rhs]
+  (let [out (jvm/native-af-array-pointer)]
+    (jvm/check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+                                1 0)  ; AF_MAT_TRANS, AF_MAT_NONE
+                "af-matmul")
+    (jvm/af-array-new (jvm/deref-af-array out))))
+
+(defn matmul-tt
+  "Matrix multiplication: A^T * B^T (both transposed).
+   
+   Convenience wrapper for matmul with both matrices transposed.
+   Equivalent to: matmul(A, B, AF_MAT_TRANS, AF_MAT_TRANS)
+   
+   Parameters:
+   - lhs: Left-hand matrix A (AFArray), will be transposed
+   - rhs: Right-hand matrix B (AFArray), will be transposed
+   
+   Returns:
+   AFArray containing A^T * B^T
+   
+   Example:
+   ```clojure
+   ;; A is [k x m], B is [n x k]
+   ;; Result is [m x n]
+   (let [a (array [[1 3]    ; 2x2
+                   [2 4]])
+         b (array [[5 7]    ; 2x2
+                   [6 8]])]
+     (matmul-tt a b))       ; A^T * B^T = [m x k] * [k x n] = [m x n]
+   ```
+   
+   Use when:
+   - Both matrices stored in transposed form
+   - Specific computational patterns in algorithms"
+  [^AFArray lhs ^AFArray rhs]
+  (let [out (jvm/native-af-array-pointer)]
+    (jvm/check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+                                1 1)  ; AF_MAT_TRANS, AF_MAT_TRANS
+                "af-matmul")
+    (jvm/af-array-new (jvm/deref-af-array out))))
