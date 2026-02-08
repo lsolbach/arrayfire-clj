@@ -14,7 +14,8 @@
    - Advanced: regions, unwrap, wrap, sat, anisotropic-diffusion, deconvolution
    
    All functions work with AFArray instances and follow ArrayFire's memory management."
-  (:require [org.soulspace.arrayfire.ffi.gradient :as gradient]
+  (:require [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.gradient :as gradient]
             [org.soulspace.arrayfire.ffi.imageio :as imageio]
             [org.soulspace.arrayfire.ffi.imageio2 :as imageio2]
             [org.soulspace.arrayfire.ffi.resize :as resize]
@@ -222,6 +223,136 @@
     (jvm/check! (imageio2/af-save-image-native c-filename (jvm/af-handle in))
                 "af-save-image-native")
     nil))
+
+(defn load-image-memory
+  "Load an image from a memory buffer.
+   
+   Decodes an image from a FreeImage FIMEMORY buffer previously created
+   or loaded into memory. Useful for loading images from network, database,
+   or embedded resources without file I/O.
+   
+   Parameters:
+   - ptr: Pointer to FreeImage FIMEMORY structure (from save-image-memory
+          or externally created)
+   
+   Returns:
+   AFArray containing the decoded image
+   
+   Example:
+   ```clojure
+   ;; Load from HTTP response
+   (let [img-bytes (http-get-bytes \"https://example.com/image.png\")
+         fimem-ptr (bytes->fimem img-bytes)
+         img (load-image-memory fimem-ptr)]
+     (process-image img))
+   
+   ;; Load from embedded resource
+   (let [resource-ptr (get-embedded-image-ptr)
+         img (load-image-memory resource-ptr)]
+     img)
+   ```
+   
+   Use cases:
+   - Network: Load images from HTTP responses
+   - Database: Decode BLOBs
+   - Embedded: Load from compiled-in resources
+   - IPC: Receive images from other processes
+   - Cache: Load from in-memory cache"
+  [ptr]
+  (let [out (jvm/native-af-array-pointer)]
+    (jvm/check! (imageio/af-load-image-memory out ptr)
+                "af-load-image-memory")
+    (jvm/af-array-new (jvm/deref-af-array out))))
+
+(defn save-image-memory
+  "Save an image to a memory buffer.
+   
+   Encodes an image and stores it in a FreeImage FIMEMORY structure.
+   The buffer can be used for network transmission, storage, or further
+   processing without file I/O.
+   
+   Parameters:
+   - in: Image to save (AFArray)
+   - format: Image format code (integer)
+     * 0 - BMP (fast, uncompressed)
+     * 2 - JPEG (lossy, small)
+     * 13 - PNG (lossless, good compression)
+     * 18 - TIFF
+     * 29 - EXR (HDR)
+     See af/defines.h for complete list
+   
+   Returns:
+   Pointer to FreeImage FIMEMORY buffer (must be freed with delete-image-memory!)
+   
+   Example:
+   ```clojure
+   ;; Save as PNG for network upload
+   (let [img (process-image original)
+         mem-ptr (save-image-memory img 13)]  ; PNG format
+     (try
+       (let [bytes (fimem->bytes mem-ptr)]
+         (http-post \"https://api.example.com/upload\" bytes))
+       (finally
+         (delete-image-memory! mem-ptr))))  ; Critical: free memory!
+   
+   ;; Save as JPEG for small size
+   (let [photo (capture-photo)
+         jpeg-ptr (save-image-memory photo 2)]  ; JPEG format
+     (try
+       (db-store! {:image (fimem->blob jpeg-ptr)})
+       (finally
+         (delete-image-memory! jpeg-ptr))))
+   ```
+   
+   Memory management:
+   CRITICAL: Always call delete-image-memory! on the returned pointer
+   to prevent memory leaks!
+   
+   Use cases:
+   - Upload to servers
+   - Store in databases
+   - Send over network
+   - In-memory caching
+   - IPC (inter-process communication)"
+  [^AFArray in format]
+  (let [ptr-ptr (mem/alloc 8)]  ; Allocate buffer for pointer
+    (jvm/check! (imageio/af-save-image-memory ptr-ptr (jvm/af-handle in) (int format))
+                "af-save-image-memory")
+    (mem/read-long ptr-ptr 0)))
+
+(defn delete-image-memory!
+  "Free a memory buffer created by save-image-memory.
+   
+   Releases the FreeImage FIMEMORY structure allocated by save-image-memory.
+   This MUST be called for every buffer created to prevent memory leaks.
+   
+   Parameters:
+   - ptr: FIMEMORY pointer returned by save-image-memory
+   
+   Returns:
+   nil
+   
+   Example:
+   ```clojure
+   (let [img (load-image \"photo.jpg\")
+         mem-ptr (save-image-memory img 13)]  ; PNG
+     (try
+       ;; Use the memory buffer
+       (upload-bytes (extract-bytes mem-ptr))
+       (finally
+         ;; ALWAYS cleanup!
+         (delete-image-memory! mem-ptr))))
+   ```
+   
+   CRITICAL:
+   - Call exactly once per buffer
+   - Do not use pointer after deletion
+   - Always pair with save-image-memory
+   - Use try-finally to ensure cleanup"
+  [ptr]
+  (jvm/check! (imageio/af-delete-image-memory ptr)
+              "af-delete-image-memory")
+  nil)
 
 ;;;
 ;;; Geometric Transformations

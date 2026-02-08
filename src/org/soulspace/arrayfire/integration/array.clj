@@ -4,6 +4,7 @@
   (:refer-clojure :exclude [empty? vector? double? integer? bytes?])
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.array :as array-ffi]
+            [org.soulspace.arrayfire.ffi.internal :as internal]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
@@ -567,3 +568,67 @@
 
 
 
+
+;;;
+;;; Memory Information
+;;;
+
+(defn get-allocated-bytes
+  "Get the physical memory size allocated for an array.
+   
+   Returns the actual GPU/device memory size in bytes.
+   For views/subsets, returns the size of the parent allocation.
+   
+   Parameters:
+   - arr: Array (AFArray) to query
+   
+   Returns:
+   Size in bytes as a long integer
+   
+   Example:
+   ```clojure
+   ;; Check memory usage of an array
+   (let [arr (array [[1 2 3] [4 5 6]])
+         bytes (get-allocated-bytes arr)
+         mb (/ bytes 1024.0 1024.0)]
+     (println (str \"Array uses \" mb \" MB\")))
+   
+   ;; Compare different array sizes
+   (let [small (array [1 2 3])
+         large (array (repeat 1000000 1.0))]
+     {:small (get-allocated-bytes small)
+      :large (get-allocated-bytes large)})
+   ```
+   
+   Use cases:
+   - Memory profiling: Track GPU memory usage
+   - Optimization: Identify large allocations
+   - Resource planning: Estimate memory requirements
+   - Debugging: Verify expected sizes
+   - Monitoring: Detect memory leaks
+   
+   Notes:
+   - Size includes full parent allocation for views
+   - Actual memory may be slightly larger (alignment)
+   - Does not include temporary allocations
+   - Multiple views share single allocation"
+  [^AFArray arr]
+  (let [bytes-buf (mem/alloc 8)]
+    (jvm/check! (internal/af-get-allocated-bytes bytes-buf (handle->segment arr))
+                "af-get-allocated-bytes")
+    (mem/read-long bytes-buf 0)))
+
+(defn allocated-bytes
+  "Alias for get-allocated-bytes. 
+   
+   Get the physical memory size allocated for an array in bytes.
+   
+   Parameters:
+   - arr: Array (AFArray) to query
+   
+   Returns:
+   Size in bytes as a long integer
+   
+   See: get-allocated-bytes"
+  [^AFArray arr]
+  (get-allocated-bytes arr))

@@ -310,6 +310,71 @@
       (.close result-dim0)
       (.close result-dim1))))
 
+(deftest test-all-true-by-key
+  (testing "all-true-by-key checks if all values are non-zero per group"
+    (device/init!)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] jvm/AF_DTYPE_S32)
+          vals (array/create-array (int-array [1 1 1 0 1 1]) [6] jvm/AF_DTYPE_S32)
+          [keys-out vals-out] (algo/all-true-by-key keys vals)]
+      (is (= 1 (array/get-numdims keys-out)))
+      (is (= 1 (array/get-numdims vals-out)))
+      ;; Group 1 should be true (all 1s), Group 2 should be false (has a 0)
+      (.close keys)
+      (.close vals)
+      (.close keys-out)
+      (.close vals-out))))
+
+(deftest test-any-true-by-key
+  (testing "any-true-by-key checks if any value is non-zero per group"
+    (device/init!)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] jvm/AF_DTYPE_S32)
+          vals (array/create-array (int-array [0 0 1 0 0 0]) [6] jvm/AF_DTYPE_S32)
+          [keys-out vals-out] (algo/any-true-by-key keys vals)]
+      (is (= 1 (array/get-numdims keys-out)))
+      (is (= 1 (array/get-numdims vals-out)))
+      ;; Group 1 should be true (has a 1), Group 2 should be false (all 0s)
+      (.close keys)
+      (.close vals)
+      (.close keys-out)
+      (.close vals-out))))
+
+(deftest test-count-by-key
+  (testing "count-by-key counts non-zero values per group"
+    (device/init!)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] jvm/AF_DTYPE_S32)
+          vals (array/create-array (int-array [1 0 1 1 1 0]) [6] jvm/AF_DTYPE_S32)
+          [keys-out vals-out] (algo/count-by-key keys vals)]
+      (is (= 1 (array/get-numdims keys-out)))
+      (is (= 1 (array/get-numdims vals-out)))
+      ;; Group 1 should have 2 non-zeros, Group 2 should have 2 non-zeros
+      (.close keys)
+      (.close vals)
+      (.close keys-out)
+      (.close vals-out))))
+
+(deftest test-accum
+  (testing "accum computes cumulative sum"
+    (device/init!)
+    (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0]) [5] jvm/AF_DTYPE_F32)
+          result (algo/accum data)]
+      (is (= 1 (array/get-numdims result)))
+      (is (= [5] (take 1 (array/get-dims result))))
+      ;; Result should be [1 3 6 10 15]
+      (.close data)
+      (.close result))))
+
+(deftest test-accum-2d
+  (testing "accum on 2D array along dimension"
+    (device/init!)
+    (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
+          result-dim0 (algo/accum data 0)
+          result-dim1 (algo/accum data 1)]
+      (is (= 2 (array/get-numdims result-dim0)))
+      (is (= 2 (array/get-numdims result-dim1)))
+      (.close data)
+      (.close result-dim0)
+      (.close result-dim1))))
+
 (comment
   ;; run tests from REPL
   (run-tests)
@@ -334,6 +399,12 @@
   (run-test test-diff1)
   (run-test test-diff2)
   (run-test test-diff1-2d)
+  (run-test test-all-true-by-key)
+  (run-test test-any-true-by-key)
+  (run-test test-count-by-key)
+  (run-test test-accum)
+  (run-test test-accum-2d)
 
   ;
   )
+

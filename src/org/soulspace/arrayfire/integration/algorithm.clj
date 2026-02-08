@@ -486,6 +486,181 @@
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
       (jvm/af-array-new (jvm/deref-af-array vals-out))])))
 
+(defn all-true-by-key
+  "Check if all values are true (non-zero) per key group.
+   
+   Tests whether all elements in each key group are non-zero.
+   Returns boolean array with one value per unique key.
+   
+   Parameters:
+   - keys: Input keys array (AFArray) - determines grouping
+   - vals: Input values array (AFArray) - tested for non-zero
+   - dim: Dimension along which to reduce (default 0)
+   
+   Returns:
+   Vector of [keys-out vals-out] where:
+   - keys-out: AFArray with unique keys
+   - vals-out: AFArray with 1 if all values true, 0 otherwise
+   
+   Example:
+   ```clojure
+   (let [[keys results] (all-true-by-key
+                          (array [1 1 1 2 2 2])
+                          (array [1 1 1 0 1 1]))]
+     {:keys keys      ; [1 2]
+      :all-true results}) ; [1 0] - group 1 all true, group 2 has a zero
+   ```
+   
+   Use cases:
+   - Data validation: Check all records in group meet criteria
+   - Logic: AND operation over grouped data
+   - Quality control: All measurements in batch pass threshold"
+  ([^AFArray keys ^AFArray vals]
+   (all-true-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (let [keys-out (jvm/native-af-array-pointer)
+         vals-out (jvm/native-af-array-pointer)]
+     (jvm/check! (reduce/af-all-true-by-key keys-out vals-out
+                                            (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
+                 "af-all-true-by-key")
+     [(jvm/af-array-new (jvm/deref-af-array keys-out))
+      (jvm/af-array-new (jvm/deref-af-array vals-out))])))
+
+(defn any-true-by-key
+  "Check if any value is true (non-zero) per key group.
+   
+   Tests whether at least one element in each key group is non-zero.
+   Returns boolean array with one value per unique key.
+   
+   Parameters:
+   - keys: Input keys array (AFArray) - determines grouping
+   - vals: Input values array (AFArray) - tested for non-zero
+   - dim: Dimension along which to reduce (default 0)
+   
+   Returns:
+   Vector of [keys-out vals-out] where:
+   - keys-out: AFArray with unique keys
+   - vals-out: AFArray with 1 if any value true, 0 if all zero
+   
+   Example:
+   ```clojure
+   (let [[keys results] (any-true-by-key
+                          (array [1 1 1 2 2 2])
+                          (array [0 0 1 0 0 0]))]
+     {:keys keys       ; [1 2]
+      :any-true results}) ; [1 0] - group 1 has a true, group 2 all false
+   ```
+   
+   Use cases:
+   - Data filtering: Any record in group meets criteria
+   - Logic: OR operation over grouped data
+   - Alert systems: Any sensor in zone triggered
+   - Error detection: Any test in suite failed"
+  ([^AFArray keys ^AFArray vals]
+   (any-true-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (let [keys-out (jvm/native-af-array-pointer)
+         vals-out (jvm/native-af-array-pointer)]
+     (jvm/check! (reduce/af-any-true-by-key keys-out vals-out
+                                            (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
+                 "af-any-true-by-key")
+     [(jvm/af-array-new (jvm/deref-af-array keys-out))
+      (jvm/af-array-new (jvm/deref-af-array vals-out))])))
+
+(defn count-by-key
+  "Count non-zero values per key group.
+   
+   Counts the number of non-zero elements in each key group.
+   
+   Parameters:
+   - keys: Input keys array (AFArray) - determines grouping
+   - vals: Input values array (AFArray) - counted if non-zero
+   - dim: Dimension along which to reduce (default 0)
+   
+   Returns:
+   Vector of [keys-out vals-out] where:
+   - keys-out: AFArray with unique keys
+   - vals-out: AFArray with count of non-zero values per key
+   
+   Example:
+   ```clojure
+   (let [[keys counts] (count-by-key
+                         (array [1 1 1 2 2 2])
+                         (array [1 0 1 1 1 0]))]
+     {:keys keys    ; [1 2]
+      :counts counts}) ; [2 2] - 2 non-zero in each group
+   ```
+   
+   Use cases:
+   - Statistics: Count valid observations per category
+   - Data quality: Count non-missing values per group
+   - Event counting: Occurrences per category
+   - Sparse data: Count non-zero entries per key"
+  ([^AFArray keys ^AFArray vals]
+   (count-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (let [keys-out (jvm/native-af-array-pointer)
+         vals-out (jvm/native-af-array-pointer)]
+     (jvm/check! (reduce/af-count-by-key keys-out vals-out
+                                         (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
+                 "af-count-by-key")
+     [(jvm/af-array-new (jvm/deref-af-array keys-out))
+      (jvm/af-array-new (jvm/deref-af-array vals-out))])))
+
+;;;
+;;; Cumulative Operations (Scans)
+;;;
+
+(defn accum
+  "Cumulative sum (inclusive prefix sum) along a dimension.
+   
+   Computes running sum: out[i] = in[0] + in[1] + ... + in[i]
+   Convenience wrapper for scan with addition operation.
+   
+   Parameters:
+   - in: Input array (AFArray)
+   - dim: Dimension along which to accumulate (default 0)
+   
+   Returns:
+   AFArray with cumulative sums
+   
+   Example:
+   ```clojure
+   ;; Running total
+   (let [values (array [1 2 3 4 5])
+         cumsum (accum values)]
+     cumsum)  ; [1 3 6 10 15]
+   
+   ;; Financial: cumulative returns
+   (let [returns (array [0.01 -0.02 0.03 0.01 -0.01])
+         cum-return (accum returns)]
+     cum-return)  ; [0.01 -0.01 0.02 0.03 0.02]
+   
+   ;; 2D: accumulate down columns
+   (let [data (array [[1 2] [3 4] [5 6]])
+         cumsum (accum data 0)]
+     cumsum)  ; [[1 2] [4 6] [9 12]]
+   ```
+   
+   Use cases:
+   - Time series: Running totals, cumulative statistics
+   - Finance: Cumulative returns, portfolio value over time
+   - Physics: Position from velocity (integration)
+   - Signal processing: Cumulative energy
+   - Graphics: Opacity accumulation, path integration
+   
+   Notes:
+   - This is the inverse operation of diff1
+   - Also known as: cumsum, prefix sum, inclusive scan
+   - For exclusive scan, use scan with inclusive=false"
+  ([^AFArray in]
+   (accum in 0))
+  ([^AFArray in dim]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (scan/af-accum out (jvm/af-handle in) (int dim))
+                 "af-accum")
+     (jvm/af-array-new (jvm/deref-af-array out)))))
+
 ;;;  
 ;;; Difference Operations
 ;;;

@@ -278,10 +278,42 @@
       (.close b)
       (.close a))))
 
+(deftest test-matmul3
+  (testing "Chain matrix multiplication with 3 matrices"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+          b (array/create-array (float-array [2.0 0.0 0.0 2.0]) [2 2] jvm/AF_DTYPE_F32)
+          c (array/create-array (float-array [1.0 1.0 1.0 1.0]) [2 2] jvm/AF_DTYPE_F32)
+          result (blas/matmul3 a b c)]
+      (is (= 2 (array/get-numdims result)))
+      (is (= [2 2] (take 2 (array/get-dims result))))
+      ;; Result should be (A * B) * C = ([2 4 6 8]) * C
+      (.close a)
+      (.close b)
+      (.close c)
+      (.close result))))
+
+(deftest test-matmul4
+  (testing "Chain matrix multiplication with 4 matrices"
+    (device/init!)
+    (let [a (array/create-array (float-array [1.0 0.0 0.0 1.0]) [2 2] jvm/AF_DTYPE_F32)  ; Identity
+          b (array/create-array (float-array [2.0 0.0 0.0 2.0]) [2 2] jvm/AF_DTYPE_F32)  ; Scale by 2
+          c (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+          d (array/create-array (float-array [1.0 0.0 0.0 1.0]) [2 2] jvm/AF_DTYPE_F32)  ; Identity
+          result (blas/matmul4 a b c d)]
+      (is (= 2 (array/get-numdims result)))
+      (is (= [2 2] (take 2 (array/get-dims result))))
+      ;; Result should be I * 2I * C * I = 2C
+      (.close a)
+      (.close b)
+      (.close c)
+      (.close d)
+      (.close result))))
+
 (comment
   ;; run all tests from REPL
   (run-tests)
-  
+
   ;; run individual tests
   (run-test test-gemm)
   (run-test test-gemm-with-transpose)
@@ -303,6 +335,6 @@
   (run-test test-matmul-tn)
   (run-test test-matmul-tt)
   (run-test test-matmul-nt-rectangle)
-  
-  ;
-  )
+  (run-test test-matmul3)
+  (run-test test-matmul4)
+

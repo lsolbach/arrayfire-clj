@@ -258,3 +258,86 @@
                                 1 1)  ; AF_MAT_TRANS, AF_MAT_TRANS
                 "af-matmul")
     (jvm/af-array-new (jvm/deref-af-array out))))
+
+;;;
+;;; Chain Matrix Multiplication
+;;;
+
+(defn matmul3
+  "Chain matrix multiplication for 3 matrices: A * B * C.
+   
+   Efficiently computes the product of three matrices by performing
+   two sequential matrix multiplications: (A * B) * C.
+   
+   Parameters:
+   - a: First matrix (AFArray) [m x k]
+   - b: Second matrix (AFArray) [k x n]
+   - c: Third matrix (AFArray) [n x p]
+   
+   Returns:
+   AFArray containing A * B * C [m x p]
+   
+   Example:
+   ```clojure
+   (let [a (array [[1 2]      ; 2x2
+                   [3 4]])
+         b (array [[5 6]      ; 2x2
+                   [7 8]])
+         c (array [[1 0]      ; 2x2
+                   [0 1]])]
+     (matmul3 a b c))         ; (A * B) * C
+   ```
+   
+   Use cases:
+   - Deep learning: Chained weight transformations
+   - Graphics: Composed transformation matrices
+   - Physics: Sequential operator applications"
+  [^AFArray a ^AFArray b ^AFArray c]
+  (let [temp (matmul a b)]
+    (try
+      (matmul temp c)
+      (finally
+        (.close temp)))))
+
+(defn matmul4
+  "Chain matrix multiplication for 4 matrices: A * B * C * D.
+   
+   Efficiently computes the product of four matrices by performing
+   three sequential matrix multiplications: ((A * B) * C) * D.
+   
+   Parameters:
+   - a: First matrix (AFArray) [m x k]
+   - b: Second matrix (AFArray) [k x n]
+   - c: Third matrix (AFArray) [n x p]
+   - d: Fourth matrix (AFArray) [p x q]
+   
+   Returns:
+   AFArray containing A * B * C * D [m x q]
+   
+   Example:
+   ```clojure
+   (let [a (array [[1 2]      ; 2x2
+                   [3 4]])
+         b (array [[5 6]      ; 2x2
+                   [7 8]])
+         c (array [[1 0]      ; 2x2
+                   [0 1]])
+         d (array [[2 0]      ; 2x2
+                   [0 2]])]
+     (matmul4 a b c d))       ; ((A * B) * C) * D
+   ```
+   
+   Use cases:
+   - Complex transformation pipelines
+   - Multi-layer neural networks
+   - Quantum gate sequences"
+  [^AFArray a ^AFArray b ^AFArray c ^AFArray d]
+  (let [temp1 (matmul a b)
+        temp2 (try
+                (matmul temp1 c)
+                (finally
+                  (.close temp1)))]
+    (try
+      (matmul temp2 d)
+      (finally
+        (.close temp2)))))
