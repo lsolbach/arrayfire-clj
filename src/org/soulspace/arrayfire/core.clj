@@ -1,6 +1,6 @@
 (ns org.soulspace.arrayfire.core
   (:require [org.soulspace.arrayfire.integration.jvm-integration :as int]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.ffi.c-api.array :as af-array]
             [org.soulspace.arrayfire.ffi.c-api.binary :as af-binary]
             [coffi.mem :as mem]

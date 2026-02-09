@@ -426,13 +426,14 @@ Legend:
 **File:** `integration/vision.clj`  
 **API Reference:** `vision.h`, `features.h`
 
-### Computer Vision: **85%** ✓
+### Computer Vision: **92%** ✓
 
-**Implemented (10 functions):**
+**Implemented (11 functions):**
 
-**Feature Detection (2):**
+**Feature Detection (3):**
 - ✓ `fast` - FAST corner detector
 - ✓ `harris` - Harris corner detector
+- ✓ `susan` - SUSAN corner detector
 
 **Feature Description (3):**
 - ✓ `orb` - ORB descriptor
@@ -451,13 +452,13 @@ Legend:
 - ✓ `homography` - Homography estimation
 
 **Missing:**
-- ✗ `susan` - SUSAN corner detector
 - ✗ `features` class wrapper - Feature container object
 
 **Notes:**
-- Good coverage of essential computer vision operations
+- Excellent coverage of computer vision operations
+- All major corner detectors implemented (FAST, Harris, SUSAN)
+- SUSAN provides noise-robust corner detection
 - Feature descriptors return features objects (need to verify structure)
-- Missing SUSAN detector (less commonly used)
 - May need explicit feature object wrapper
 
 ---
@@ -727,7 +728,7 @@ These files extend beyond the core Unified API with additional functionality and
 | **Index** | index.clj | ~13 | 12 | 1 | **90%** ✓ | Good coverage |
 | **Signal** | signal.clj | ~43 | 40 | 3 | **98%** ✓ | Includes normalized FFT |
 | **Image** | image.clj | ~44 | 43 | 1 | **98%** ✓ | Memory I/O, comprehensive processing |
-| **Vision** | vision.clj | ~12 | 10 | 2 | **85%** ✓ | Key algorithms present |
+| **Vision** | vision.clj | ~12 | 11 | 1 | **92%** ✓ | Key algorithms present |
 | **Statistics** | statistics.clj | 16 | 16 | 0 | **100%** ✓ | Excellent documentation |
 | **Algorithm** | algorithm.clj | ~29 | 28 | 1 | **98%** ✓ | ByKey reductions, accum, diff ops |
 | **Random** | random.clj | ~17 | 17 | 0 | **100%** ✓ | Complete with engines |
@@ -769,8 +770,7 @@ These files extend beyond the core Unified API with additional functionality and
 **Image Processing (2% remaining):**
 - Image I/O availability check: `isImageIOAvailable`
 
-**Computer Vision (15% remaining):**
-- SUSAN corner detector (less commonly used)
+**Computer Vision (8% remaining):**
 - Feature container wrapper
 
 **Array Core (3% remaining):**
@@ -811,7 +811,7 @@ The integration layer is **production-ready** with comprehensive support for:
 - ✓ **Machine Learning**: Matrix operations, categorical data processing with ByKey reductions, and random number generation
 - ✓ **Signal Processing**: Comprehensive FFT operations (1D/2D/3D), convolution, and filtering
 - ✓ **Image Processing**: Geometric transformations, filtering, color space conversions, and morphological operations
-- ✓ **Computer Vision**: Feature detection (FAST, Harris), descriptors (ORB, SIFT, GLOH), and matching
+- ✓ **Computer Vision**: Feature detection (FAST, Harris, SUSAN), descriptors (ORB, SIFT, GLOH), and matching
 - ✓ **Scientific Computing**: Linear algebra (BLAS, LAPACK), statistics, and numerical analysis
 - ✓ **Data Analysis**: Comprehensive reductions, scans, sorting, and set operations
 

@@ -1,8 +1,8 @@
 (ns org.soulspace.arrayfire.integration.event-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
-            [org.soulspace.arrayfire.integration.event :as event]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.event :as event]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
 
 ;;;

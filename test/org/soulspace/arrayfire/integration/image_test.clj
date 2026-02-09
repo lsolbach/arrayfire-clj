@@ -1,8 +1,8 @@
 (ns org.soulspace.arrayfire.integration.image-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
-            [org.soulspace.arrayfire.integration.image :as img]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.image :as img]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
             [coffi.mem :as mem])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))

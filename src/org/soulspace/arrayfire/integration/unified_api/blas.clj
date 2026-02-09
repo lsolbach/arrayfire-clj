@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.blas
+(ns org.soulspace.arrayfire.integration.unified-api.blas
   "Integration of the ArrayFire BLAS related FFI bindings with the error
    handling and resource management on the JVM."
   (:require [coffi.mem :as mem]

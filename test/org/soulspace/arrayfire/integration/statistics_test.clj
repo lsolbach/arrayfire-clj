@@ -1,9 +1,9 @@
 (ns org.soulspace.arrayfire.integration.statistics-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
-            [org.soulspace.arrayfire.integration.statistics :as stats]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.data :as data]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.statistics :as stats]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.data :as data]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
 

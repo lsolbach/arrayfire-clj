@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.moments
+(ns org.soulspace.arrayfire.integration.unified-api.moments
   "Integration of the ArrayFire moments related FFI bindings with the error
    handling and resource management on the JVM.
    

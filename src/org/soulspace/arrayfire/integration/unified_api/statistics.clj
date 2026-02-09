@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.statistics
+(ns org.soulspace.arrayfire.integration.unified-api.statistics
   "High-level Clojure wrapper for ArrayFire statistical functions.
 
   Statistical operations compute measures of central tendency, dispersion,

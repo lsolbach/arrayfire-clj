@@ -1,8 +1,8 @@
 (ns org.soulspace.arrayfire.integration.vision-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
-            [org.soulspace.arrayfire.integration.vision :as vision]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.vision :as vision]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
 
@@ -67,6 +67,39 @@
     (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] jvm/AF_DTYPE_F32)
           features-small (vision/harris img 50 1.0e4 0.5 3 0.04)
           features-large (vision/harris img 50 1.0e4 2.0 5 0.06)]
+      (try
+        (is (integer? features-small))
+        (is (integer? features-large))
+        (finally
+          (.close img))))))
+
+(deftest test-susan
+  (testing "SUSAN corner detection"
+    (device/init!)
+    (let [;; Create test image with corners
+          img-data (float-array (* 32 32))
+          _ (dotimes [i 10] (aset img-data i 1.0)) ;; horizontal edge
+          img (array/create-array img-data [32 32] jvm/AF_DTYPE_F32)
+          radius 3
+          diff-thr 20.0
+          geom-thr 14.0 ;; ≈ 0.5 * π * radius²
+          feature-ratio 0.15
+          edge 3
+          features (vision/susan img radius diff-thr geom-thr feature-ratio edge)]
+      (try
+        (is (integer? features))
+        (is (>= features 0))
+        (finally
+          (.close img))))))
+
+(deftest test-susan-parameters
+  (testing "SUSAN with different radius and threshold values"
+    (device/init!)
+    (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] jvm/AF_DTYPE_F32)
+          ;; Small radius for fine details
+          features-small (vision/susan img 2 15.0 6.0 0.2 2)
+          ;; Large radius for noise robustness
+          features-large (vision/susan img 5 30.0 39.0 0.1 5)]
       (try
         (is (integer? features-small))
         (is (integer? features-large))
@@ -385,6 +418,10 @@
   ;; run individual tests - Harris
   (run-test test-harris)
   (run-test test-harris-parameters)
+  
+  ;; run individual tests - SUSAN
+  (run-test test-susan)
+  (run-test test-susan-parameters)
   
   ;; run individual tests - ORB
   (run-test test-orb)

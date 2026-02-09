@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.lapack
+(ns org.soulspace.arrayfire.integration.unified-api.lapack
   "Integration of the ArrayFire LAPACK related FFI bindings with the error
    handling and resource management on the JVM."
   (:require [coffi.mem :as mem]

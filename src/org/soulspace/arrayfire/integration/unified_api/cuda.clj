@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.cuda
+(ns org.soulspace.arrayfire.integration.unified-api.cuda
   "Integration of the ArrayFire CUDA backend related FFI bindings with the error
    handling and resource management on the JVM.
    

@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.util
+(ns org.soulspace.arrayfire.integration.unified-api.util
   "High-level Clojure wrapper for ArrayFire utility functions.
    
    Utility functions provide essential debugging, persistence, and data

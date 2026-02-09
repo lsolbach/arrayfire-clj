@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.features
+(ns org.soulspace.arrayfire.integration.unified-api.features
   "Integration of the ArrayFire features related FFI bindings with the error
    handling and resource management on the JVM.
    

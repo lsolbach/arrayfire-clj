@@ -1,9 +1,7 @@
 (ns introduction
-  (:require [clojure.pprint :refer [pprint]]
-            [org.soulspace.arrayfire.integration.device :as device]
+  (:require [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.memory :as memory]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [coffi.mem :as mem]))
 
 ;; # Introduction to ArrayFire-CLJ

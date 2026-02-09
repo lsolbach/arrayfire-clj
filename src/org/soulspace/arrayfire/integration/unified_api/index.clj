@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.index
+(ns org.soulspace.arrayfire.integration.unified-api.index
   "Integration of the ArrayFire indexing FFI bindings with error handling
    and resource management on the JVM.
    

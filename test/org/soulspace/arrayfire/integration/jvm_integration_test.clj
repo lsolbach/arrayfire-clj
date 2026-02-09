@@ -1,7 +1,7 @@
 (ns org.soulspace.arrayfire.integration.jvm-integration-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.ffi.c-api.array :as af-array]
             [coffi.mem :as mem])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))

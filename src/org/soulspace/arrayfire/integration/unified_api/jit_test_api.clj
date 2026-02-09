@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.jit-test-api
+(ns org.soulspace.arrayfire.integration.unified-api.jit-test-api
   "Integration of the ArrayFire JIT test API related FFI bindings with error
    handling and resource management on the JVM.
    

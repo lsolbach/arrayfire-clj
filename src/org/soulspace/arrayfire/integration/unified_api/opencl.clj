@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.opencl
+(ns org.soulspace.arrayfire.integration.unified-api.opencl
   "Integration of the ArrayFire OpenCL backend FFI bindings with the error
    handling and resource management on the JVM.
    

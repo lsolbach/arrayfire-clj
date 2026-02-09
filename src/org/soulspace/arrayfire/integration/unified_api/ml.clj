@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.ml
+(ns org.soulspace.arrayfire.integration.unified-api.ml
   "Integration of the ArrayFire machine learning related FFI bindings with the error
    handling and resource management on the JVM.
    

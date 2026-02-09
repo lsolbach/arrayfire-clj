@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.vision
+(ns org.soulspace.arrayfire.integration.unified-api.vision
   "High-level Clojure wrapper for ArrayFire computer vision functions.
    
    Computer vision functions provide feature detection, descriptor extraction,
@@ -285,6 +285,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.fast :as fast]
             [org.soulspace.arrayfire.ffi.c-api.harris :as harris]
+            [org.soulspace.arrayfire.ffi.c-api.susan :as susan]
             [org.soulspace.arrayfire.ffi.c-api.orb :as orb]
             [org.soulspace.arrayfire.ffi.c-api.sift :as sift]
             [org.soulspace.arrayfire.ffi.c-api.hamming :as hamming]
@@ -558,6 +559,112 @@
                                    (float min-response) (float sigma)
                                    (int block-size) (float k-thr))
                  "af-harris")
+     (jvm/deref-af-array out))))
+
+(defn susan
+  "Detect SUSAN (Smallest Univalue Segment Assimilating Nucleus) corners.
+   
+   SUSAN is a corner and edge detection algorithm that uses direct intensity
+   comparison within a circular mask, making it robust to noise without
+   requiring derivative computation.
+   
+   Algorithm:
+   1. Place circular mask of radius r at each pixel
+   2. Compare center pixel intensity with mask pixels
+   3. Weight similarities by exponential: exp(-((I_mask - I_center)/t)^6)
+   4. Compute USAN area c = sum of weights
+   5. Calculate response: R = max(0, geom_thr - c)
+   6. Apply non-maximal suppression and thresholding
+   
+   USAN Interpretation:
+   - Small USAN (c << geom_thr): Corner (high response)
+   - Medium USAN (c ≈ geom_thr): Edge (low response)
+   - Large USAN (c ≈ circle_area): Flat region (zero response)
+   
+   Parameters:
+   - in: Input grayscale image (AFArray)
+   - radius: Circular mask radius in pixels (default 3)
+             Range: 1-9 (must be < 10, must be ≤ edge)
+             Larger = more smoothing, fewer corners
+   - diff-thr: Intensity difference threshold (default 20.0)
+               Range: > 0.0
+               Lower = more selective (sharper corners)
+               Higher = less selective (more corners, noise robust)
+               Typical: 15-30 for 8-bit, 0.05-0.15 for float [0,1]
+   - geom-thr: Geometric threshold for corner response (default 14.0)
+               Range: > 0.0
+               Typical: ≈ 0.5 * π * radius²
+               Lower = more corners, Higher = fewer corners
+   - feature-ratio: Fraction of corners to retain (default 0.15)
+                    Range: (0.0, 1.0]
+                    Keeps top (feature-ratio × 100)% of corners
+   - edge: Border exclusion size in pixels (default 3)
+           Range: ≥ radius
+           Must satisfy: image dimensions ≥ (2*edge + 1)
+   
+   Returns:
+   af_features struct handle containing:
+   - n: Number of corners detected
+   - x, y: Corner coordinates
+   - score: SUSAN response values
+   - orientation: 0.0 (SUSAN has no orientation)
+   - size: 1.0 (SUSAN has no scale)
+   
+   Example:
+   ```clojure
+   ;; Basic SUSAN corners
+   (let [img (array/load-image "noisy-scene.jpg")
+         gray (colorspace/rgb-to-gray img)
+         corners (susan gray 3 20.0 14.0 0.15 3)]
+     corners)
+   
+   ;; Noise-robust (larger radius, higher threshold)
+   (let [corners (susan gray 5 30.0 39.0 0.1 5)]
+     corners)
+   
+   ;; High precision (low thresholds)
+   (let [corners (susan gray 3 10.0 10.0 0.05 3)]
+     corners)
+   ```
+   
+   Performance:
+   - Fast: O(W × H × radius²)
+   - No convolution required
+   - Typical: 5-30ms for 640×480 on GPU
+   - GPU provides 20-50× speedup
+   
+   Advantages over Harris:
+   - More robust to noise (no derivatives)
+   - Better localization accuracy
+   - Simpler computation
+   - Unified corner/edge detection
+   
+   Use cases:
+   - Noisy image processing (medical imaging, low-light)
+   - Real-time feature tracking
+   - When Harris produces unstable results
+   - Structure analysis and texture characterization
+   
+   See also:
+   - fast: Faster but less noise-robust
+   - harris: Derivative-based corner detection
+   - orb: Features with descriptors"
+  ([^AFArray in]
+   (susan in 3 20.0 14.0 0.15 3))
+  ([^AFArray in radius]
+   (susan in radius 20.0 14.0 0.15 radius))
+  ([^AFArray in radius diff-thr]
+   (susan in radius diff-thr 14.0 0.15 radius))
+  ([^AFArray in radius diff-thr geom-thr]
+   (susan in radius diff-thr geom-thr 0.15 radius))
+  ([^AFArray in radius diff-thr geom-thr feature-ratio]
+   (susan in radius diff-thr geom-thr feature-ratio radius))
+  ([^AFArray in radius diff-thr geom-thr feature-ratio edge]
+   (let [out (jvm/native-af-array-pointer)]
+     (jvm/check! (susan/af-susan out (jvm/af-handle in) (int radius)
+                                 (float diff-thr) (float geom-thr)
+                                 (float feature-ratio) (int edge))
+                 "af-susan")
      (jvm/deref-af-array out))))
 
 ;;;

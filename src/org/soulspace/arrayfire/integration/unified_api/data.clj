@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.data
+(ns org.soulspace.arrayfire.integration.unified-api.data
   "Integration of the ArrayFire data related FFI bindings with the error
    handling and resource management on the JVM."
   (:refer-clojure :exclude [identity range])

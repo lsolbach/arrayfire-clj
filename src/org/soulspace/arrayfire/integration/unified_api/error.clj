@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.error
+(ns org.soulspace.arrayfire.integration.unified-api.error
   "Integration of the ArrayFire error handling related FFI bindings with the error
    handling and resource management on the JVM.
    

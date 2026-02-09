@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.image
+(ns org.soulspace.arrayfire.integration.unified-api.image
   "Integration of the ArrayFire image processing FFI bindings with error
    handling and resource management on the JVM.
    

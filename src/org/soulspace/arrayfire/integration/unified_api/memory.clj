@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.memory
+(ns org.soulspace.arrayfire.integration.unified-api.memory
   "Integration of the ArrayFire memory related FFI bindings with the error
    handling and resource management on the JVM.
    
@@ -38,8 +38,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.memory :as mem-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)
-           (java.lang.foreign ValueLayout)))
+  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;
 ;;; Pinned Memory

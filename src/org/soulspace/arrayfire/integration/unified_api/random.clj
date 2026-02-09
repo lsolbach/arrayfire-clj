@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.random
+(ns org.soulspace.arrayfire.integration.unified-api.random
   "Integration of the ArrayFire random number generation FFI bindings with
    error handling and resource management on the JVM.
    

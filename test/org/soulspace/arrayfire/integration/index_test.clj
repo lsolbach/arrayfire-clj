@@ -1,9 +1,9 @@
 (ns org.soulspace.arrayfire.integration.index-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
-            [org.soulspace.arrayfire.integration.index :as idx]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.data :as data]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.index :as idx]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.data :as data]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
             [coffi.mem :as mem])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))

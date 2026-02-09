@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.device
+(ns org.soulspace.arrayfire.integration.unified-api.device
   "Integration of the ArrayFire device management related FFI bindings with the error
    handling and resource management on the JVM."
   (:require [coffi.mem :as mem]

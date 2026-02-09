@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.arith
+(ns org.soulspace.arrayfire.integration.unified-api.arith
   "Integration of the ArrayFire Arithmetic related FFI bindings with the error
    handling and resource management on the JVM."
   (:refer-clojure :exclude [cast not zero? mod rem and or])

@@ -1,6 +1,6 @@
 (ns org.soulspace.arrayfire.integration.device-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
-            [org.soulspace.arrayfire.integration.device :as device]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
 ;;;
 ;;; Device Initialization Tests

@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.sparse
+(ns org.soulspace.arrayfire.integration.unified-api.sparse
   "High-level Clojure wrapper for ArrayFire sparse matrix operations.
 
   Sparse matrices store only non-zero elements, providing significant memory

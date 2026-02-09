@@ -1,8 +1,8 @@
 (ns org.soulspace.arrayfire.integration.util-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
-            [org.soulspace.arrayfire.integration.util :as util]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.util :as util]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
             [clojure.java.io :as io])
   (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))

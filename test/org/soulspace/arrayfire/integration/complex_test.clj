@@ -1,8 +1,8 @@
 (ns org.soulspace.arrayfire.integration.complex-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
-            [org.soulspace.arrayfire.integration.complex :as complex]
-            [org.soulspace.arrayfire.integration.array :as array]
-            [org.soulspace.arrayfire.integration.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.complex :as complex]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
             [coffi.mem :as mem]))
 
