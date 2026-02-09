@@ -62,7 +62,7 @@
    See also:
    - org.soulspace.arrayfire.integration.device: Backend management"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.opencl :as opencl]
+            [org.soulspace.arrayfire.ffi.c-api.opencl :as opencl]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
 
 ;;;

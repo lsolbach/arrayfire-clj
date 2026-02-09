@@ -82,7 +82,7 @@
    - All arrays are float32 (single precision)
    - Features live in GPU memory"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.features :as ffi]
+            [org.soulspace.arrayfire.ffi.c-api.features :as ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
 
 ;;;

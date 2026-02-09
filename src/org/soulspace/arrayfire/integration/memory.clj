@@ -36,7 +36,7 @@
    - Automatic garbage collection
    - Configurable chunk sizes"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.memory :as mem-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.memory :as mem-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)
            (java.lang.foreign ValueLayout)))

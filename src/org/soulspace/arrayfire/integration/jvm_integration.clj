@@ -31,7 +31,7 @@
    that resources are released when the AFArray instance is garbage collected,
    preventing memory leaks."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.array :refer [af-release-array af-retain-array]])
+            [org.soulspace.arrayfire.ffi.c-api.array :refer [af-release-array af-retain-array]])
   (:import [java.lang AutoCloseable]
            [java.lang.ref Cleaner Cleaner$Cleanable]
            [java.util.concurrent.atomic AtomicBoolean]

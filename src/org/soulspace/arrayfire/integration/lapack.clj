@@ -2,16 +2,16 @@
   "Integration of the ArrayFire LAPACK related FFI bindings with the error
    handling and resource management on the JVM."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.cholesky :as cholesky]
-            [org.soulspace.arrayfire.ffi.det :as det]
-            [org.soulspace.arrayfire.ffi.inverse :as inverse]
-            [org.soulspace.arrayfire.ffi.pinverse :as pinverse]
-            [org.soulspace.arrayfire.ffi.solve :as solve]
-            [org.soulspace.arrayfire.ffi.norm :as norm]
-            [org.soulspace.arrayfire.ffi.rank :as rank]
-            [org.soulspace.arrayfire.ffi.lu :as lu]
-            [org.soulspace.arrayfire.ffi.qr :as qr]
-            [org.soulspace.arrayfire.ffi.svd :as svd]
+            [org.soulspace.arrayfire.ffi.c-api.cholesky :as cholesky]
+            [org.soulspace.arrayfire.ffi.c-api.det :as det]
+            [org.soulspace.arrayfire.ffi.c-api.inverse :as inverse]
+            [org.soulspace.arrayfire.ffi.c-api.pinverse :as pinverse]
+            [org.soulspace.arrayfire.ffi.c-api.solve :as solve]
+            [org.soulspace.arrayfire.ffi.c-api.norm :as norm]
+            [org.soulspace.arrayfire.ffi.c-api.rank :as rank]
+            [org.soulspace.arrayfire.ffi.c-api.lu :as lu]
+            [org.soulspace.arrayfire.ffi.c-api.qr :as qr]
+            [org.soulspace.arrayfire.ffi.c-api.svd :as svd]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

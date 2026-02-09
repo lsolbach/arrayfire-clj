@@ -20,7 +20,7 @@
    like CUDA kernel integration, external library interop, and performance
    optimization."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.internal :as internal-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.internal :as internal-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)
            (java.lang.foreign ValueLayout)))

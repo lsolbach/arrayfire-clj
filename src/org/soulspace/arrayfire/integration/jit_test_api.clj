@@ -43,7 +43,7 @@
    These functions are primarily for testing, benchmarking, and performance
    tuning. Most applications should use the default settings."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.jit-test-api :as jit-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.jit-test-api :as jit-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
 
 ;;;

@@ -2,7 +2,7 @@
   "Integration of the ArrayFire BLAS related FFI bindings with the error
    handling and resource management on the JVM."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.blas :as blas]
+            [org.soulspace.arrayfire.ffi.c-api.blas :as blas]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

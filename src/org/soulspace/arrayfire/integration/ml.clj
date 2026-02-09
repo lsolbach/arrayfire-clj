@@ -44,7 +44,7 @@
    - If using bias terms in convolution
    - Sum of incoming gradient over spatial dimensions
    - One value per output channel"
-  (:require [org.soulspace.arrayfire.ffi.convolve :as convolve-ffi]
+  (:require [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

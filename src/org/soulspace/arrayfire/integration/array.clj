@@ -3,15 +3,14 @@
    handling and resource management on the JVM."
   (:refer-clojure :exclude [empty? vector? double? integer? bytes?])
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.array :as array-ffi]
-            [org.soulspace.arrayfire.ffi.internal :as internal]
+            [org.soulspace.arrayfire.ffi.c-api.array :as array-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.internal :as internal]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;
 ;;; Type Helper Functions
 ;;;
-
 (defn floats?
   "Check if data is a float array or a collection of floats."
   [data]

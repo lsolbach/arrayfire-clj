@@ -73,7 +73,7 @@
    - Consider event pooling for high-frequency usage
    - Minimize synchronization points for better performance"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.events :as event-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.events :as event-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
 
 ;;;

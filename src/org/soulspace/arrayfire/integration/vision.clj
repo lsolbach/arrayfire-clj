@@ -283,15 +283,15 @@
    - Image processing functions for preprocessing
    - BLAS operations for geometric transformations"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.fast :as fast]
-            [org.soulspace.arrayfire.ffi.harris :as harris]
-            [org.soulspace.arrayfire.ffi.orb :as orb]
-            [org.soulspace.arrayfire.ffi.sift :as sift]
-            [org.soulspace.arrayfire.ffi.hamming :as hamming]
-            [org.soulspace.arrayfire.ffi.nearest-neighbour :as nn]
-            [org.soulspace.arrayfire.ffi.match-template :as match-template]
-            [org.soulspace.arrayfire.ffi.dog :as dog]
-            [org.soulspace.arrayfire.ffi.homography :as homography-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.fast :as fast]
+            [org.soulspace.arrayfire.ffi.c-api.harris :as harris]
+            [org.soulspace.arrayfire.ffi.c-api.orb :as orb]
+            [org.soulspace.arrayfire.ffi.c-api.sift :as sift]
+            [org.soulspace.arrayfire.ffi.c-api.hamming :as hamming]
+            [org.soulspace.arrayfire.ffi.c-api.nearest-neighbour :as nn]
+            [org.soulspace.arrayfire.ffi.c-api.match-template :as match-template]
+            [org.soulspace.arrayfire.ffi.c-api.dog :as dog]
+            [org.soulspace.arrayfire.ffi.c-api.homography :as homography-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

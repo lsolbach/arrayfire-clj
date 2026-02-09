@@ -5,7 +5,7 @@
    These functions are specific to the CUDA backend and will return
    AF_ERR_NOT_SUPPORTED if the current backend is not CUDA."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.cuda :as cuda-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.cuda :as cuda-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
 
 ;;;

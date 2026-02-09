@@ -34,8 +34,8 @@
    
    This applies to all indexing and assignment operations in this namespace."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.index :as index-ffi]
-            [org.soulspace.arrayfire.ffi.assign :as assign-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.index :as index-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.assign :as assign-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)
            (java.lang.foreign ValueLayout)))

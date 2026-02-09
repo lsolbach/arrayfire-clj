@@ -6,12 +6,12 @@
    org.soulspace.arrayfire.integration.lapack to align with the ArrayFire
    Unified API structure."
   (:refer-clojure :exclude [min max count sort])
-  (:require [org.soulspace.arrayfire.ffi.reduce :as reduce]
-            [org.soulspace.arrayfire.ffi.scan :as scan]
-            [org.soulspace.arrayfire.ffi.sort :as sort]
-            [org.soulspace.arrayfire.ffi.set :as set-ops]
-            [org.soulspace.arrayfire.ffi.where :as where]
-            [org.soulspace.arrayfire.ffi.diff :as diff]
+  (:require [org.soulspace.arrayfire.ffi.c-api.reduce :as reduce]
+            [org.soulspace.arrayfire.ffi.c-api.scan :as scan]
+            [org.soulspace.arrayfire.ffi.c-api.sort :as sort]
+            [org.soulspace.arrayfire.ffi.c-api.set :as set-ops]
+            [org.soulspace.arrayfire.ffi.c-api.where :as where]
+            [org.soulspace.arrayfire.ffi.c-api.diff :as diff]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

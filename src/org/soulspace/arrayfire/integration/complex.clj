@@ -2,7 +2,7 @@
   "Integration of the ArrayFire complex related FFI bindings with the error
    handling and resource management on the JVM."
   (:refer-clojure :exclude [abs])
-  (:require [org.soulspace.arrayfire.ffi.complex :as complex-ffi]
+  (:require [org.soulspace.arrayfire.ffi.c-api.complex :as complex-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.arith :as arith])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))

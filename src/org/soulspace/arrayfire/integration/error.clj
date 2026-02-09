@@ -37,7 +37,7 @@
    (set-enable-stacktrace! true)  ; Enable for debugging
    ```"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.error :as error-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.error :as error-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import [java.lang.foreign Arena MemorySegment]))
 

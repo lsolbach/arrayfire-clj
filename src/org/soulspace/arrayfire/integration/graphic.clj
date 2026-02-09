@@ -89,12 +89,12 @@
    - Use grid! for subplot layouts
    - Cell properties (af_cell) control plot positioning in grids"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.window :as window-ffi]
-            [org.soulspace.arrayfire.ffi.image :as image-ffi]
-            [org.soulspace.arrayfire.ffi.plot :as plot-ffi]
-            [org.soulspace.arrayfire.ffi.hist :as hist-ffi]
-            [org.soulspace.arrayfire.ffi.surface :as surface-ffi]
-            [org.soulspace.arrayfire.ffi.vector-field :as vector-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.window :as window-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.image :as image-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.plot :as plot-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.hist :as hist-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.surface :as surface-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.vector-field :as vector-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (java.lang.foreign MemorySegment)))
 

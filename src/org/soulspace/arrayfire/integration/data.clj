@@ -3,7 +3,7 @@
    handling and resource management on the JVM."
   (:refer-clojure :exclude [identity range])
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.data :as data]
+            [org.soulspace.arrayfire.ffi.c-api.data :as data]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

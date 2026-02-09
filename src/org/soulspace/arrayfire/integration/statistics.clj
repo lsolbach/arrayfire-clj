@@ -213,13 +213,13 @@
   - BLAS operations for linear algebra"
   (:refer-clojure :exclude [var])
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.mean :as mean]
-            [org.soulspace.arrayfire.ffi.var :as variance]
-            [org.soulspace.arrayfire.ffi.stdev :as stdev]
-            [org.soulspace.arrayfire.ffi.median :as median]
-            [org.soulspace.arrayfire.ffi.covariance :as covariance]
-            [org.soulspace.arrayfire.ffi.corrcoef :as corrcoef]
-            [org.soulspace.arrayfire.ffi.topk :as topk]
+            [org.soulspace.arrayfire.ffi.c-api.mean :as mean]
+            [org.soulspace.arrayfire.ffi.c-api.var :as variance]
+            [org.soulspace.arrayfire.ffi.c-api.stdev :as stdev]
+            [org.soulspace.arrayfire.ffi.c-api.median :as median]
+            [org.soulspace.arrayfire.ffi.c-api.covariance :as covariance]
+            [org.soulspace.arrayfire.ffi.c-api.corrcoef :as corrcoef]
+            [org.soulspace.arrayfire.ffi.c-api.topk :as topk]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

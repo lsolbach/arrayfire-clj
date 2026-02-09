@@ -2,8 +2,8 @@
   "Integration of the ArrayFire device management related FFI bindings with the error
    handling and resource management on the JVM."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.device :as device-ffi]
-            [org.soulspace.arrayfire.ffi.memory :as memory-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.device :as device-ffi]
+            [org.soulspace.arrayfire.ffi.c-api.memory :as memory-ffi]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)
            (java.lang.foreign Arena MemorySegment)))

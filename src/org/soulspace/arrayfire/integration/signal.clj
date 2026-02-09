@@ -89,12 +89,12 @@
    - integration.arith for element-wise operations
    - integration.algorithm for reduction and sorting"
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.approx :as approx]
-            [org.soulspace.arrayfire.ffi.fft :as fft]
-            [org.soulspace.arrayfire.ffi.convolve :as convolve]
-            [org.soulspace.arrayfire.ffi.fftconvolve :as fftconvolve]
-            [org.soulspace.arrayfire.ffi.iir :as iir]
-            [org.soulspace.arrayfire.ffi.filters :as filters]
+            [org.soulspace.arrayfire.ffi.c-api.approx :as approx]
+            [org.soulspace.arrayfire.ffi.c-api.fft :as fft]
+            [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve]
+            [org.soulspace.arrayfire.ffi.c-api.fftconvolve :as fftconvolve]
+            [org.soulspace.arrayfire.ffi.c-api.iir :as iir]
+            [org.soulspace.arrayfire.ffi.c-api.filters :as filters]
             [org.soulspace.arrayfire.integration.array :as array]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))

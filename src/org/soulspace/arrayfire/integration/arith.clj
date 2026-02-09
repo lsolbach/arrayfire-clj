@@ -2,10 +2,10 @@
   "Integration of the ArrayFire Arithmetic related FFI bindings with the error
    handling and resource management on the JVM."
   (:refer-clojure :exclude [cast not zero? mod rem and or])
-  (:require [org.soulspace.arrayfire.ffi.unary :as unary]
-            [org.soulspace.arrayfire.ffi.binary :as binary]
-            [org.soulspace.arrayfire.ffi.cast :as ffi-cast]
-            [org.soulspace.arrayfire.ffi.clamp :as ffi-clamp]
+  (:require [org.soulspace.arrayfire.ffi.c-api.unary :as unary]
+            [org.soulspace.arrayfire.ffi.c-api.binary :as binary]
+            [org.soulspace.arrayfire.ffi.c-api.cast :as ffi-cast]
+            [org.soulspace.arrayfire.ffi.c-api.clamp :as ffi-clamp]
             [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
