@@ -62,9 +62,9 @@
 ;; ## Device Information
 ;; We can query information about the available devices and their capabilities.
 
-(let [device-info (device/info-string)
-      device-count (device/get-device-count)
+(let [device-count (device/get-device-count)
       current-device (device/get-device)
+      device-info (device/info-string)
       dbl-support (device/dbl-support?)
       half-support (device/half-support?)
       mem-info (device/device-mem-info)]
