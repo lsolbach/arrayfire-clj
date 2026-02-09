@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.device-test
+(ns org.soulspace.arrayfire.integration.unified-api.device-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 

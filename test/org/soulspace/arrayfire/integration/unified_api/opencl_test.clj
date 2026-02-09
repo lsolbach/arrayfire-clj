@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.opencl-test
+(ns org.soulspace.arrayfire.integration.unified-api.opencl-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.opencl :as opencl]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]))

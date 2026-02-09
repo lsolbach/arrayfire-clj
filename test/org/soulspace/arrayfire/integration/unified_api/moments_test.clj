@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.moments-test
+(ns org.soulspace.arrayfire.integration.unified-api.moments-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.moments :as moments]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]

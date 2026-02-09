@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.graphic-test
+(ns org.soulspace.arrayfire.integration.unified-api.graphic-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.graphic :as graphic]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]

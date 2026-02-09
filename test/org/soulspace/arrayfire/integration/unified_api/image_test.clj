@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.image-test
+(ns org.soulspace.arrayfire.integration.unified-api.image-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.image :as img]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]

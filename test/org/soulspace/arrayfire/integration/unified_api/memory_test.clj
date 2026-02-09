@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.memory-test
+(ns org.soulspace.arrayfire.integration.unified-api.memory-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]

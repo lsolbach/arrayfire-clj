@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.internal-test
+(ns org.soulspace.arrayfire.integration.unified-api.internal-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.internal :as internal]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]

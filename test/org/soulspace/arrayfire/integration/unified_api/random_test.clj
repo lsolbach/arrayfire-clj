@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.random-test
+(ns org.soulspace.arrayfire.integration.unified-api.random-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.integration.unified-api.random :as rand]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]

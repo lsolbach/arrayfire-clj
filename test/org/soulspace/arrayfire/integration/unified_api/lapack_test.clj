@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.lapack-test
+(ns org.soulspace.arrayfire.integration.unified-api.lapack-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
             [org.soulspace.arrayfire.util.test :refer [approx=]]
             [org.soulspace.arrayfire.integration.unified-api.lapack :as lapack]
