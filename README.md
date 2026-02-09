@@ -1,11 +1,26 @@
-# ArrayFire for Clojure
-
-Arrayfire-clj provides a minimal Clojure wrapper around the
-[ArrayFire](https://github.com/arrayfire/arrayfire) C API
-using Java 22+ Foreign Function & Memory API via the
-[Coffi](https://github.com/IGJoshua/coffi) library.
+# ArrayFire-CLJ
+Arrayfire-clj provides a Clojure wrapper around the
+[ArrayFire](https://github.com/arrayfire/arrayfire) C API using Java 22+
+Foreign Function & Memory API via the [Coffi](https://github.com/IGJoshua/coffi)
+library. It brings ArrayFire to the JVM, with some unique features not 
+available otherwise on the JVM, like GPU enabled linear algebra over the field
+of complex numbers. 
 
 ArrayFire is a general-purpose tensor library that simplifies the software development process for the parallel architectures found in CPUs, GPUs, and other hardware acceleration devices.
+
+ArrayFire provides:
+* Hundreds of functions in the following categories
+  * Array handling
+  * Computer vision
+  * Image processing
+  * Linear algebra
+  * Machine learning
+  * Standard math
+  * Signal Processing
+  * Statistics
+  * Vector algorithms
+* Cross-platform compatibility with support for CUDA, oneAPI, OpenCL,
+  and native CPU on Windows, Mac, and Linux
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.soulspace/arrayfire-clj.svg)](https://clojars.org/org.soulspace/arrayfire-clj)
 [![cljdoc badge](https://cljdoc.org/badge/org.soulspace/arrayfire-clj)](https://cljdoc.org/d/org.soulspace/arrayfire-clj)
@@ -93,17 +108,15 @@ tensors over the field of complex numbers. By adapting ArrayFire to Clojure
 on the JVM, this gap is closed.
 
 ## Implementation Status
-*Experimental* 
+*Alpha* but usable
 
 Done:
 * All ArrayFire 3.10 C API bindings
-
-Work in progress:
-* Deeper JVM/Clojure integration
+* JVM/Clojure integration of the ArrayFire Unified API
   * error/exception handling 
   * resource management
 
-Not done:
+Planned:
 * Idiomatic Clojure API
 * dtype-next integration
 
