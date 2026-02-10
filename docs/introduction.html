@@ -45,50 +45,35 @@
 .clay-side-by-side {margin: 1em 0}
 </style>
 <link href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" rel="stylesheet" type="text/css" />
-<title>Clay</title></head><body data-spy="scroll" data-target="#toc" style="border:2px solid red;margin:auto;">
+<title>Clay</title></head><body data-spy="scroll" data-target="#toc" style="border:;margin:auto;">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" type="text/javascript"></script><script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js" type="text/javascript"></script><script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" type="text/javascript"></script>
 <div class="container"><div class="row"><div class="col-sm-12"><div><div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(ns introduction
   (:require [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [coffi.mem :as mem]))</code></pre></div></div><div style="margin:15px;"><div class="callout callout-style-default callout-titled callout-important"><details class="callout-header" open><summary style="list-style:none;"><div class="d-flex align-content-center"><div class="callout-icon-container"><i class="callout-icon"></i></div><div class="callout-title-container flex-fill"><strong>Syntax error macroexpanding at (org/soulspace/arrayfire/integration/unified_api/device.clj:1:1).<br>org.soulspace.arrayfire.integration.jvm_integration.AFArray</strong></div><div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div></div></summary><div class="callout-body-container callout-body"><pre><code>                                                               clojure.core/eval             core.clj: 3232
-                                                                             ...                          
-                                                          introduction/eval27339           REPL Input:     
-                                          introduction/eval27339/loading--auto--           REPL Input:     
-                                                                             ...                          
-                                                            clojure.core/require             core.clj: 6066 (repeats 2 times)
-                                                                             ...                          
-                                                          clojure.core/load-libs             core.clj: 6028
-                                                          clojure.core/load-libs             core.clj: 6044
-                                                                             ...                          
-                                                           clojure.core/load-lib             core.clj: 5981
-                                                           clojure.core/load-lib             core.clj: 6002
-                                                        clojure.core/load-lib/fn             core.clj: 6003
-                                                           clojure.core/load-one             core.clj: 5961
-                                                                             ...                          
-                                                               clojure.core/load             core.clj: 6172
-                                                               clojure.core/load             core.clj: 6188
-                                                            clojure.core/load/fn             core.clj: 6189
-                                                                             ...                          
-                org.soulspace.arrayfire.integration.unified-api.device/eval27347           device.clj:    1
-org.soulspace.arrayfire.integration.unified-api.device/eval27347/loading--auto--           device.clj:    1
-                                                                             ...                          
-                                                         java.lang.Class.forName           Class.java:  547
-                                                        java.lang.Class.forName0           Class.java:     
-                                                 java.lang.ClassLoader.loadClass     ClassLoader.java:  490
-                                                                             ...                          
-                                                 java.lang.ClassLoader.loadClass     ClassLoader.java:  557
-                                                                             ...                          
-                                               java.net.URLClassLoader.findClass  URLClassLoader.java:  377
-       java.lang.ClassNotFoundException: org.soulspace.arrayfire.integration.jvm_integration.AFArray
-clojure.lang.Compiler$CompilerException: Syntax error macroexpanding at (org/soulspace/arrayfire/integration/unified_api/device.clj:1:1).
-    data: #:clojure.error{:phase :execution,
-                      :line 1,
-                      :column 1,
-                      :source
-                      "org/soulspace/arrayfire/integration/unified_api/device.clj"}
+            [coffi.mem :as mem]))</code></pre></div></div><div style="margin:15px;"><div><h1 id="introduction-to-arrayfire-clj">Introduction to ArrayFire-CLJ</h1><p>This notebook provides an introduction to using the <a href="https://github.com/lsolbach/arrayfire-clj">ArrayFire-CLJ</a> library, a Clojure wrapper for the <a href="https://github.com/arrayfire/arrayfire">ArrayFire</a> tensor math library. We will cover the basics of initializing the library, creating and manipulating arrays, and managing resources.</p><h2 id="arrayfire">ArrayFire</h2><p><a href="https://github.com/arrayfire/arrayfire">ArrayFire</a> is a general-purpose tensor library that simplifies the software development process for the parallel architectures found in CPUs, GPUs, and other hardware acceleration devices.</p><p>ArrayFire provides:</p><ul><li>Hundreds of functions in the following categories<ul><li>Array handling</li><li>Computer vision</li><li>Image processing</li><li>Linear algebra</li><li>Machine learning</li><li>Standard math</li><li>Signal Processing</li><li>Statistics</li><li>Vector algorithms</li></ul></li><li>Cross-platform compatibility with support for CUDA, oneAPI, OpenCL, and native CPU on Windows, Mac, and Linux</li></ul><h2 id="arrayfire-clj">ArrayFire-CLJ</h2><p><a href="https://github.com/lsolbach/arrayfire-clj">ArrayFire-CLJ</a> is a Clojure wrapper around the ArrayFire library, providing a more idiomatic Clojure interface for working with ArrayFire. It abstracts away the complexities of the underlying C API and allows you to work with ArrayFire arrays using familiar Clojure data structures and functions.</p><p>The library also includes integration tests to ensure that the core functionality works correctly across different platforms and configurations.</p><p>In this notebook, we will explore the core features of ArrayFire-CLJ and how to use it effectively in your Clojure projects. We will cover device initialization, array creation and manipulation, memory management, and error handling. By the end of this notebook, you should have a solid understanding of how to use ArrayFire-CLJ to perform high-performance computations in Clojure.</p><h2 id="initialization">Initialization</h2><p>Before using ArrayFire, we need to initialize the library and select a device. The <code>device</code> namespace provides functions for this purpose.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(device/init!)</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">true
+</code></pre></div></div><div style="margin:15px;"><div><p>This initializes ArrayFire and selects the default device. You can also specify a backend (e.g., CUDA, OpenCL) if you have multiple backends available.</p><h2 id="device-information">Device Information</h2><p>We can query information about the available devices and their capabilities.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(let [device-count (device/get-device-count)
+      current-device (device/get-device)
+      device-info (device/info-string)
+      dbl-support (device/dbl-support?)
+      half-support (device/half-support?)
+      mem-info (device/device-mem-info)]
+  (println &quot;Device Count:&quot; device-count)
+  (println &quot;Current Device ID:&quot; current-device)
+  (println &quot;Device Info:\n&quot; device-info)
+  (println &quot;Double Precision Support:&quot; dbl-support)
+  (println &quot;Half Precision Support:&quot; half-support)
+  (println &quot;Memory Info:&quot; mem-info))</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Device Count: 1
+Current Device ID: 0
+Device Info:
+ ArrayFire v3.10.0 (oneAPI, 64-bit Linux, build 492718b5a)
+[0] Intel(R) OpenCL Graphics: Intel(R) UHD Graphics, 14293 MB (fp64 fp16 )
 
-</code></pre></div></details></div></div><div style="margin:15px;"><div style="background-color:grey;height:2px;width:100%;"></div></div><div style="margin:15px;"><div><pre><small><small>source: notebooks/introduction.clj</small></small></pre></div></div></div></div></div></div></div><script type="text/javascript">/*!
+Double Precision Support: true
+Half Precision Support: true
+Memory Info: {:alloc-bytes 0, :alloc-buffers 0, :lock-bytes 0, :lock-buffers 0}
+</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
+</code></pre></div></div><div style="margin:15px;"><div><h2 id="array-creation-and-manipulation">Array Creation and Manipulation</h2><p>The <code>array</code> namespace provides functions for creating and manipulating ArrayFire arrays. We can create arrays from Clojure data structures or directly from memory.</p></div></div><div style="margin:15px;"><div style="background-color:grey;height:2px;width:100%;"></div></div><div style="margin:15px;"><div><pre><small><small>source: notebooks/introduction.clj</small></small></pre></div></div></div></div></div></div></div><script type="text/javascript">/*!
   Highlight.js v11.9.0 (git: b7ec4bfafc)
   (c) 2006-2023 undefined and other contributors
   License: BSD-3-Clause
