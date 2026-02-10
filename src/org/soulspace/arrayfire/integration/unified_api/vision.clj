@@ -294,7 +294,7 @@
             [org.soulspace.arrayfire.ffi.c-api.dog :as dog]
             [org.soulspace.arrayfire.ffi.c-api.homography :as homography-ffi]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Match Type Constants

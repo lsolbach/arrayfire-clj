@@ -6,7 +6,7 @@
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [coffi.mem :as mem])
-  (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
+  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
 
 (defn- approx=
   "Compare expected/actual values within a tolerance."

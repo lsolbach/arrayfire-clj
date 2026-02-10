@@ -1,6 +1,6 @@
 (ns introduction
   (:require [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [coffi.mem :as mem]))
 
@@ -30,6 +30,7 @@
 ;; * Cross-platform compatibility with support for CUDA, oneAPI, OpenCL,
 ;;   and native CPU on Windows, Mac, and Linux
 ;;
+
 ;; ## ArrayFire-CLJ
 ;; [ArrayFire-CLJ](https://github.com/lsolbach/arrayfire-clj) is a Clojure
 ;; wrapper around the ArrayFire library, providing a more idiomatic Clojure

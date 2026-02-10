@@ -5,7 +5,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.data :as data]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Data Generation Functions

@@ -5,7 +5,7 @@
             [org.soulspace.arrayfire.integration.unified-api.signal :as signal]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
+  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
 
 ;;;
 ;;; Gradient Type Conversion Tests

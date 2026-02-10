@@ -46,7 +46,7 @@
    - One value per output channel"
   (:require [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve-ffi]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Gradient Type Constants

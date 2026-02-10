@@ -5,7 +5,7 @@
             [org.soulspace.arrayfire.ffi.c-api.device :as device-ffi]
             [org.soulspace.arrayfire.ffi.c-api.memory :as memory-ffi]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
            (java.lang.foreign Arena MemorySegment)))
 
 ;;;

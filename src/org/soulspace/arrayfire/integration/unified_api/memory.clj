@@ -38,7 +38,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.memory :as mem-ffi]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Pinned Memory

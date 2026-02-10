@@ -37,7 +37,7 @@
             [org.soulspace.arrayfire.ffi.c-api.index :as index-ffi]
             [org.soulspace.arrayfire.ffi.c-api.assign :as assign-ffi]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
            (java.lang.foreign ValueLayout)))
 
 ;;;

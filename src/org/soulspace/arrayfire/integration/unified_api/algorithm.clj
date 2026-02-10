@@ -13,7 +13,7 @@
             [org.soulspace.arrayfire.ffi.c-api.where :as where]
             [org.soulspace.arrayfire.ffi.c-api.diff :as diff]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Reduction Operations

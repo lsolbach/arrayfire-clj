@@ -221,7 +221,7 @@
             [org.soulspace.arrayfire.ffi.c-api.corrcoef :as corrcoef]
             [org.soulspace.arrayfire.ffi.c-api.topk :as topk]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Variance Bias Constants

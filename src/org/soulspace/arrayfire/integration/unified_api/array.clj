@@ -6,7 +6,7 @@
             [org.soulspace.arrayfire.ffi.c-api.array :as array-ffi]
             [org.soulspace.arrayfire.ffi.c-api.internal :as internal]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Type Helper Functions

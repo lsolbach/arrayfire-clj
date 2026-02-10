@@ -5,7 +5,7 @@
   (:require [org.soulspace.arrayfire.ffi.c-api.complex :as complex-ffi]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Complex Number Creation

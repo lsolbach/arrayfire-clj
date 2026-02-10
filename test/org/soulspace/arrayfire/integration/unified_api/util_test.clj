@@ -5,7 +5,7 @@
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [clojure.java.io :as io])
-  (:import [org.soulspace.arrayfire.integration.jvm_integration AFArray]))
+  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
 
 (defn cuda-backend?
   "Check if the current backend is CUDA."

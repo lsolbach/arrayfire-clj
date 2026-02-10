@@ -226,7 +226,7 @@
             [org.soulspace.arrayfire.ffi.c-api.print :as print]
             [org.soulspace.arrayfire.ffi.c-api.stream :as stream]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
 ;;;
 ;;; Array Printing and Display
