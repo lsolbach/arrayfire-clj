@@ -4,14 +4,7 @@
    It contains functions and types for:
    * Loading the ArrayFire library
    * Type Definitions
-   * Error Handling
    * Resource Management
-
-   Error Handling:
-
-   This module provides a function to check ArrayFire error codes returned
-   from FFI calls. If an error code indicates failure, an exception is thrown
-   with details about the error and where it occurred.
 
    Resource Management for ArrayFire Resources:
    
