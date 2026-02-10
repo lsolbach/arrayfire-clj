@@ -63,6 +63,7 @@
    - org.soulspace.arrayfire.integration.device: Backend management"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.opencl :as opencl]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
@@ -134,7 +135,7 @@
    (get-context false))
   ([retain]
    (let [ctx-ptr (mem/alloc 8)]
-     (jvm/check! (opencl/afcl-get-context ctx-ptr (if retain 1 0))
+     (check! (opencl/afcl-get-context ctx-ptr (if retain 1 0))
                  "afcl-get-context")
      (mem/read-long ctx-ptr 0))))
 
@@ -189,7 +190,7 @@
    (get-queue false))
   ([retain]
    (let [queue-ptr (mem/alloc 8)]
-     (jvm/check! (opencl/afcl-get-queue queue-ptr (if retain 1 0))
+     (check! (opencl/afcl-get-queue queue-ptr (if retain 1 0))
                  "afcl-get-queue")
      (mem/read-long queue-ptr 0))))
 
@@ -223,7 +224,7 @@
    - get-device-type: Query device type"
   []
   (let [id-ptr (mem/alloc 8)]
-    (jvm/check! (opencl/afcl-get-device-id id-ptr)
+    (check! (opencl/afcl-get-device-id id-ptr)
                 "afcl-get-device-id")
     (mem/read-long id-ptr 0)))
 
@@ -268,7 +269,7 @@
    - get-device-id: Query current device"
   [id]
   (let [id-seg (mem/as-segment (long id))]
-    (jvm/check! (opencl/afcl-set-device-id id-seg)
+    (check! (opencl/afcl-set-device-id id-seg)
                 "afcl-set-device-id")
     nil))
 
@@ -331,7 +332,7 @@
         queue-seg (if queue
                     (mem/as-segment (long queue))
                     jvm/null-ptr)]
-    (jvm/check! (opencl/afcl-add-device-context dev-seg ctx-seg queue-seg)
+    (check! (opencl/afcl-add-device-context dev-seg ctx-seg queue-seg)
                 "afcl-add-device-context")
     nil))
 
@@ -387,7 +388,7 @@
   [dev ctx]
   (let [dev-seg (mem/as-segment (long dev))
         ctx-seg (mem/as-segment (long ctx))]
-    (jvm/check! (opencl/afcl-set-device-context dev-seg ctx-seg)
+    (check! (opencl/afcl-set-device-context dev-seg ctx-seg)
                 "afcl-set-device-context")
     nil))
 
@@ -438,7 +439,7 @@
   [dev ctx]
   (let [dev-seg (mem/as-segment (long dev))
         ctx-seg (mem/as-segment (long ctx))]
-    (jvm/check! (opencl/afcl-delete-device-context dev-seg ctx-seg)
+    (check! (opencl/afcl-delete-device-context dev-seg ctx-seg)
                 "afcl-delete-device-context")
     nil))
 
@@ -489,7 +490,7 @@
    - get-platform: Query platform vendor"
   []
   (let [dtype-ptr (mem/alloc 4)]
-    (jvm/check! (opencl/afcl-get-device-type dtype-ptr)
+    (check! (opencl/afcl-get-device-type dtype-ptr)
                 "afcl-get-device-type")
     (mem/read-int dtype-ptr 0)))
 
@@ -552,7 +553,7 @@
    - get-device-type: Query device type"
   []
   (let [plat-ptr (mem/alloc 4)]
-    (jvm/check! (opencl/afcl-get-platform plat-ptr)
+    (check! (opencl/afcl-get-platform plat-ptr)
                 "afcl-get-platform")
     (mem/read-int plat-ptr 0)))
 

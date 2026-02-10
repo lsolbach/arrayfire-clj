@@ -4,6 +4,7 @@
   (:refer-clojure :exclude [identity range])
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.data :as data]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -27,7 +28,7 @@
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
          dims-seg (jvm/dims->segment dims)]
-     (jvm/check! (data/af-constant out (double value) ndims dims-seg (int dtype))
+     (check! (data/af-constant out (double value) ndims dims-seg (int dtype))
                  "af-constant")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -48,7 +49,7 @@
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
          dims-seg (jvm/dims->segment dims)]
-     (jvm/check! (data/af-constant-complex out (double real) (double imag) ndims dims-seg (int dtype))
+     (check! (data/af-constant-complex out (double real) (double imag) ndims dims-seg (int dtype))
                  "af-constant-complex")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -65,7 +66,7 @@
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
         dims-seg (jvm/dims->segment dims)]
-    (jvm/check! (data/af-constant-long out (long value) ndims dims-seg)
+    (check! (data/af-constant-long out (long value) ndims dims-seg)
                 "af-constant-long")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -82,7 +83,7 @@
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
         dims-seg (jvm/dims->segment dims)]
-    (jvm/check! (data/af-constant-ulong out (long value) ndims dims-seg)
+    (check! (data/af-constant-ulong out (long value) ndims dims-seg)
                 "af-constant-ulong")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -101,7 +102,7 @@
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
          dims-seg (jvm/dims->segment dims)]
-     (jvm/check! (data/af-identity out ndims dims-seg (int dtype))
+     (check! (data/af-identity out ndims dims-seg (int dtype))
                  "af-identity")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -121,7 +122,7 @@
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
          dims-seg (jvm/dims->segment dims)]
-     (jvm/check! (data/af-range out ndims dims-seg (int seq-dim) (int dtype))
+     (check! (data/af-range out ndims dims-seg (int seq-dim) (int dtype))
                  "af-range")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -143,7 +144,7 @@
          dims-seg (jvm/dims->segment dims)
          tndims (count tdims)
          tdims-seg (jvm/dims->segment tdims)]
-     (jvm/check! (data/af-iota out ndims dims-seg tndims tdims-seg (int dtype))
+     (check! (data/af-iota out ndims dims-seg tndims tdims-seg (int dtype))
                  "af-iota")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -164,7 +165,7 @@
    (diag-create in 0))
   ([^AFArray in num]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (data/af-diag-create out (jvm/af-handle in) (int num))
+     (check! (data/af-diag-create out (jvm/af-handle in) (int num))
                  "af-diag-create")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -181,7 +182,7 @@
    (diag-extract in 0))
   ([^AFArray in num]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (data/af-diag-extract out (jvm/af-handle in) (int num))
+     (check! (data/af-diag-extract out (jvm/af-handle in) (int num))
                  "af-diag-extract")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -201,7 +202,7 @@
    AFArray result of joining"
   [dim ^AFArray first ^AFArray second]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (data/af-join out (int dim) (jvm/af-handle first) (jvm/af-handle second))
+    (check! (data/af-join out (int dim) (jvm/af-handle first) (jvm/af-handle second))
                 "af-join")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -225,7 +226,7 @@
       (mem/write-long handles-buf
                       (* i pointer-size)
                       (jvm/af-handle-value arr)))
-    (jvm/check! (data/af-join-many out (int dim) n handles-buf)
+    (check! (data/af-join-many out (int dim) n handles-buf)
                 "af-join-many")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -249,7 +250,7 @@
    (tile in x y z 1))
   ([^AFArray in x y z w]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (data/af-tile out (jvm/af-handle in) (int x) (int y) (int z) (int w))
+     (check! (data/af-tile out (jvm/af-handle in) (int x) (int y) (int z) (int w))
                  "af-tile")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -273,7 +274,7 @@
    (reorder in x y z 3))
   ([^AFArray in x y z w]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (data/af-reorder out (jvm/af-handle in) (int x) (int y) (int z) (int w))
+     (check! (data/af-reorder out (jvm/af-handle in) (int x) (int y) (int z) (int w))
                  "af-reorder")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -297,7 +298,7 @@
    (shift in x y z 0))
   ([^AFArray in x y z w]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (data/af-shift out (jvm/af-handle in) (int x) (int y) (int z) (int w))
+     (check! (data/af-shift out (jvm/af-handle in) (int x) (int y) (int z) (int w))
                  "af-shift")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -314,7 +315,7 @@
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
         dims-seg (jvm/dims->segment dims)]
-    (jvm/check! (data/af-moddims out (jvm/af-handle in) ndims dims-seg)
+    (check! (data/af-moddims out (jvm/af-handle in) ndims dims-seg)
                 "af-moddims")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -328,7 +329,7 @@
    AFArray flattened to 1D"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (data/af-flat out (jvm/af-handle in))
+    (check! (data/af-flat out (jvm/af-handle in))
                 "af-flat")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -343,7 +344,7 @@
    AFArray with flipped elements"
   [^AFArray in dim]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (data/af-flip out (jvm/af-handle in) (int dim))
+    (check! (data/af-flip out (jvm/af-handle in) (int dim))
                 "af-flip")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -364,7 +365,7 @@
    (lower in false))
   ([^AFArray in is-unit-diag]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (data/af-lower out (jvm/af-handle in) (if is-unit-diag 1 0))
+     (check! (data/af-lower out (jvm/af-handle in) (if is-unit-diag 1 0))
                  "af-lower")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -381,7 +382,7 @@
    (upper in false))
   ([^AFArray in is-unit-diag]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (data/af-upper out (jvm/af-handle in) (if is-unit-diag 1 0))
+     (check! (data/af-upper out (jvm/af-handle in) (if is-unit-diag 1 0))
                  "af-upper")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -401,7 +402,7 @@
    AFArray with elements selected based on condition"
   [^AFArray cond ^AFArray a ^AFArray b]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (data/af-select out (jvm/af-handle cond) (jvm/af-handle a) (jvm/af-handle b))
+    (check! (data/af-select out (jvm/af-handle cond) (jvm/af-handle a) (jvm/af-handle b))
                 "af-select")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -417,7 +418,7 @@
    AFArray with elements selected based on condition"
   [^AFArray cond ^AFArray a b]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (data/af-select-scalar-r out (jvm/af-handle cond) (jvm/af-handle a) (double b))
+    (check! (data/af-select-scalar-r out (jvm/af-handle cond) (jvm/af-handle a) (double b))
                 "af-select-scalar-r")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -433,7 +434,7 @@
    AFArray with elements selected based on condition"
   [^AFArray cond a ^AFArray b]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (data/af-select-scalar-l out (jvm/af-handle cond) (double a) (jvm/af-handle b))
+    (check! (data/af-select-scalar-l out (jvm/af-handle cond) (double a) (jvm/af-handle b))
                 "af-select-scalar-l")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -448,7 +449,7 @@
    Returns:
    The modified array 'a' (for chaining)"
   [^AFArray a ^AFArray cond ^AFArray b]
-  (jvm/check! (data/af-replace (jvm/af-handle a) (jvm/af-handle cond) (jvm/af-handle b))
+  (check! (data/af-replace (jvm/af-handle a) (jvm/af-handle cond) (jvm/af-handle b))
               "af-replace")
   a)
 
@@ -463,7 +464,7 @@
    Returns:
    The modified array 'a' (for chaining)"
   [^AFArray a ^AFArray cond b]
-  (jvm/check! (data/af-replace-scalar (jvm/af-handle a) (jvm/af-handle cond) (double b))
+  (check! (data/af-replace-scalar (jvm/af-handle a) (jvm/af-handle cond) (double b))
               "af-replace-scalar")
   a)
 
@@ -487,6 +488,6 @@
          b-dims-seg (jvm/dims->segment begin-dims)
          e-ndims (count end-dims)
          e-dims-seg (jvm/dims->segment end-dims)]
-     (jvm/check! (data/af-pad out (jvm/af-handle in) b-ndims b-dims-seg e-ndims e-dims-seg (int border-type))
+     (check! (data/af-pad out (jvm/af-handle in) b-ndims b-dims-seg e-ndims e-dims-seg (int border-type))
                  "af-pad")
      (jvm/af-array-new (jvm/deref-af-array out)))))

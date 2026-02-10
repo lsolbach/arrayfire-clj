@@ -21,6 +21,7 @@
    optimization."
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.internal :as internal-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
            (java.lang.foreign ValueLayout)))
@@ -67,7 +68,7 @@
          ndims (count dims)
          dims-seg (jvm/dims->segment dims)
          strides-seg (jvm/dims->segment strides)]
-     (jvm/check! (internal-ffi/af-create-strided-array 
+     (check! (internal-ffi/af-create-strided-array 
                   out data (long offset) (int ndims) 
                   dims-seg strides-seg (int dtype) (int location))
                  "af-create-strided-array")
@@ -113,7 +114,7 @@
         s1-buf (mem/alloc 8)
         s2-buf (mem/alloc 8)
         s3-buf (mem/alloc 8)]
-    (jvm/check! (internal-ffi/af-get-strides s0-buf s1-buf s2-buf s3-buf (jvm/af-handle arr))
+    (check! (internal-ffi/af-get-strides s0-buf s1-buf s2-buf s3-buf (jvm/af-handle arr))
                 "af-get-strides")
     [(mem/read-long s0-buf 0)
      (mem/read-long s1-buf 0)
@@ -145,7 +146,7 @@
    ```"
   [^AFArray arr]
   (let [offset-buf (mem/alloc 8)]
-    (jvm/check! (internal-ffi/af-get-offset offset-buf (jvm/af-handle arr))
+    (check! (internal-ffi/af-get-offset offset-buf (jvm/af-handle arr))
                 "af-get-offset")
     (mem/read-long offset-buf 0)))
 
@@ -184,7 +185,7 @@
    ```"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (internal-ffi/af-is-linear result-buf (jvm/af-handle arr))
+    (check! (internal-ffi/af-is-linear result-buf (jvm/af-handle arr))
                 "af-is-linear")
     (not (zero? (mem/read-int result-buf 0)))))
 
@@ -225,7 +226,7 @@
    ```"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (internal-ffi/af-is-owner result-buf (jvm/af-handle arr))
+    (check! (internal-ffi/af-is-owner result-buf (jvm/af-handle arr))
                 "af-is-owner")
     (not (zero? (mem/read-int result-buf 0)))))
 
@@ -275,7 +276,7 @@
    ```"
   [^AFArray arr]
   (let [ptr-buf (mem/alloc 8)]
-    (jvm/check! (internal-ffi/af-get-raw-ptr ptr-buf (jvm/af-handle arr))
+    (check! (internal-ffi/af-get-raw-ptr ptr-buf (jvm/af-handle arr))
                 "af-get-raw-ptr")
     (.get ptr-buf ValueLayout/ADDRESS 0)))
 
@@ -314,7 +315,7 @@
    ```"
   [^AFArray arr]
   (let [bytes-buf (mem/alloc 8)]
-    (jvm/check! (internal-ffi/af-get-allocated-bytes bytes-buf (jvm/af-handle arr))
+    (check! (internal-ffi/af-get-allocated-bytes bytes-buf (jvm/af-handle arr))
                 "af-get-allocated-bytes")
     (mem/read-long bytes-buf 0)))
 

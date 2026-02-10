@@ -3,6 +3,7 @@
    handling and resource management on the JVM."
   (:refer-clojure :exclude [abs])
   (:require [org.soulspace.arrayfire.ffi.c-api.complex :as complex-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
@@ -36,7 +37,7 @@
    ```"
   [^AFArray a]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (complex-ffi/af-cplx out (jvm/af-handle a)) "af-cplx")
+    (check! (complex-ffi/af-cplx out (jvm/af-handle a)) "af-cplx")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 (defn cplx2
@@ -70,7 +71,7 @@
   ([^AFArray real ^AFArray imag batch]
    (let [out (jvm/native-af-array-pointer)
          batch-flag (if batch 1 0)]
-     (jvm/check! (complex-ffi/af-cplx2 out (jvm/af-handle real) (jvm/af-handle imag) batch-flag) "af-cplx2")
+     (check! (complex-ffi/af-cplx2 out (jvm/af-handle real) (jvm/af-handle imag) batch-flag) "af-cplx2")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
 ;;;
@@ -102,7 +103,7 @@
    ```"
   [^AFArray a]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (complex-ffi/af-real out (jvm/af-handle a)) "af-real")
+    (check! (complex-ffi/af-real out (jvm/af-handle a)) "af-real")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 (defn imag
@@ -130,7 +131,7 @@
    ```"
   [^AFArray a]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (complex-ffi/af-imag out (jvm/af-handle a)) "af-imag")
+    (check! (complex-ffi/af-imag out (jvm/af-handle a)) "af-imag")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 ;;;
@@ -167,7 +168,7 @@
    ```"
   [^AFArray a]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (complex-ffi/af-conjg out (jvm/af-handle a)) "af-conjg")
+    (check! (complex-ffi/af-conjg out (jvm/af-handle a)) "af-conjg")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 (defn abs
@@ -199,7 +200,7 @@
    ```"
   [^AFArray a]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (complex-ffi/af-abs out (jvm/af-handle a)) "af-abs")
+    (check! (complex-ffi/af-abs out (jvm/af-handle a)) "af-abs")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 (defn arg
@@ -235,7 +236,7 @@
    ```"
   [^AFArray a]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (complex-ffi/af-arg out (jvm/af-handle a)) "af-arg")
+    (check! (complex-ffi/af-arg out (jvm/af-handle a)) "af-arg")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
 ;;;

@@ -74,6 +74,7 @@
    - Minimize synchronization points for better performance"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.events :as event-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
@@ -103,7 +104,7 @@
    resource leaks. Consider using a resource management pattern."
   []
   (let [event-ptr-buf (mem/alloc 8)] ; Buffer to hold af_event pointer
-    (jvm/check! (event-ffi/af-create-event event-ptr-buf)
+    (check! (event-ffi/af-create-event event-ptr-buf)
                 "af-create-event")
     (mem/read-long event-ptr-buf 0)))
 
@@ -130,7 +131,7 @@
    the event if you need to ensure completion before cleanup."
   [event]
   (let [event-segment (mem/as-segment event)]
-    (jvm/check! (event-ffi/af-delete-event event-segment)
+    (check! (event-ffi/af-delete-event event-segment)
                 "af-delete-event")
     nil))
 
@@ -167,7 +168,7 @@
    the event to a new timeline position."
   [event]
   (let [event-segment (mem/as-segment event)]
-    (jvm/check! (event-ffi/af-mark-event event-segment)
+    (check! (event-ffi/af-mark-event event-segment)
                 "af-mark-event")
     nil))
 
@@ -207,7 +208,7 @@
    block-event! if you need CPU-GPU synchronization."
   [event]
   (let [event-segment (mem/as-segment event)]
-    (jvm/check! (event-ffi/af-enqueue-wait-event event-segment)
+    (check! (event-ffi/af-enqueue-wait-event event-segment)
                 "af-enqueue-wait-event")
     nil))
 
@@ -246,6 +247,6 @@
    and prefer asynchronous patterns when possible."
   [event]
   (let [event-segment (mem/as-segment event)]
-    (jvm/check! (event-ffi/af-block-event event-segment)
+    (check! (event-ffi/af-block-event event-segment)
                 "af-block-event")
     nil))

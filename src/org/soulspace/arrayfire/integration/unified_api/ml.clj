@@ -45,6 +45,7 @@
    - Sum of incoming gradient over spatial dimensions
    - One value per output channel"
   (:require [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -337,7 +338,7 @@
         ;; Allocate output
         out (jvm/native-af-array-pointer)]
     
-    (jvm/check! (convolve-ffi/af-convolve2-gradient-nn
+    (check! (convolve-ffi/af-convolve2-gradient-nn
                   out
                   (jvm/af-handle incoming-gradient)
                   (jvm/af-handle original-signal)

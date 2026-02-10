@@ -3,6 +3,7 @@
    handling and resource management on the JVM."
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.blas :as blas]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -31,7 +32,7 @@
         beta-buf (mem/alloc 8)
         _ (jvm/write-double! alpha-buf 0 alpha)
         _ (jvm/write-double! beta-buf 0 beta)]
-    (jvm/check! (blas/af-gemm out (int op-a) (int op-b) 
+    (check! (blas/af-gemm out (int op-a) (int op-b) 
                               alpha-buf (jvm/af-handle a) (jvm/af-handle b) beta-buf)
                 "af-gemm")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -56,7 +57,7 @@
    (matmul lhs rhs 0 0))
   ([^AFArray lhs ^AFArray rhs opt-lhs opt-rhs]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs) 
+     (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs) 
                                   (int opt-lhs) (int opt-rhs))
                  "af-matmul")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -79,7 +80,7 @@
    (dot lhs rhs 0 0))
   ([^AFArray lhs ^AFArray rhs opt-lhs opt-rhs]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (blas/af-dot out (jvm/af-handle lhs) (jvm/af-handle rhs) 
+     (check! (blas/af-dot out (jvm/af-handle lhs) (jvm/af-handle rhs) 
                               (int opt-lhs) (int opt-rhs))
                  "af-dot")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -104,7 +105,7 @@
   ([^AFArray lhs ^AFArray rhs opt-lhs opt-rhs]
    (let [real-buf (mem/alloc 8)
          imag-buf (mem/alloc 8)]
-     (jvm/check! (blas/af-dot-all real-buf imag-buf (jvm/af-handle lhs) (jvm/af-handle rhs)
+     (check! (blas/af-dot-all real-buf imag-buf (jvm/af-handle lhs) (jvm/af-handle rhs)
                                   (int opt-lhs) (int opt-rhs))
                  "af-dot-all")
      (let [real (jvm/read-double real-buf 0)
@@ -129,7 +130,7 @@
    (transpose in false))
   ([^AFArray in conjugate]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (blas/af-transpose out (jvm/af-handle in) (if conjugate 1 0))
+     (check! (blas/af-transpose out (jvm/af-handle in) (if conjugate 1 0))
                  "af-transpose")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -148,7 +149,7 @@
   ([^AFArray in]
    (transpose! in false))
   ([^AFArray in conjugate]
-   (jvm/check! (blas/af-transpose-inplace (jvm/af-handle in) (if conjugate 1 0))
+   (check! (blas/af-transpose-inplace (jvm/af-handle in) (if conjugate 1 0))
                "af-transpose-inplace")
    in))
 
@@ -185,7 +186,7 @@
    - Avoiding explicit transpose operation for efficiency"
   [^AFArray lhs ^AFArray rhs]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+    (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
                                 0 1)  ; AF_MAT_NONE, AF_MAT_TRANS
                 "af-matmul")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -220,7 +221,7 @@
    - Normal equations: A^T * A * x = A^T * b"
   [^AFArray lhs ^AFArray rhs]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+    (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
                                 1 0)  ; AF_MAT_TRANS, AF_MAT_NONE
                 "af-matmul")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -254,7 +255,7 @@
    - Specific computational patterns in algorithms"
   [^AFArray lhs ^AFArray rhs]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+    (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
                                 1 1)  ; AF_MAT_TRANS, AF_MAT_TRANS
                 "af-matmul")
     (jvm/af-array-new (jvm/deref-af-array out))))

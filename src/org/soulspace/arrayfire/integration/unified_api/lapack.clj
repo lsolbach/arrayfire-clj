@@ -12,6 +12,7 @@
             [org.soulspace.arrayfire.ffi.c-api.lu :as lu]
             [org.soulspace.arrayfire.ffi.c-api.qr :as qr]
             [org.soulspace.arrayfire.ffi.c-api.svd :as svd]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -46,7 +47,7 @@
   (let [l (jvm/native-af-array-pointer)
         u (jvm/native-af-array-pointer)
         p (jvm/native-af-array-pointer)]
-    (jvm/check! (lu/af-lu l u p (jvm/af-handle a)) "af-lu")
+    (check! (lu/af-lu l u p (jvm/af-handle a)) "af-lu")
     [(jvm/af-array-new (jvm/deref-af-array l))
      (jvm/af-array-new (jvm/deref-af-array u))
      (jvm/af-array-new (jvm/deref-af-array p))]))
@@ -72,7 +73,7 @@
    (lu! in false))
   ([^AFArray in is-lapack-piv]
    (let [pivot (jvm/native-af-array-pointer)]
-     (jvm/check! (lu/af-lu-inplace pivot (jvm/af-handle in) (if is-lapack-piv 1 0))
+     (check! (lu/af-lu-inplace pivot (jvm/af-handle in) (if is-lapack-piv 1 0))
                  "af-lu-inplace")
      (jvm/af-array-new (jvm/deref-af-array pivot)))))
 
@@ -103,7 +104,7 @@
   (let [q (jvm/native-af-array-pointer)
         r (jvm/native-af-array-pointer)
         tau (jvm/native-af-array-pointer)]
-    (jvm/check! (qr/af-qr q r tau (jvm/af-handle a)) "af-qr")
+    (check! (qr/af-qr q r tau (jvm/af-handle a)) "af-qr")
     [(jvm/af-array-new (jvm/deref-af-array q))
      (jvm/af-array-new (jvm/deref-af-array r))
      (jvm/af-array-new (jvm/deref-af-array tau))]))
@@ -126,7 +127,7 @@
      tau)"
   [^AFArray in]
   (let [tau (jvm/native-af-array-pointer)]
-    (jvm/check! (qr/af-qr-inplace tau (jvm/af-handle in))
+    (check! (qr/af-qr-inplace tau (jvm/af-handle in))
                 "af-qr-inplace")
     (jvm/af-array-new (jvm/deref-af-array tau))))
 
@@ -160,7 +161,7 @@
   (let [u  (jvm/native-af-array-pointer)
         s  (jvm/native-af-array-pointer)
         vt (jvm/native-af-array-pointer)]
-    (jvm/check! (svd/af-svd u s vt (jvm/af-handle a)) "af-svd")
+    (check! (svd/af-svd u s vt (jvm/af-handle a)) "af-svd")
     [(jvm/af-array-new (jvm/deref-af-array u))
      (jvm/af-array-new (jvm/deref-af-array s))
      (jvm/af-array-new (jvm/deref-af-array vt))]))
@@ -188,7 +189,7 @@
   (let [u  (jvm/native-af-array-pointer)
         s  (jvm/native-af-array-pointer)
         vt (jvm/native-af-array-pointer)]
-    (jvm/check! (svd/af-svd-inplace u s vt (jvm/af-handle in)) "af-svd-inplace")
+    (check! (svd/af-svd-inplace u s vt (jvm/af-handle in)) "af-svd-inplace")
     [(jvm/af-array-new (jvm/deref-af-array u))
      (jvm/af-array-new (jvm/deref-af-array s))
      (jvm/af-array-new (jvm/deref-af-array vt))]))
@@ -221,7 +222,7 @@
   ([^AFArray in is-upper]
    (let [out (jvm/native-af-array-pointer)
          info-buf (mem/alloc 4)]
-     (jvm/check! (cholesky/af-cholesky out info-buf (jvm/af-handle in) (if is-upper 1 0))
+     (check! (cholesky/af-cholesky out info-buf (jvm/af-handle in) (if is-upper 1 0))
                  "af-cholesky")
      {:result (jvm/af-array-new (jvm/deref-af-array out))
       :info (mem/read-int info-buf 0)})))
@@ -244,7 +245,7 @@
    (cholesky! in false))
   ([^AFArray in is-upper]
    (let [info-buf (mem/alloc 4)]
-     (jvm/check! (cholesky/af-cholesky-inplace info-buf (jvm/af-handle in) (if is-upper 1 0))
+     (check! (cholesky/af-cholesky-inplace info-buf (jvm/af-handle in) (if is-upper 1 0))
                  "af-cholesky-inplace")
      {:result in
       :info (mem/read-int info-buf 0)})))
@@ -272,7 +273,7 @@
   [^AFArray in]
   (let [real-buf (mem/alloc 8)
         imag-buf (mem/alloc 8)]
-    (jvm/check! (det/af-det real-buf imag-buf (jvm/af-handle in))
+    (check! (det/af-det real-buf imag-buf (jvm/af-handle in))
                 "af-det")
     (let [real (mem/read-double real-buf 0)
           imag (mem/read-double imag-buf 0)]
@@ -301,7 +302,7 @@
    (rank in 1e-5))
   ([^AFArray in tol]
    (let [rank-buf (mem/alloc 4)]
-     (jvm/check! (rank/af-rank rank-buf (jvm/af-handle in) (double tol))
+     (check! (rank/af-rank rank-buf (jvm/af-handle in) (double tol))
                  "af-rank")
      (mem/read-int rank-buf 0))))
 
@@ -344,7 +345,7 @@
    (norm in norm-type p 1.0))
   ([^AFArray in norm-type p q]
    (let [out-buf (mem/alloc 8)]
-     (jvm/check! (norm/af-norm out-buf (jvm/af-handle in) (int norm-type) (double p) (double q))
+     (check! (norm/af-norm out-buf (jvm/af-handle in) (int norm-type) (double p) (double q))
                  "af-norm")
      (mem/read-double out-buf 0))))
 
@@ -377,7 +378,7 @@
   ([^AFArray in options]
    (let [out (jvm/native-af-array-pointer)
          method (get options :method 0)]
-     (jvm/check! (inverse/af-inverse out (jvm/af-handle in) (int method))
+     (check! (inverse/af-inverse out (jvm/af-handle in) (int method))
                  "af-inverse")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -410,7 +411,7 @@
   ([^AFArray in tol options]
    (let [out (jvm/native-af-array-pointer)
          method (get options :method 0)]
-     (jvm/check! (pinverse/af-pinverse out (jvm/af-handle in) (double tol) (int method))
+     (check! (pinverse/af-pinverse out (jvm/af-handle in) (double tol) (int method))
                  "af-pinverse")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -447,7 +448,7 @@
   ([^AFArray a ^AFArray b options]
    (let [out (jvm/native-af-array-pointer)
          method (get options :method 0)]
-     (jvm/check! (solve/af-solve out (jvm/af-handle a) (jvm/af-handle b) (int method))
+     (check! (solve/af-solve out (jvm/af-handle a) (jvm/af-handle b) (int method))
                  "af-solve")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -476,7 +477,7 @@
   ([^AFArray a ^AFArray pivot ^AFArray b options]
    (let [out (jvm/native-af-array-pointer)
          method (get options :method 0)]
-     (jvm/check! (solve/af-solve-lu out (jvm/af-handle a) (jvm/af-handle pivot) (jvm/af-handle b) (int method))
+     (check! (solve/af-solve-lu out (jvm/af-handle a) (jvm/af-handle pivot) (jvm/af-handle b) (int method))
                  "af-solve-lu")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -498,7 +499,7 @@
      (println \"LAPACK operations are supported\"))"
   []
   (let [available-buf (mem/alloc 1)]
-    (jvm/check! (lu/af-is-lapack-available available-buf)
+    (check! (lu/af-is-lapack-available available-buf)
                 "af-is-lapack-available")
     (not (zero? (mem/read-byte available-buf 0)))))
 

@@ -37,6 +37,7 @@
    - Configurable chunk sizes"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.memory :as mem-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -86,7 +87,7 @@
    ```"
   [bytes]
   (let [ptr-buf (mem/alloc 8)]
-    (jvm/check! (mem-ffi/af-alloc-pinned ptr-buf (long bytes))
+    (check! (mem-ffi/af-alloc-pinned ptr-buf (long bytes))
                 "af-alloc-pinned")
     (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
                      (long bytes))))
@@ -110,7 +111,7 @@
      (free-pinned! pinned))
    ```"
   [ptr]
-  (jvm/check! (mem-ffi/af-free-pinned ptr)
+  (check! (mem-ffi/af-free-pinned ptr)
               "af-free-pinned")
   nil)
 
@@ -144,7 +145,7 @@
    ```"
   [bytes]
   (let [ptr-buf (mem/alloc 8)]
-    (jvm/check! (mem-ffi/af-alloc-host ptr-buf (long bytes))
+    (check! (mem-ffi/af-alloc-host ptr-buf (long bytes))
                 "af-alloc-host")
     (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
                      (long bytes))))
@@ -165,7 +166,7 @@
      (free-host! host-mem))
    ```"
   [ptr]
-  (jvm/check! (mem-ffi/af-free-host ptr)
+  (check! (mem-ffi/af-free-host ptr)
               "af-free-host")
   nil)
 
@@ -205,7 +206,7 @@
    ```"
   [bytes]
   (let [ptr-buf (mem/alloc 8)]
-    (jvm/check! (mem-ffi/af-alloc-device-v2 ptr-buf (long bytes))
+    (check! (mem-ffi/af-alloc-device-v2 ptr-buf (long bytes))
                 "af-alloc-device-v2")
     (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
                      (long bytes))))
@@ -230,7 +231,7 @@
      (free-device! dev-mem))
    ```"
   [ptr]
-  (jvm/check! (mem-ffi/af-free-device-v2 ptr)
+  (check! (mem-ffi/af-free-device-v2 ptr)
               "af-free-device-v2")
   nil)
 
@@ -272,7 +273,7 @@
         alloc-buffers-buf (mem/alloc 8)
         lock-bytes-buf (mem/alloc 8)
         lock-buffers-buf (mem/alloc 8)]
-    (jvm/check! (mem-ffi/af-device-mem-info alloc-bytes-buf alloc-buffers-buf
+    (check! (mem-ffi/af-device-mem-info alloc-bytes-buf alloc-buffers-buf
                                             lock-bytes-buf lock-buffers-buf)
                 "af-device-mem-info")
     {:alloc-bytes (mem/read-long alloc-bytes-buf 0)
@@ -312,7 +313,7 @@
    (let [msg-ptr (if msg
                    (jvm/string->c-string msg)
                    jvm/null-ptr)]
-     (jvm/check! (mem-ffi/af-print-mem-info msg-ptr (int device-id))
+     (check! (mem-ffi/af-print-mem-info msg-ptr (int device-id))
                  "af-print-mem-info")
      nil)))
 
@@ -353,7 +354,7 @@
        (device-gc)))
    ```"
   []
-  (jvm/check! (mem-ffi/af-device-gc)
+  (check! (mem-ffi/af-device-gc)
               "af-device-gc")
   nil)
 
@@ -389,7 +390,7 @@
    (set-mem-step-size! (* 1024 1024))
    ```"
   [step-bytes]
-  (jvm/check! (mem-ffi/af-set-mem-step-size (long step-bytes))
+  (check! (mem-ffi/af-set-mem-step-size (long step-bytes))
               "af-set-mem-step-size")
   nil)
 
@@ -418,7 +419,7 @@
    ```"
   []
   (let [step-buf (mem/alloc 8)]
-    (jvm/check! (mem-ffi/af-get-mem-step-size step-buf)
+    (check! (mem-ffi/af-get-mem-step-size step-buf)
                 "af-get-mem-step-size")
     (mem/read-long step-buf 0)))
 
@@ -453,7 +454,7 @@
          (unlock-array! arr))))
    ```"
   [^AFArray arr]
-  (jvm/check! (mem-ffi/af-lock-array (jvm/af-handle arr))
+  (check! (mem-ffi/af-lock-array (jvm/af-handle arr))
               "af-lock-array")
   nil)
 
@@ -474,7 +475,7 @@
    (unlock-array! arr)
    ```"
   [^AFArray arr]
-  (jvm/check! (mem-ffi/af-unlock-array (jvm/af-handle arr))
+  (check! (mem-ffi/af-unlock-array (jvm/af-handle arr))
               "af-unlock-array")
   nil)
 
@@ -502,7 +503,7 @@
    ```"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (mem-ffi/af-is-locked-array result-buf
+    (check! (mem-ffi/af-is-locked-array result-buf
                         (jvm/af-handle arr))
                 "af-is-locked-array")
     (not (zero? (mem/read-int result-buf 0)))))
@@ -535,7 +536,7 @@
    ```"
   [^AFArray arr]
   (let [ptr-buf (mem/alloc 8)]
-    (jvm/check! (mem-ffi/af-get-device-ptr ptr-buf
+    (check! (mem-ffi/af-get-device-ptr ptr-buf
                          (jvm/af-handle arr))
                 "af-get-device-ptr")
     (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))))

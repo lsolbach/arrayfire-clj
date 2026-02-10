@@ -1,35 +1,11 @@
 (ns org.soulspace.arrayfire.integration.base.jvm-integration-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.ffi.c-api.array :as af-array]
             [coffi.mem :as mem])
   (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
-
-;;;
-;;; Error Handling Tests
-;;;
-
-(deftest test-check-success
-  (testing "check! succeeds with AF_SUCCESS (0)"
-    (is (nil? (jvm/check! jvm/AF_SUCCESS "test-operation")))))
-
-(deftest test-check-error
-  (testing "check! throws exception on non-zero error code"
-    (is (thrown-with-msg? 
-         clojure.lang.ExceptionInfo
-         #"ArrayFire error at test-error"
-         (jvm/check! jvm/AF_ERR_NO_MEM "test-error")))))
-
-(deftest test-check-error-details
-  (testing "check! includes error code and location in exception data"
-    (try
-      (jvm/check! jvm/AF_ERR_INVALID_ARRAY "test-location")
-      (is false "Should have thrown exception")
-      (catch clojure.lang.ExceptionInfo e
-        (let [data (ex-data e)]
-          (is (= jvm/AF_ERR_INVALID_ARRAY (:code data)))
-          (is (= "test-location" (:where data))))))))
 
 ;;;
 ;;; Resource Management Tests
@@ -48,7 +24,7 @@
               (mem/write-float data-seg (* i (.byteSize java.lang.foreign.ValueLayout/JAVA_FLOAT))
                        (float (inc i))))
               out-ptr (.allocate arena java.lang.foreign.ValueLayout/ADDRESS)
-              _ (jvm/check! (af-array/af-create-array out-ptr data-seg 1 dims-seg jvm/AF_DTYPE_F32)
+              _ (check! (af-array/af-create-array out-ptr data-seg 1 dims-seg jvm/AF_DTYPE_F32)
                            "test-create-array")
               handle (jvm/deref-af-array out-ptr)
               af-arr (jvm/af-array-new handle)]
@@ -71,7 +47,7 @@
               (mem/write-float data-seg (* i (.byteSize java.lang.foreign.ValueLayout/JAVA_FLOAT))
                        (float (inc i))))
               out-ptr (.allocate arena java.lang.foreign.ValueLayout/ADDRESS)
-              _ (jvm/check! (af-array/af-create-array out-ptr data-seg 1 dims-seg jvm/AF_DTYPE_F32)
+              _ (check! (af-array/af-create-array out-ptr data-seg 1 dims-seg jvm/AF_DTYPE_F32)
                            "test-create-array")
               handle (jvm/deref-af-array out-ptr)]
           ;; Create AFArray and let it go out of scope
@@ -96,7 +72,7 @@
               (mem/write-float data-seg (* i (.byteSize java.lang.foreign.ValueLayout/JAVA_FLOAT))
                        (float (inc i))))
               out-ptr (.allocate arena java.lang.foreign.ValueLayout/ADDRESS)
-              _ (jvm/check! (af-array/af-create-array out-ptr data-seg 1 dims-seg jvm/AF_DTYPE_F32)
+              _ (check! (af-array/af-create-array out-ptr data-seg 1 dims-seg jvm/AF_DTYPE_F32)
                            "test-create-array")
               handle (jvm/deref-af-array out-ptr)
               af-arr (jvm/af-array-new handle)]

@@ -36,6 +36,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.index :as index-ffi]
             [org.soulspace.arrayfire.ffi.c-api.assign :as assign-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
            (java.lang.foreign ValueLayout)))
@@ -112,7 +113,7 @@
     ;; Write sequence pointers to array
     (doseq [[i seq-ptr] (map-indexed vector seqs)]
       (mem/write-long seqs-array (* i 8) (.address seq-ptr)))
-    (jvm/check! (index-ffi/af-index out (jvm/af-handle in) (int ndims) seqs-array)
+    (check! (index-ffi/af-index out (jvm/af-handle in) (int ndims) seqs-array)
                 "af-index")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -143,7 +144,7 @@
    (lookup in indices 0))
   ([^AFArray in ^AFArray indices dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (index-ffi/af-lookup out (jvm/af-handle in) (jvm/af-handle indices) (int dim))
+     (check! (index-ffi/af-lookup out (jvm/af-handle in) (jvm/af-handle indices) (int dim))
                  "af-lookup")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -177,7 +178,7 @@
    ```"
   [^AFArray in indexers ndims]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (index-ffi/af-index-gen out (jvm/af-handle in) (long ndims) indexers)
+    (check! (index-ffi/af-index-gen out (jvm/af-handle in) (long ndims) indexers)
                 "af-index-gen")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -213,7 +214,7 @@
         seqs-array (mem/alloc (* ndims 8))]
     (doseq [[i seq-ptr] (map-indexed vector seqs)]
       (mem/write-long seqs-array (* i 8) (.address seq-ptr)))
-    (jvm/check! (assign-ffi/af-assign-seq out (jvm/af-handle lhs) (int ndims) 
+    (check! (assign-ffi/af-assign-seq out (jvm/af-handle lhs) (int ndims) 
                                           seqs-array (jvm/af-handle rhs))
                 "af-assign-seq")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -244,7 +245,7 @@
    ```"
   [^AFArray lhs indexers ndims ^AFArray rhs]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (assign-ffi/af-assign-gen out (jvm/af-handle lhs) (long ndims)
+    (check! (assign-ffi/af-assign-gen out (jvm/af-handle lhs) (long ndims)
                                           indexers (jvm/af-handle rhs))
                 "af-assign-gen")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -272,7 +273,7 @@
    ```"
   []
   (let [indexers-ptr (mem/alloc 8)] ; Pointer to pointer
-    (jvm/check! (index-ffi/af-create-indexers indexers-ptr)
+    (check! (index-ffi/af-create-indexers indexers-ptr)
                 "af-create-indexers")
     (.get indexers-ptr ValueLayout/ADDRESS 0)))
 
@@ -296,7 +297,7 @@
      (set-array-indexer! indexers indices 0))
    ```"
   [indexers ^AFArray idx dim]
-  (jvm/check! (index-ffi/af-set-array-indexer indexers (jvm/af-handle idx) (long dim))
+  (check! (index-ffi/af-set-array-indexer indexers (jvm/af-handle idx) (long dim))
               "af-set-array-indexer")
   nil)
 
@@ -323,7 +324,7 @@
   ([indexers seq dim]
    (set-seq-indexer! indexers seq dim false))
   ([indexers seq dim is-batch]
-   (jvm/check! (index-ffi/af-set-seq-indexer indexers seq (long dim) (if is-batch 1 0))
+   (check! (index-ffi/af-set-seq-indexer indexers seq (long dim) (if is-batch 1 0))
                "af-set-seq-indexer")
    nil))
 
@@ -354,7 +355,7 @@
   ([indexers begin end step dim]
    (set-seq-param-indexer! indexers begin end step dim false))
   ([indexers begin end step dim is-batch]
-   (jvm/check! (index-ffi/af-set-seq-param-indexer indexers (double begin) (double end)
+   (check! (index-ffi/af-set-seq-param-indexer indexers (double begin) (double end)
                                                     (double step) (long dim) (if is-batch 1 0))
                "af-set-seq-param-indexer")
    nil))
@@ -380,7 +381,7 @@
          (release-indexers! indexers))))
    ```"
   [indexers]
-  (jvm/check! (index-ffi/af-release-indexers indexers)
+  (check! (index-ffi/af-release-indexers indexers)
               "af-release-indexers")
   nil)
 

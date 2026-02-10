@@ -95,6 +95,7 @@
             [org.soulspace.arrayfire.ffi.c-api.hist :as hist-ffi]
             [org.soulspace.arrayfire.ffi.c-api.surface :as surface-ffi]
             [org.soulspace.arrayfire.ffi.c-api.vector-field :as vector-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (java.lang.foreign MemorySegment)))
 
@@ -139,7 +140,7 @@
   [width height title]
   (let [window-ptr-buf (mem/alloc 8)
         title-c-str (jvm/string->c-string title)]
-    (jvm/check! (window-ffi/af-create-window window-ptr-buf 
+    (check! (window-ffi/af-create-window window-ptr-buf 
                                               (int width) 
                                               (int height) 
                                               title-c-str)
@@ -170,7 +171,7 @@
    ```"
   [window x y]
   (let [window-segment (mem/as-segment window)]
-    (jvm/check! (window-ffi/af-set-position window-segment (int x) (int y))
+    (check! (window-ffi/af-set-position window-segment (int x) (int y))
                 "af-set-position"))
   nil)
 
@@ -194,7 +195,7 @@
   [window title]
   (let [window-segment (mem/as-segment window)
         title-c-str (jvm/string->c-string title)]
-    (jvm/check! (window-ffi/af-set-title window-segment title-c-str)
+    (check! (window-ffi/af-set-title window-segment title-c-str)
                 "af-set-title"))
   nil)
 
@@ -218,7 +219,7 @@
    ```"
   [window width height]
   (let [window-segment (mem/as-segment window)]
-    (jvm/check! (window-ffi/af-set-size window-segment (int width) (int height))
+    (check! (window-ffi/af-set-size window-segment (int width) (int height))
                 "af-set-size"))
   nil)
 
@@ -256,7 +257,7 @@
    - Cell (row, col) specified in cell properties when drawing"
   [window rows cols]
   (let [window-segment (mem/as-segment window)]
-    (jvm/check! (window-ffi/af-grid window-segment (int rows) (int cols))
+    (check! (window-ffi/af-grid window-segment (int rows) (int cols))
                 "af-grid"))
   nil)
 
@@ -290,7 +291,7 @@
    - For non-blocking operation, use set-visibility! and poll is-window-closed?"
   [window]
   (let [window-segment (mem/as-segment window)]
-    (jvm/check! (window-ffi/af-show window-segment)
+    (check! (window-ffi/af-show window-segment)
                 "af-show"))
   nil)
 
@@ -321,7 +322,7 @@
   [window]
   (let [closed-buf (mem/alloc 1)
         window-segment (mem/as-segment window)]
-    (jvm/check! (window-ffi/af-is-window-closed closed-buf window-segment)
+    (check! (window-ffi/af-is-window-closed closed-buf window-segment)
                 "af-is-window-closed")
     (not (zero? (mem/read-byte closed-buf 0)))))
 
@@ -350,7 +351,7 @@
    ```"
   [window visible]
   (let [window-segment (mem/as-segment window)]
-    (jvm/check! (window-ffi/af-set-visibility window-segment (if visible 1 0))
+    (check! (window-ffi/af-set-visibility window-segment (if visible 1 0))
                 "af-set-visibility"))
   nil)
 
@@ -383,7 +384,7 @@
   [window]
   (when window
     (let [window-segment (mem/as-segment window)]
-      (jvm/check! (window-ffi/af-destroy-window window-segment)
+      (check! (window-ffi/af-destroy-window window-segment)
                   "af-destroy-window")))
   nil)
 
@@ -422,7 +423,7 @@
         y-handle (jvm/af-handle y)
         z-handle (if z (jvm/af-handle z) MemorySegment/NULL)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (window-ffi/af-set-axes-limits-compute window-segment 
+    (check! (window-ffi/af-set-axes-limits-compute window-segment 
                                                         x-handle 
                                                         y-handle 
                                                         z-handle
@@ -459,7 +460,7 @@
   [window xmin xmax ymin ymax exact props]
   (let [window-segment (mem/as-segment window)
         props-ptr (or props jvm/null-ptr)]
-    (jvm/check! (window-ffi/af-set-axes-limits-2d window-segment
+    (check! (window-ffi/af-set-axes-limits-2d window-segment
                                                    (float xmin) (float xmax)
                                                    (float ymin) (float ymax)
                                                    (if exact 1 0)
@@ -494,7 +495,7 @@
   [window xmin xmax ymin ymax zmin zmax exact props]
   (let [window-segment (mem/as-segment window)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (window-ffi/af-set-axes-limits-3d window-segment
+    (check! (window-ffi/af-set-axes-limits-3d window-segment
                                                    (float xmin) (float xmax)
                                                    (float ymin) (float ymax)
                                                    (float zmin) (float zmax)
@@ -532,7 +533,7 @@
         y-c-str (if ytitle (jvm/string->c-string ytitle) MemorySegment/NULL)
         z-c-str (if ztitle (jvm/string->c-string ztitle) MemorySegment/NULL)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (window-ffi/af-set-axes-titles window-segment
+    (check! (window-ffi/af-set-axes-titles window-segment
                                                 x-c-str y-c-str z-c-str
                                                 props-ptr)
                 "af-set-axes-titles"))
@@ -568,7 +569,7 @@
         y-c-str (if yformat (jvm/string->c-string yformat) MemorySegment/NULL)
         z-c-str (if zformat (jvm/string->c-string zformat) MemorySegment/NULL)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (window-ffi/af-set-axes-label-format window-segment
+    (check! (window-ffi/af-set-axes-label-format window-segment
                                                       x-c-str y-c-str z-c-str
                                                       props-ptr)
                 "af-set-axes-label-format"))
@@ -601,7 +602,7 @@
   (let [window-segment (mem/as-segment window)
         image-handle (jvm/af-handle image)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (image-ffi/af-draw-image window-segment image-handle props-ptr)
+    (check! (image-ffi/af-draw-image window-segment image-handle props-ptr)
                 "af-draw-image"))
   nil)
 
@@ -630,7 +631,7 @@
   (let [window-segment (mem/as-segment window)
         points-handle (jvm/af-handle points)
         props-ptr (or props jvm/null-ptr)]
-    (jvm/check! (plot-ffi/af-draw-plot-nd window-segment points-handle props-ptr)
+    (check! (plot-ffi/af-draw-plot-nd window-segment points-handle props-ptr)
                 "af-draw-plot-nd"))
   nil)
 
@@ -659,7 +660,7 @@
         x-handle (jvm/af-handle x)
         y-handle (jvm/af-handle y)
         props-ptr (or props jvm/null-ptr)]
-    (jvm/check! (plot-ffi/af-draw-plot-2d window-segment x-handle y-handle props-ptr)
+    (check! (plot-ffi/af-draw-plot-2d window-segment x-handle y-handle props-ptr)
                 "af-draw-plot-2d"))
   nil)
 
@@ -693,7 +694,7 @@
         y-handle (jvm/af-handle y)
         z-handle (jvm/af-handle z)
         props-ptr (or props jvm/null-ptr)]
-    (jvm/check! (plot-ffi/af-draw-plot-3d window-segment x-handle y-handle z-handle props-ptr)
+    (check! (plot-ffi/af-draw-plot-3d window-segment x-handle y-handle z-handle props-ptr)
                 "af-draw-plot-3d"))
   nil)
 
@@ -714,7 +715,7 @@
   (let [window-segment (mem/as-segment window)
         points-handle (jvm/af-handle points)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (plot-ffi/af-draw-scatter-nd window-segment points-handle (int marker) props-ptr)
+    (check! (plot-ffi/af-draw-scatter-nd window-segment points-handle (int marker) props-ptr)
                 "af-draw-scatter-nd"))
   nil)
 
@@ -742,7 +743,7 @@
         x-handle (jvm/af-handle x)
         y-handle (jvm/af-handle y)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (plot-ffi/af-draw-scatter-2d window-segment x-handle y-handle (int marker) props-ptr)
+    (check! (plot-ffi/af-draw-scatter-2d window-segment x-handle y-handle (int marker) props-ptr)
                 "af-draw-scatter-2d"))
   nil)
 
@@ -767,7 +768,7 @@
         y-handle (jvm/af-handle y)
         z-handle (jvm/af-handle z)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (plot-ffi/af-draw-scatter-3d window-segment x-handle y-handle z-handle (int marker) props-ptr)
+    (check! (plot-ffi/af-draw-scatter-3d window-segment x-handle y-handle z-handle (int marker) props-ptr)
                 "af-draw-scatter-3d"))
   nil)
 
@@ -796,7 +797,7 @@
   (let [window-segment (mem/as-segment window)
         data-handle (jvm/af-handle data)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (hist-ffi/af-draw-hist window-segment data-handle (double minval) (double maxval) props-ptr)
+    (check! (hist-ffi/af-draw-hist window-segment data-handle (double minval) (double maxval) props-ptr)
                 "af-draw-hist"))
   nil)
 
@@ -830,7 +831,7 @@
         y-handle (jvm/af-handle y-vals)
         z-handle (jvm/af-handle z-vals)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (surface-ffi/af-draw-surface window-segment x-handle y-handle z-handle props-ptr)
+    (check! (surface-ffi/af-draw-surface window-segment x-handle y-handle z-handle props-ptr)
                 "af-draw-surface"))
   nil)
 
@@ -852,7 +853,7 @@
         points-handle (jvm/af-handle points)
         directions-handle (jvm/af-handle directions)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (vector-ffi/af-draw-vector-field-nd window-segment points-handle directions-handle props-ptr)
+    (check! (vector-ffi/af-draw-vector-field-nd window-segment points-handle directions-handle props-ptr)
                 "af-draw-vector-field-nd"))
   nil)
 
@@ -887,7 +888,7 @@
         xd-handle (jvm/af-handle x-dirs)
         yd-handle (jvm/af-handle y-dirs)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (vector-ffi/af-draw-vector-field-2d window-segment xp-handle yp-handle xd-handle yd-handle props-ptr)
+    (check! (vector-ffi/af-draw-vector-field-2d window-segment xp-handle yp-handle xd-handle yd-handle props-ptr)
                 "af-draw-vector-field-2d"))
   nil)
 
@@ -921,7 +922,7 @@
         yd-handle (jvm/af-handle y-dirs)
         zd-handle (jvm/af-handle z-dirs)
         props-ptr (or props MemorySegment/NULL)]
-    (jvm/check! (vector-ffi/af-draw-vector-field-3d window-segment 
+    (check! (vector-ffi/af-draw-vector-field-3d window-segment 
                                                      xp-handle yp-handle zp-handle
                                                      xd-handle yd-handle zd-handle
                                                      props-ptr)

@@ -42,6 +42,7 @@
             [org.soulspace.arrayfire.ffi.c-api.anisotropic-diffusion :as aniso]
             [org.soulspace.arrayfire.ffi.c-api.deconvolution :as deconv]
             [org.soulspace.arrayfire.ffi.c-api.confidence-connected :as confidence]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -71,7 +72,7 @@
   [^AFArray in]
   (let [dx (jvm/native-af-array-pointer)
         dy (jvm/native-af-array-pointer)]
-    (jvm/check! (gradient/af-gradient dx dy (jvm/af-handle in)) "af-gradient")
+    (check! (gradient/af-gradient dx dy (jvm/af-handle in)) "af-gradient")
     [(jvm/af-array-new (jvm/deref-af-array dx))
      (jvm/af-array-new (jvm/deref-af-array dy))]))
 
@@ -99,7 +100,7 @@
   ([^AFArray img ker-size]
    (let [dx (jvm/native-af-array-pointer)
          dy (jvm/native-af-array-pointer)]
-     (jvm/check! (sobel/af-sobel-operator dx dy (jvm/af-handle img) (int ker-size))
+     (check! (sobel/af-sobel-operator dx dy (jvm/af-handle img) (int ker-size))
                  "af-sobel-operator")
      [(jvm/af-array-new (jvm/deref-af-array dx))
       (jvm/af-array-new (jvm/deref-af-array dy))])))
@@ -135,7 +136,7 @@
    (canny in threshold-type low-threshold high-threshold 3 true))
   ([^AFArray in threshold-type low-threshold high-threshold sobel-window is-fast]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (canny/af-canny out (jvm/af-handle in) (int threshold-type)
+     (check! (canny/af-canny out (jvm/af-handle in) (int threshold-type)
                                  (float low-threshold) (float high-threshold)
                                  (int sobel-window) (if is-fast 1 0))
                  "af-canny")
@@ -167,7 +168,7 @@
   ([filename is-color]
    (let [out (jvm/native-af-array-pointer)
          c-filename (jvm/string->c-string filename)]
-     (jvm/check! (imageio/af-load-image out c-filename (if is-color 1 0))
+     (check! (imageio/af-load-image out c-filename (if is-color 1 0))
                  "af-load-image")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -189,7 +190,7 @@
    ```"
   [filename ^AFArray in]
   (let [c-filename (jvm/string->c-string filename)]
-    (jvm/check! (imageio/af-save-image c-filename (jvm/af-handle in))
+    (check! (imageio/af-save-image c-filename (jvm/af-handle in))
                 "af-save-image")
     nil))
 
@@ -204,7 +205,7 @@
   [filename]
   (let [out (jvm/native-af-array-pointer)
         c-filename (jvm/string->c-string filename)]
-    (jvm/check! (imageio2/af-load-image-native out c-filename)
+    (check! (imageio2/af-load-image-native out c-filename)
                 "af-load-image-native")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -220,7 +221,7 @@
    nil"
   [filename ^AFArray in]
   (let [c-filename (jvm/string->c-string filename)]
-    (jvm/check! (imageio2/af-save-image-native c-filename (jvm/af-handle in))
+    (check! (imageio2/af-save-image-native c-filename (jvm/af-handle in))
                 "af-save-image-native")
     nil))
 
@@ -260,7 +261,7 @@
    - Cache: Load from in-memory cache"
   [ptr]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (imageio/af-load-image-memory out ptr)
+    (check! (imageio/af-load-image-memory out ptr)
                 "af-load-image-memory")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -316,7 +317,7 @@
    - IPC (inter-process communication)"
   [^AFArray in format]
   (let [ptr-ptr (mem/alloc 8)]  ; Allocate buffer for pointer
-    (jvm/check! (imageio/af-save-image-memory ptr-ptr (jvm/af-handle in) (int format))
+    (check! (imageio/af-save-image-memory ptr-ptr (jvm/af-handle in) (int format))
                 "af-save-image-memory")
     (mem/read-long ptr-ptr 0)))
 
@@ -350,7 +351,7 @@
    - Always pair with save-image-memory
    - Use try-finally to ensure cleanup"
   [ptr]
-  (jvm/check! (imageio/af-delete-image-memory ptr)
+  (check! (imageio/af-delete-image-memory ptr)
               "af-delete-image-memory")
   nil)
 
@@ -379,7 +380,7 @@
    (resize in odim0 odim1 1))
   ([^AFArray in odim0 odim1 method]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (resize/af-resize out (jvm/af-handle in) (long odim0) (long odim1) (int method))
+     (check! (resize/af-resize out (jvm/af-handle in) (long odim0) (long odim1) (int method))
                  "af-resize")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -406,7 +407,7 @@
    (rotate in theta crop 1))
   ([^AFArray in theta crop method]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (rotate/af-rotate out (jvm/af-handle in) (float theta)
+     (check! (rotate/af-rotate out (jvm/af-handle in) (float theta)
                                    (if crop 1 0) (int method))
                  "af-rotate")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -430,7 +431,7 @@
    (translate in trans0 trans1 odim0 odim1 1))
   ([^AFArray in trans0 trans1 odim0 odim1 method]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (transform/af-translate out (jvm/af-handle in) (float trans0) (float trans1)
+     (check! (transform/af-translate out (jvm/af-handle in) (float trans0) (float trans1)
                                          (long odim0) (long odim1) (int method))
                  "af-translate")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -454,7 +455,7 @@
    (scale in scale0 scale1 odim0 odim1 1))
   ([^AFArray in scale0 scale1 odim0 odim1 method]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (transform/af-scale out (jvm/af-handle in) (float scale0) (float scale1)
+     (check! (transform/af-scale out (jvm/af-handle in) (float scale0) (float scale1)
                                      (long odim0) (long odim1) (int method))
                  "af-scale")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -479,7 +480,7 @@
    (skew in skew0 skew1 odim0 odim1 1 false))
   ([^AFArray in skew0 skew1 odim0 odim1 method inverse]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (transform/af-skew out (jvm/af-handle in) (float skew0) (float skew1)
+     (check! (transform/af-skew out (jvm/af-handle in) (float skew0) (float skew1)
                                     (long odim0) (long odim1) (int method) (if inverse 1 0))
                  "af-skew")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -501,7 +502,7 @@
    (transform in transform-matrix odim0 odim1 1 true))
   ([^AFArray in ^AFArray transform-matrix odim0 odim1 method inverse]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (transform/af-transform out (jvm/af-handle in) (jvm/af-handle transform-matrix)
+     (check! (transform/af-transform out (jvm/af-handle in) (jvm/af-handle transform-matrix)
                                          (long odim0) (long odim1) (int method) (if inverse 1 0))
                  "af-transform")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -518,7 +519,7 @@
    Transformed coordinates (AFArray)"
   [^AFArray tf d0 d1]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (transform-coords/af-transform-coordinates out (jvm/af-handle tf) (float d0) (float d1))
+    (check! (transform-coords/af-transform-coordinates out (jvm/af-handle tf) (float d0) (float d1))
                 "af-transform-coordinates")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -546,7 +547,7 @@
    ```"
   [^AFArray in ^AFArray mask]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (morph/af-dilate out (jvm/af-handle in) (jvm/af-handle mask))
+    (check! (morph/af-dilate out (jvm/af-handle in) (jvm/af-handle mask))
                 "af-dilate")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -563,7 +564,7 @@
    Dilated volume (AFArray)"
   [^AFArray in ^AFArray mask]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (morph/af-dilate3 out (jvm/af-handle in) (jvm/af-handle mask))
+    (check! (morph/af-dilate3 out (jvm/af-handle in) (jvm/af-handle mask))
                 "af-dilate3")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -580,7 +581,7 @@
    Eroded image (AFArray)"
   [^AFArray in ^AFArray mask]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (morph/af-erode out (jvm/af-handle in) (jvm/af-handle mask))
+    (check! (morph/af-erode out (jvm/af-handle in) (jvm/af-handle mask))
                 "af-erode")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -597,7 +598,7 @@
    Eroded volume (AFArray)"
   [^AFArray in ^AFArray mask]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (morph/af-erode3 out (jvm/af-handle in) (jvm/af-handle mask))
+    (check! (morph/af-erode3 out (jvm/af-handle in) (jvm/af-handle mask))
                 "af-erode3")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -629,7 +630,7 @@
    (bilateral in spatial-sigma chromatic-sigma false))
   ([^AFArray in spatial-sigma chromatic-sigma is-color]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (bilateral/af-bilateral out (jvm/af-handle in)
+     (check! (bilateral/af-bilateral out (jvm/af-handle in)
                                          (float spatial-sigma) (float chromatic-sigma)
                                          (if is-color 1 0))
                  "af-bilateral")
@@ -651,7 +652,7 @@
    (mean-shift in spatial-sigma chromatic-sigma 10 false))
   ([^AFArray in spatial-sigma chromatic-sigma iter is-color]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (meanshift/af-mean-shift out (jvm/af-handle in)
+     (check! (meanshift/af-mean-shift out (jvm/af-handle in)
                                           (float spatial-sigma) (float chromatic-sigma)
                                           (int iter) (if is-color 1 0))
                  "af-mean-shift")
@@ -676,7 +677,7 @@
    (minfilt in wind-length wind-width 0))
   ([^AFArray in wind-length wind-width edge-pad]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (filters/af-minfilt out (jvm/af-handle in)
+     (check! (filters/af-minfilt out (jvm/af-handle in)
                                      (long wind-length) (long wind-width) (int edge-pad))
                  "af-minfilt")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -700,7 +701,7 @@
    (maxfilt in wind-length wind-width 0))
   ([^AFArray in wind-length wind-width edge-pad]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (filters/af-maxfilt out (jvm/af-handle in)
+     (check! (filters/af-maxfilt out (jvm/af-handle in)
                                      (long wind-length) (long wind-width) (int edge-pad))
                  "af-maxfilt")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -728,7 +729,7 @@
    (gaussian-kernel rows cols 0.0 0.0))
   ([rows cols sigma-r sigma-c]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (gaussian-kernel/af-gaussian-kernel out (int rows) (int cols)
+     (check! (gaussian-kernel/af-gaussian-kernel out (int rows) (int cols)
                                                      (double sigma-r) (double sigma-c))
                  "af-gaussian-kernel")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -756,7 +757,7 @@
    ```"
   [^AFArray in nbins minval maxval]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (histogram/af-histogram out (jvm/af-handle in) (int nbins)
+    (check! (histogram/af-histogram out (jvm/af-handle in) (int nbins)
                                         (double minval) (double maxval))
                 "af-histogram")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -781,7 +782,7 @@
    ```"
   [^AFArray in ^AFArray hist]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (histeq/af-hist-equal out (jvm/af-handle in) (jvm/af-handle hist))
+    (check! (histeq/af-hist-equal out (jvm/af-handle in) (jvm/af-handle hist))
                 "af-hist-equal")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -810,7 +811,7 @@
    (rgb->gray in 0.2126 0.7152 0.0722))
   ([^AFArray in r-percent g-percent b-percent]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (rgb-gray/af-rgb2gray out (jvm/af-handle in)
+     (check! (rgb-gray/af-rgb2gray out (jvm/af-handle in)
                                        (float r-percent) (float g-percent) (float b-percent))
                  "af-rgb2gray")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -830,7 +831,7 @@
    (gray->rgb in 1.0 1.0 1.0))
   ([^AFArray in r-factor g-factor b-factor]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (rgb-gray/af-gray2rgb out (jvm/af-handle in)
+     (check! (rgb-gray/af-gray2rgb out (jvm/af-handle in)
                                        (float r-factor) (float g-factor) (float b-factor))
                  "af-gray2rgb")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -845,7 +846,7 @@
    HSV image (AFArray)"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (hsv-rgb/af-rgb2hsv out (jvm/af-handle in))
+    (check! (hsv-rgb/af-rgb2hsv out (jvm/af-handle in))
                 "af-rgb2hsv")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -859,7 +860,7 @@
    RGB image (AFArray)"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (hsv-rgb/af-hsv2rgb out (jvm/af-handle in))
+    (check! (hsv-rgb/af-hsv2rgb out (jvm/af-handle in))
                 "af-hsv2rgb")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -876,7 +877,7 @@
    (rgb->ycbcr in 0))
   ([^AFArray in standard]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (ycbcr-rgb/af-rgb2ycbcr out (jvm/af-handle in) (int standard))
+     (check! (ycbcr-rgb/af-rgb2ycbcr out (jvm/af-handle in) (int standard))
                  "af-rgb2ycbcr")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -893,7 +894,7 @@
    (ycbcr->rgb in 0))
   ([^AFArray in standard]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (ycbcr-rgb/af-ycbcr2rgb out (jvm/af-handle in) (int standard))
+     (check! (ycbcr-rgb/af-ycbcr2rgb out (jvm/af-handle in) (int standard))
                  "af-ycbcr2rgb")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -909,7 +910,7 @@
    Converted image (AFArray)"
   [^AFArray image to from]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (colorspace/af-color-space out (jvm/af-handle image) (int to) (int from))
+    (check! (colorspace/af-color-space out (jvm/af-handle image) (int to) (int from))
                 "af-color-space")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -937,7 +938,7 @@
    (regions in 4 5))
   ([^AFArray in connectivity dtype]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (regions/af-regions out (jvm/af-handle in) (int connectivity) (int dtype))
+     (check! (regions/af-regions out (jvm/af-handle in) (int connectivity) (int dtype))
                  "af-regions")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -959,7 +960,7 @@
    Segmented image (AFArray)"
   [^AFArray in ^AFArray seedx ^AFArray seedy radius multiplier iter segmented-value]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (confidence/af-confidence-cc out (jvm/af-handle in)
+    (check! (confidence/af-confidence-cc out (jvm/af-handle in)
                                              (jvm/af-handle seedx) (jvm/af-handle seedy)
                                              (int radius) (int multiplier) (int iter)
                                              (double segmented-value))
@@ -991,7 +992,7 @@
    (unwrap in wx wy sx sy 0 0 true))
   ([^AFArray in wx wy sx sy px py is-column]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (unwrap/af-unwrap out (jvm/af-handle in)
+     (check! (unwrap/af-unwrap out (jvm/af-handle in)
                                    (long wx) (long wy) (long sx) (long sy)
                                    (long px) (long py) (if is-column 1 0))
                  "af-unwrap")
@@ -1020,7 +1021,7 @@
    (wrap in ox oy wx wy sx sy 0 0 true))
   ([^AFArray in ox oy wx wy sx sy px py is-column]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (wrap/af-wrap out (jvm/af-handle in)
+     (check! (wrap/af-wrap out (jvm/af-handle in)
                                (long ox) (long oy) (long wx) (long wy)
                                (long sx) (long sy) (long px) (long py)
                                (if is-column 1 0))
@@ -1045,7 +1046,7 @@
    ```"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (sat/af-sat out (jvm/af-handle in))
+    (check! (sat/af-sat out (jvm/af-handle in))
                 "af-sat")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -1076,7 +1077,7 @@
    (anisotropic-diffusion in dt K iterations 1 0))
   ([^AFArray in dt K iterations fftype diffusion-eq]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (aniso/af-anisotropic-diffusion out (jvm/af-handle in)
+     (check! (aniso/af-anisotropic-diffusion out (jvm/af-handle in)
                                                  (float dt) (float K) (int iterations)
                                                  (int fftype) (int diffusion-eq))
                  "af-anisotropic-diffusion")
@@ -1098,7 +1099,7 @@
    (iterative-deconv in ker iterations 1.0 0))
   ([^AFArray in ^AFArray ker iterations relax-factor algo]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (deconv/af-iterative-deconv out (jvm/af-handle in) (jvm/af-handle ker)
+     (check! (deconv/af-iterative-deconv out (jvm/af-handle in) (jvm/af-handle ker)
                                              (int iterations) (float relax-factor) (int algo))
                  "af-iterative-deconv")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -1118,7 +1119,7 @@
    (inverse-deconv in psf 1.0 0))
   ([^AFArray in ^AFArray psf gamma algo]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (deconv/af-inverse-deconv out (jvm/af-handle in) (jvm/af-handle psf)
+     (check! (deconv/af-inverse-deconv out (jvm/af-handle in) (jvm/af-handle psf)
                                            (float gamma) (int algo))
                  "af-inverse-deconv")
      (jvm/af-array-new (jvm/deref-af-array out)))))

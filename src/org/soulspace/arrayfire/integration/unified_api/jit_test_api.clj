@@ -44,6 +44,7 @@
    tuning. Most applications should use the default settings."
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.jit-test-api :as jit-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
@@ -85,7 +86,7 @@
    ```"
   []
   (let [len-buf (mem/alloc 4)]
-    (jvm/check! (jit-ffi/af-get-max-jit-len len-buf)
+    (check! (jit-ffi/af-get-max-jit-len len-buf)
                 "af-get-max-jit-len")
     (mem/read-int len-buf 0)))
 
@@ -162,7 +163,7 @@
   [jit-len]
   (when (<= jit-len 0)
     (throw (ex-info "JIT length must be positive" {:jit-len jit-len})))
-  (jvm/check! (jit-ffi/af-set-max-jit-len (int jit-len))
+  (check! (jit-ffi/af-set-max-jit-len (int jit-len))
               "af-set-max-jit-len")
   nil)
 

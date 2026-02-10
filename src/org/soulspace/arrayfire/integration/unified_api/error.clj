@@ -38,6 +38,7 @@
    ```"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.error :as error-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import [java.lang.foreign Arena MemorySegment]))
 
@@ -184,7 +185,7 @@
    Note: This affects global state and should be set once at program initialization.
    The setting applies to all subsequent errors across all threads."
   [enabled]
-  (jvm/check! (error-ffi/af-set-enable-stacktrace (if enabled 1 0))
+  (check! (error-ffi/af-set-enable-stacktrace (if enabled 1 0))
               "af-set-enable-stacktrace")
   nil)
 

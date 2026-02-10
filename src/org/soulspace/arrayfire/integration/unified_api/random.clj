@@ -71,6 +71,7 @@
    - integration.device for backend management"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.random :as random]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
@@ -167,7 +168,7 @@
   ([engine-type seed]
    (let [engine-ptr (mem/alloc 8)
          type-int (engine-type->int engine-type)]
-     (jvm/check! (random/af-create-random-engine engine-ptr type-int (long seed))
+     (check! (random/af-create-random-engine engine-ptr type-int (long seed))
                  "af-create-random-engine")
      (mem/read-long engine-ptr 0))))
 
@@ -187,7 +188,7 @@
    - release-engine!: Decrement reference count"
   [engine]
   (let [out-ptr (mem/alloc 8)]
-    (jvm/check! (random/af-retain-random-engine out-ptr (mem/as-segment engine))
+    (check! (random/af-retain-random-engine out-ptr (mem/as-segment engine))
                 "af-retain-random-engine")
     (mem/read-long out-ptr 0)))
 
@@ -219,7 +220,7 @@
    See also:
    - create-engine: Create engine"
   [engine]
-  (jvm/check! (random/af-release-random-engine (mem/as-segment engine))
+  (check! (random/af-release-random-engine (mem/as-segment engine))
               "af-release-random-engine")
   nil)
 
@@ -255,7 +256,7 @@
   (let [type-int (engine-type->int engine-type)
         engine-ptr (mem/alloc 8)]
     (mem/write-long engine-ptr 0 engine)
-    (jvm/check! (random/af-random-engine-set-type engine-ptr type-int)
+    (check! (random/af-random-engine-set-type engine-ptr type-int)
                 "af-random-engine-set-type")
     engine))
 
@@ -285,7 +286,7 @@
    - engine-type-name: Get type name"
   [engine]
   (let [type-ptr (mem/alloc 4)]
-    (jvm/check! (random/af-random-engine-get-type type-ptr (mem/as-segment engine))
+    (check! (random/af-random-engine-get-type type-ptr (mem/as-segment engine))
                 "af-random-engine-get-type")
     (mem/read-int type-ptr 0)))
    
@@ -315,7 +316,7 @@
   [engine seed]
   (let [engine-ptr (mem/alloc 8)]
     (mem/write-long engine-ptr 0 engine)
-    (jvm/check! (random/af-random-engine-set-seed engine-ptr (long seed))
+    (check! (random/af-random-engine-set-seed engine-ptr (long seed))
                 "af-random-engine-set-seed")
     engine))
 
@@ -341,7 +342,7 @@
    - set-engine-seed!: Change seed"
   [engine]
   (let [seed-ptr (mem/alloc 8)]
-    (jvm/check! (random/af-random-engine-get-seed seed-ptr (mem/as-segment engine))
+    (check! (random/af-random-engine-get-seed seed-ptr (mem/as-segment engine))
                 "af-random-engine-get-seed")
     (mem/read-long seed-ptr 0)))
 
@@ -374,7 +375,7 @@
    - set-default-engine-type!: Change default engine type"
   []
   (let [engine-ptr (mem/alloc 8)]
-    (jvm/check! (random/af-get-default-random-engine engine-ptr)
+    (check! (random/af-get-default-random-engine engine-ptr)
                 "af-get-default-random-engine")
     (mem/read-long engine-ptr 0)))
 
@@ -403,7 +404,7 @@
    - get-default-engine: Get default engine handle"
   [engine-type]
   (let [type-int (engine-type->int engine-type)]
-    (jvm/check! (random/af-set-default-random-engine-type type-int)
+    (check! (random/af-set-default-random-engine-type type-int)
                 "af-set-default-random-engine-type")
     nil))
 
@@ -447,7 +448,7 @@
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
         dims-seg (jvm/dims->segment dims)]
-    (jvm/check! (random/af-random-uniform out ndims dims-seg dtype (mem/as-segment engine))
+    (check! (random/af-random-uniform out ndims dims-seg dtype (mem/as-segment engine))
                 "af-random-uniform")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -487,7 +488,7 @@
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
         dims-seg (jvm/dims->segment dims)]
-    (jvm/check! (random/af-random-normal out ndims dims-seg dtype (mem/as-segment engine))
+    (check! (random/af-random-normal out ndims dims-seg dtype (mem/as-segment engine))
                 "af-random-normal")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -534,7 +535,7 @@
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
         dims-seg (jvm/dims->segment dims)]
-    (jvm/check! (random/af-randu out ndims dims-seg dtype)
+    (check! (random/af-randu out ndims dims-seg dtype)
                 "af-randu")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -576,7 +577,7 @@
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
         dims-seg (jvm/dims->segment dims)]
-    (jvm/check! (random/af-randn out ndims dims-seg dtype)
+    (check! (random/af-randn out ndims dims-seg dtype)
                 "af-randn")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -615,7 +616,7 @@
    - get-seed: Query current seed
    - set-engine-seed!: Set custom engine seed"
   [seed]
-  (jvm/check! (random/af-set-seed (long seed))
+  (check! (random/af-set-seed (long seed))
               "af-set-seed")
   nil)
 
@@ -640,7 +641,7 @@
    - get-engine-seed: Get custom engine seed"
   []
   (let [seed-ptr (mem/alloc 8)]
-    (jvm/check! (random/af-get-seed seed-ptr)
+    (check! (random/af-get-seed seed-ptr)
                 "af-get-seed")
     (mem/read-long seed-ptr 0)))
 

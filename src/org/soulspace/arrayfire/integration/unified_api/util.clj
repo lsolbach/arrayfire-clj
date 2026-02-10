@@ -225,6 +225,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.print :as print]
             [org.soulspace.arrayfire.ffi.c-api.stream :as stream]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -268,7 +269,7 @@
    - print-array-gen: Named print with custom precision
    - array-to-string: Convert to string for programmatic use"
   [^AFArray arr]
-  (jvm/check! (print/af-print-array (jvm/af-handle arr))
+  (check! (print/af-print-array (jvm/af-handle arr))
               "af-print-array")
   nil)
 
@@ -313,7 +314,7 @@
    (print-array-gen expression arr 4))
   ([expression ^AFArray arr precision]
    (let [c-str (jvm/string->c-string expression)]
-     (jvm/check! (print/af-print-array-gen c-str (jvm/af-handle arr) (int precision))
+     (check! (print/af-print-array-gen c-str (jvm/af-handle arr) (int precision))
                  "af-print-array-gen")
      nil)))
 
@@ -361,7 +362,7 @@
   ([expression ^AFArray arr precision transpose]
    (let [c-expr (jvm/string->c-string expression)
          output-ptr (jvm/native-af-array-pointer)]
-     (jvm/check! (print/af-array-to-string output-ptr c-expr (jvm/af-handle arr) 
+     (check! (print/af-array-to-string output-ptr c-expr (jvm/af-handle arr) 
                                            (int precision) (if transpose 1 0))
                  "af-array-to-string")
      (let [str-addr (jvm/deref-af-array output-ptr)
@@ -427,7 +428,7 @@
    (let [c-key (jvm/string->c-string key)
          c-filename (jvm/string->c-string filename)
          index-buf (mem/alloc-instance ::mem/int)]
-     (jvm/check! (stream/af-save-array index-buf c-key (jvm/af-handle arr) 
+     (check! (stream/af-save-array index-buf c-key (jvm/af-handle arr) 
                                       c-filename (if append 1 0))
                  "af-save-array")
      (mem/read-int index-buf 0))))
@@ -470,7 +471,7 @@
   [filename index]
   (let [c-filename (jvm/string->c-string filename)
         out (jvm/native-af-array-pointer)]
-    (jvm/check! (stream/af-read-array-index out c-filename (int index))
+    (check! (stream/af-read-array-index out c-filename (int index))
                 "af-read-array-index")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -515,7 +516,7 @@
   (let [c-filename (jvm/string->c-string filename)
         c-key (jvm/string->c-string key)
         out (jvm/native-af-array-pointer)]
-    (jvm/check! (stream/af-read-array-key out c-filename c-key)
+    (check! (stream/af-read-array-key out c-filename c-key)
                 "af-read-array-key")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -566,7 +567,7 @@
   (let [c-filename (jvm/string->c-string filename)
         c-key (jvm/string->c-string key)
         index-buf (mem/alloc-instance ::mem/int)]
-    (jvm/check! (stream/af-read-array-key-check index-buf c-filename c-key)
+    (check! (stream/af-read-array-key-check index-buf c-filename c-key)
                 "af-read-array-key-check")
     (mem/read-int index-buf 0)))
 

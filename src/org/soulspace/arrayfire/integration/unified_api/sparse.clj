@@ -144,6 +144,7 @@
   - BLAS operations for dense matrices"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.sparse :as sparse]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -241,7 +242,7 @@
    (create n-rows n-cols values row-idx col-idx COO))
   ([n-rows n-cols ^AFArray values ^AFArray row-idx ^AFArray col-idx storage-type]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (sparse/af-create-sparse-array
+     (check! (sparse/af-create-sparse-array
                   out
                   (long n-rows)
                   (long n-cols)
@@ -292,7 +293,7 @@
    (from-ptr n-rows n-cols nnz values row-idx col-idx dtype storage-type 0))
   ([n-rows n-cols nnz values row-idx col-idx dtype storage-type source]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (sparse/af-create-sparse-array-from-ptr
+     (check! (sparse/af-create-sparse-array-from-ptr
                   out
                   (long n-rows)
                   (long n-cols)
@@ -353,7 +354,7 @@
    (from-dense in COO))
   ([^AFArray in storage-type]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (sparse/af-create-sparse-array-from-dense
+     (check! (sparse/af-create-sparse-array-from-dense
                   out
                   (jvm/af-handle in)
                   (int storage-type))
@@ -411,7 +412,7 @@
    - storage-format: Query current format"
   [^AFArray in dest-storage]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (sparse/af-sparse-convert-to
+    (check! (sparse/af-sparse-convert-to
                  out
                  (jvm/af-handle in)
                  (int dest-storage))
@@ -462,7 +463,7 @@
    - convert-to: Convert between sparse formats"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (sparse/af-sparse-to-dense
+    (check! (sparse/af-sparse-to-dense
                  out
                  (jvm/af-handle in))
                 "af-sparse-to-dense")
@@ -524,7 +525,7 @@
         row-idx-ptr (jvm/native-af-array-pointer)
         col-idx-ptr (jvm/native-af-array-pointer)
         storage-buf (mem/alloc-instance ::mem/int)]
-    (jvm/check! (sparse/af-sparse-get-info
+    (check! (sparse/af-sparse-get-info
                  values-ptr
                  row-idx-ptr
                  col-idx-ptr
@@ -561,7 +562,7 @@
    - info: Get all components"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (sparse/af-sparse-get-values
+    (check! (sparse/af-sparse-get-values
                  out
                  (jvm/af-handle in))
                 "af-sparse-get-values")
@@ -604,7 +605,7 @@
    - info: Get all components"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (sparse/af-sparse-get-row-idx
+    (check! (sparse/af-sparse-get-row-idx
                  out
                  (jvm/af-handle in))
                 "af-sparse-get-row-idx")
@@ -638,7 +639,7 @@
    - info: Get all components"
   [^AFArray in]
   (let [out (jvm/native-af-array-pointer)]
-    (jvm/check! (sparse/af-sparse-get-col-idx
+    (check! (sparse/af-sparse-get-col-idx
                  out
                  (jvm/af-handle in))
                 "af-sparse-get-col-idx")
@@ -689,7 +690,7 @@
    - storage-format: Get storage format"
   [^AFArray in]
   (let [nnz-buf (mem/alloc-instance ::mem/long)]
-    (jvm/check! (sparse/af-sparse-get-nnz
+    (check! (sparse/af-sparse-get-nnz
                  nnz-buf
                  (jvm/af-handle in))
                 "af-sparse-get-nnz")
@@ -734,7 +735,7 @@
    - info: Get all sparse matrix information"
   [^AFArray in]
   (let [storage-buf (mem/alloc-instance ::mem/int)]
-    (jvm/check! (sparse/af-sparse-get-storage
+    (check! (sparse/af-sparse-get-storage
                  storage-buf
                  (jvm/af-handle in))
                 "af-sparse-get-storage")

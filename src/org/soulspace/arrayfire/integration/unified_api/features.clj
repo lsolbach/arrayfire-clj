@@ -83,6 +83,7 @@
    - Features live in GPU memory"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.features :as ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
@@ -137,7 +138,7 @@
    - Empty features (num=0) are valid but rarely useful"
   [num]
   (let [features-ptr-buf (mem/alloc 8)] ; Buffer to hold af_features pointer
-    (jvm/check! (ffi/af-create-features features-ptr-buf (long num))
+    (check! (ffi/af-create-features features-ptr-buf (long num))
                 "af-create-features")
     (mem/read-long features-ptr-buf 0)))
 
@@ -193,7 +194,7 @@
   [features]
   (let [out-ptr-buf (mem/alloc 8)
         features-segment (mem/as-segment features)]
-    (jvm/check! (ffi/af-retain-features out-ptr-buf features-segment)
+    (check! (ffi/af-retain-features out-ptr-buf features-segment)
                 "af-retain-features")
     (mem/read-long out-ptr-buf 0)))
 
@@ -242,7 +243,7 @@
   [features]
   (when features
     (let [features-segment (mem/as-segment features)]
-      (jvm/check! (ffi/af-release-features features-segment)
+      (check! (ffi/af-release-features features-segment)
                   "af-release-features")))
   nil)
 
@@ -285,7 +286,7 @@
   [features]
   (let [num-buf (mem/alloc 8)
         features-segment (mem/as-segment features)]
-    (jvm/check! (ffi/af-get-features-num num-buf features-segment)
+    (check! (ffi/af-get-features-num num-buf features-segment)
                 "af-get-features-num")
     (mem/read-long num-buf 0)))
 
@@ -342,7 +343,7 @@
   [features]
   (let [x-ptr-buf (mem/alloc 8)
         features-segment (mem/as-segment features)]
-    (jvm/check! (ffi/af-get-features-xpos x-ptr-buf features-segment)
+    (check! (ffi/af-get-features-xpos x-ptr-buf features-segment)
                 "af-get-features-xpos")
     (jvm/af-array-retained (mem/read-long x-ptr-buf 0))))
 
@@ -391,7 +392,7 @@
   [features]
   (let [y-ptr-buf (mem/alloc 8)
         features-segment (mem/as-segment features)]
-    (jvm/check! (ffi/af-get-features-ypos y-ptr-buf features-segment)
+    (check! (ffi/af-get-features-ypos y-ptr-buf features-segment)
                 "af-get-features-ypos")
     (jvm/af-array-retained (mem/read-long y-ptr-buf 0))))
 
@@ -448,7 +449,7 @@
   [features]
   (let [score-ptr-buf (mem/alloc 8)
         features-segment (mem/as-segment features)]
-    (jvm/check! (ffi/af-get-features-score score-ptr-buf features-segment)
+    (check! (ffi/af-get-features-score score-ptr-buf features-segment)
                 "af-get-features-score")
     (jvm/af-array-retained (mem/read-long score-ptr-buf 0))))
 
@@ -505,7 +506,7 @@
   [features]
   (let [ori-ptr-buf (mem/alloc 8)
         features-segment (mem/as-segment features)]
-    (jvm/check! (ffi/af-get-features-orientation ori-ptr-buf features-segment)
+    (check! (ffi/af-get-features-orientation ori-ptr-buf features-segment)
                 "af-get-features-orientation")
     (jvm/af-array-retained (mem/read-long ori-ptr-buf 0))))
 
@@ -570,6 +571,6 @@
   [features]
   (let [size-ptr-buf (mem/alloc 8)
         features-segment (mem/as-segment features)]
-    (jvm/check! (ffi/af-get-features-size size-ptr-buf features-segment)
+    (check! (ffi/af-get-features-size size-ptr-buf features-segment)
                 "af-get-features-size")
     (jvm/af-array-retained (mem/read-long size-ptr-buf 0))))

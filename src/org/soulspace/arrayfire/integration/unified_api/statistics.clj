@@ -220,6 +220,7 @@
             [org.soulspace.arrayfire.ffi.c-api.covariance :as covariance]
             [org.soulspace.arrayfire.ffi.c-api.corrcoef :as corrcoef]
             [org.soulspace.arrayfire.ffi.c-api.topk :as topk]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -316,7 +317,7 @@
    (mean in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (mean/af-mean out (jvm/af-handle in) (int dim))
+     (check! (mean/af-mean out (jvm/af-handle in) (int dim))
                  "af-mean")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -359,7 +360,7 @@
    (mean-weighted in weights -1))
   ([^AFArray in ^AFArray weights dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (mean/af-mean-weighted out (jvm/af-handle in) (jvm/af-handle weights) (int dim))
+     (check! (mean/af-mean-weighted out (jvm/af-handle in) (jvm/af-handle weights) (int dim))
                  "af-mean-weighted")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -393,7 +394,7 @@
   [^AFArray in]
   (let [real-buf (mem/alloc-instance ::mem/double)
         imag-buf (mem/alloc-instance ::mem/double)]
-    (jvm/check! (mean/af-mean-all real-buf imag-buf (jvm/af-handle in))
+    (check! (mean/af-mean-all real-buf imag-buf (jvm/af-handle in))
                 "af-mean-all")
     (let [real (mem/read-double real-buf)
           imag (mem/read-double imag-buf)]
@@ -428,7 +429,7 @@
   [^AFArray in ^AFArray weights]
   (let [real-buf (mem/alloc-instance ::mem/double)
         imag-buf (mem/alloc-instance ::mem/double)]
-    (jvm/check! (mean/af-mean-all-weighted real-buf imag-buf (jvm/af-handle in) (jvm/af-handle weights))
+    (check! (mean/af-mean-all-weighted real-buf imag-buf (jvm/af-handle in) (jvm/af-handle weights))
                 "af-mean-all-weighted")
     (let [real (mem/read-double real-buf)
           imag (mem/read-double imag-buf)]
@@ -479,17 +480,17 @@
    - var-all: Reduce to scalar"
   ([^AFArray in]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (variance/af-var-v2 out (jvm/af-handle in) (int VARIANCE_SAMPLE) (int -1))
+     (check! (variance/af-var-v2 out (jvm/af-handle in) (int VARIANCE_SAMPLE) (int -1))
                  "af-var-v2")
      (jvm/af-array-new (jvm/deref-af-array out))))
   ([^AFArray in bias]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (variance/af-var-v2 out (jvm/af-handle in) (int bias) (int -1))
+     (check! (variance/af-var-v2 out (jvm/af-handle in) (int bias) (int -1))
                  "af-var-v2")
      (jvm/af-array-new (jvm/deref-af-array out))))
   ([^AFArray in bias dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (variance/af-var-v2 out (jvm/af-handle in) (int bias) (int dim))
+     (check! (variance/af-var-v2 out (jvm/af-handle in) (int bias) (int dim))
                  "af-var-v2")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -523,7 +524,7 @@
    (var-weighted in weights -1))
   ([^AFArray in ^AFArray weights dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (variance/af-var-weighted out (jvm/af-handle in) (jvm/af-handle weights) (int dim))
+     (check! (variance/af-var-weighted out (jvm/af-handle in) (jvm/af-handle weights) (int dim))
                  "af-var-weighted")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -555,7 +556,7 @@
   ([^AFArray in bias]
    (let [real-buf (mem/alloc-instance ::mem/double)
          imag-buf (mem/alloc-instance ::mem/double)]
-     (jvm/check! (variance/af-var-all-v2 real-buf imag-buf (jvm/af-handle in) (int bias))
+     (check! (variance/af-var-all-v2 real-buf imag-buf (jvm/af-handle in) (int bias))
                  "af-var-all-v2")
      (let [real (mem/read-double real-buf)
            imag (mem/read-double imag-buf)]
@@ -588,7 +589,7 @@
   [^AFArray in ^AFArray weights]
   (let [real-buf (mem/alloc-instance ::mem/double)
         imag-buf (mem/alloc-instance ::mem/double)]
-    (jvm/check! (variance/af-var-all-weighted real-buf imag-buf (jvm/af-handle in) (jvm/af-handle weights))
+    (check! (variance/af-var-all-weighted real-buf imag-buf (jvm/af-handle in) (jvm/af-handle weights))
                 "af-var-all-weighted")
     (let [real (mem/read-double real-buf)
           imag (mem/read-double imag-buf)]
@@ -641,7 +642,7 @@
    (stdev in bias -1))
   ([^AFArray in bias dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (stdev/af-stdev-v2 out (jvm/af-handle in) (int bias) (int dim))
+     (check! (stdev/af-stdev-v2 out (jvm/af-handle in) (int bias) (int dim))
                  "af-stdev-v2")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -673,7 +674,7 @@
   ([^AFArray in bias]
    (let [real-buf (mem/alloc-instance ::mem/double)
          imag-buf (mem/alloc-instance ::mem/double)]
-     (jvm/check! (stdev/af-stdev-all-v2 real-buf imag-buf (jvm/af-handle in) (int bias))
+     (check! (stdev/af-stdev-all-v2 real-buf imag-buf (jvm/af-handle in) (int bias))
                  "af-stdev-all-v2")
      (let [real (mem/read-double real-buf)
            imag (mem/read-double imag-buf)]
@@ -724,7 +725,7 @@
    (median in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (median/af-median out (jvm/af-handle in) (int dim))
+     (check! (median/af-median out (jvm/af-handle in) (int dim))
                  "af-median")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -753,7 +754,7 @@
   [^AFArray in]
   (let [real-buf (mem/alloc-instance ::mem/double)
         imag-buf (mem/alloc-instance ::mem/double)]
-    (jvm/check! (median/af-median-all real-buf imag-buf (jvm/af-handle in))
+    (check! (median/af-median-all real-buf imag-buf (jvm/af-handle in))
                 "af-median-all")
     (let [real (mem/read-double real-buf)
           imag (mem/read-double imag-buf)]
@@ -809,7 +810,7 @@
   ([^AFArray in ^AFArray weights bias dim]
    (let [mean-ptr (jvm/native-af-array-pointer)
          var-ptr (jvm/native-af-array-pointer)]
-     (jvm/check! (variance/af-meanvar mean-ptr var-ptr (jvm/af-handle in) (jvm/af-handle weights) (int bias) (int dim))
+     (check! (variance/af-meanvar mean-ptr var-ptr (jvm/af-handle in) (jvm/af-handle weights) (int bias) (int dim))
                  "af-meanvar")
      {:mean (jvm/af-array-new (jvm/deref-af-array mean-ptr))
       :var (jvm/af-array-new (jvm/deref-af-array var-ptr))})))
@@ -860,7 +861,7 @@
    (cov x y VARIANCE_SAMPLE))
   ([^AFArray x ^AFArray y bias]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (covariance/af-cov-v2 out (jvm/af-handle x) (jvm/af-handle y) (int bias))
+     (check! (covariance/af-cov-v2 out (jvm/af-handle x) (jvm/af-handle y) (int bias))
                  "af-cov-v2")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -911,7 +912,7 @@
   [^AFArray x ^AFArray y]
   (let [real-buf (mem/alloc-instance ::mem/double)
         imag-buf (mem/alloc-instance ::mem/double)]
-    (jvm/check! (corrcoef/af-corrcoef real-buf imag-buf (jvm/af-handle x) (jvm/af-handle y))
+    (check! (corrcoef/af-corrcoef real-buf imag-buf (jvm/af-handle x) (jvm/af-handle y))
                 "af-corrcoef")
     (let [real (mem/read-double real-buf)
           imag (mem/read-double imag-buf)]
@@ -979,7 +980,7 @@
   ([^AFArray in k dim order]
    (let [values-ptr (jvm/native-af-array-pointer)
          indices-ptr (jvm/native-af-array-pointer)]
-     (jvm/check! (topk/af-topk values-ptr indices-ptr (jvm/af-handle in) (int k) (int dim) (int order))
+     (check! (topk/af-topk values-ptr indices-ptr (jvm/af-handle in) (int k) (int dim) (int order))
                  "af-topk")
      [(jvm/af-array-new (jvm/deref-af-array values-ptr))
       (jvm/af-array-new (jvm/deref-af-array indices-ptr))])))

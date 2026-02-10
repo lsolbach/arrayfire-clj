@@ -4,6 +4,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.device :as device-ffi]
             [org.soulspace.arrayfire.ffi.c-api.memory :as memory-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
            (java.lang.foreign Arena MemorySegment)))
@@ -24,7 +25,7 @@
    Example:
    (init!)"
   []
-  (jvm/check! (device-ffi/af-init) "af-init")
+  (check! (device-ffi/af-init) "af-init")
   true)
 
 (defn info
@@ -39,7 +40,7 @@
    Example:
    (info)"
   []
-  (jvm/check! (device-ffi/af-info) "af-info")
+  (check! (device-ffi/af-info) "af-info")
   :ok)
 
 (defn info-string
@@ -60,7 +61,7 @@
    (let [arena (Arena/ofConfined)]
      (try
        (let [str-ptr-buf (mem/alloc 8)] ; Buffer to hold char** pointer
-         (jvm/check! (device-ffi/af-info-string str-ptr-buf (if verbose 1 0))
+         (check! (device-ffi/af-info-string str-ptr-buf (if verbose 1 0))
                      "af-info-string")
          ;; Read the char* pointer from the buffer
          (let [str-address (mem/read-long str-ptr-buf 0)
@@ -84,7 +85,7 @@
      (println \"Found\" count \"devices\"))"
   []
   (let [count-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-device-count count-buf)
+    (check! (device-ffi/af-get-device-count count-buf)
                 "af-get-device-count")
     (mem/read-int count-buf 0)))
 
@@ -99,7 +100,7 @@
      (println \"Active device:\" device-id))"
   []
   (let [device-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-device device-buf)
+    (check! (device-ffi/af-get-device device-buf)
                 "af-get-device")
     (mem/read-int device-buf 0)))
 
@@ -118,7 +119,7 @@
    Example:
    (set-device! 0) ; Set device 0 as active"
   [device-id]
-  (jvm/check! (device-ffi/af-set-device (int device-id))
+  (check! (device-ffi/af-set-device (int device-id))
               "af-set-device")
   nil)
 
@@ -148,7 +149,7 @@
                  platform-buf (mem/alloc 256 arena)
                  toolkit-buf (mem/alloc 256 arena)
                  compute-buf (mem/alloc 256 arena)]
-             (jvm/check! (device-ffi/af-device-info name-buf platform-buf toolkit-buf compute-buf)
+             (check! (device-ffi/af-device-info name-buf platform-buf toolkit-buf compute-buf)
                          "af-device-info")
              {:device-id device-id
               :name (jvm/c-string->string name-buf)
@@ -182,7 +183,7 @@
    (dbl-support? (get-device)))
   ([device-id]
    (let [available-buf (mem/alloc 4)]
-     (jvm/check! (device-ffi/af-get-dbl-support available-buf (int device-id))
+     (check! (device-ffi/af-get-dbl-support available-buf (int device-id))
                  "af-get-dbl-support")
      (not (zero? (mem/read-int available-buf 0))))))
 
@@ -203,7 +204,7 @@
    (half-support? (get-device)))
   ([device-id]
    (let [available-buf (mem/alloc 4)]
-     (jvm/check! (device-ffi/af-get-half-support available-buf (int device-id))
+     (check! (device-ffi/af-get-half-support available-buf (int device-id))
                  "af-get-half-support")
      (not (zero? (mem/read-int available-buf 0))))))
 
@@ -229,7 +230,7 @@
   ([]
    (sync! (get-device)))
   ([device-id]
-   (jvm/check! (device-ffi/af-sync (int device-id))
+   (check! (device-ffi/af-sync (int device-id))
                "af-sync")
    nil))
 
@@ -255,7 +256,7 @@
         alloc-buffers-buf (mem/alloc 8)
         lock-bytes-buf (mem/alloc 8)
         lock-buffers-buf (mem/alloc 8)]
-    (jvm/check! (memory-ffi/af-device-mem-info alloc-bytes-buf alloc-buffers-buf
+    (check! (memory-ffi/af-device-mem-info alloc-bytes-buf alloc-buffers-buf
                                                lock-bytes-buf lock-buffers-buf)
                 "af-device-mem-info")
     {:alloc-bytes (mem/read-long alloc-bytes-buf 0)
@@ -288,7 +289,7 @@
        (let [msg-segment (if msg
                            (jvm/string->c-string msg arena)
                            mem/null)]
-         (jvm/check! (memory-ffi/af-print-mem-info msg-segment (int device-id))
+         (check! (memory-ffi/af-print-mem-info msg-segment (int device-id))
                      "af-print-mem-info")
          nil)
        (finally
@@ -306,7 +307,7 @@
    Example:
    (device-gc!) ; Free unused device memory"
   []
-  (jvm/check! (memory-ffi/af-device-gc) "af-device-gc")
+  (check! (memory-ffi/af-device-gc) "af-device-gc")
   nil)
 
 (defn set-mem-step-size!
@@ -324,7 +325,7 @@
    Example:
    (set-mem-step-size! (* 1024 1024)) ; 1MB chunks"
   [step-bytes]
-  (jvm/check! (memory-ffi/af-set-mem-step-size (long step-bytes))
+  (check! (memory-ffi/af-set-mem-step-size (long step-bytes))
               "af-set-mem-step-size")
   nil)
 
@@ -339,7 +340,7 @@
      (println \"Memory step size:\" step-size \"bytes\"))"
   []
   (let [step-buf (mem/alloc 8)]
-    (jvm/check! (memory-ffi/af-get-mem-step-size step-buf)
+    (check! (memory-ffi/af-get-mem-step-size step-buf)
                 "af-get-mem-step-size")
     (mem/read-long step-buf 0)))
 
@@ -365,7 +366,7 @@
      (eval-array! a)
      ;; Now safe to access data"
   [^AFArray arr]
-  (jvm/check! (device-ffi/af-eval (jvm/af-handle arr))
+  (check! (device-ffi/af-eval (jvm/af-handle arr))
               "af-eval")
   nil)
 
@@ -391,7 +392,7 @@
         handles-buf (mem/alloc (* n 8))] ; 8 bytes per pointer
     (doseq [[i arr] (map-indexed vector arrays)]
       (mem/write-long handles-buf (* i 8) (jvm/af-handle-value arr)))
-    (jvm/check! (device-ffi/af-eval-multiple n handles-buf)
+    (check! (device-ffi/af-eval-multiple n handles-buf)
                 "af-eval-multiple")
     nil))
 
@@ -419,7 +420,7 @@
    Example:
    (set-backend! AF_BACKEND_CUDA)"
   [backend]
-  (jvm/check! (device-ffi/af-set-backend (int backend))
+  (check! (device-ffi/af-set-backend (int backend))
               "af-set-backend")
   nil)
 
@@ -434,7 +435,7 @@
      (println \"Available backends:\" count))"
   []
   (let [count-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-backend-count count-buf)
+    (check! (device-ffi/af-get-backend-count count-buf)
                 "af-get-backend-count")
     (mem/read-int count-buf 0)))
 
@@ -456,7 +457,7 @@
        (println \"CUDA backend available\")))"
   []
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-available-backends result-buf)
+    (check! (device-ffi/af-get-available-backends result-buf)
                 "af-get-available-backends")
     (mem/read-int result-buf 0)))
 
@@ -474,7 +475,7 @@
        3 (println \"OpenCL backend active\")))"
   []
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-active-backend result-buf)
+    (check! (device-ffi/af-get-active-backend result-buf)
                 "af-get-active-backend")
     (mem/read-int result-buf 0)))
 
@@ -492,7 +493,7 @@
      (println \"Array is on backend\" backend-id))"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-backend-id result-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-get-backend-id result-buf (jvm/af-handle arr))
                 "af-get-backend-id")
     (mem/read-int result-buf 0)))
 
@@ -510,7 +511,7 @@
      (println \"Array is on device\" device-id))"
   [^AFArray arr]
   (let [device-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-device-id device-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-get-device-id device-buf (jvm/af-handle arr))
                 "af-get-device-id")
     (mem/read-int device-buf 0)))
 
@@ -536,7 +537,7 @@
    ;; Array memory is now locked
    (unlock-array! my-array) ; Don't forget to unlock!"
   [^AFArray arr]
-  (jvm/check! (device-ffi/af-lock-array (jvm/af-handle arr))
+  (check! (device-ffi/af-lock-array (jvm/af-handle arr))
               "af-lock-array")
   nil)
 
@@ -555,7 +556,7 @@
    Example:
    (unlock-array! my-array)"
   [^AFArray arr]
-  (jvm/check! (device-ffi/af-unlock-array (jvm/af-handle arr))
+  (check! (device-ffi/af-unlock-array (jvm/af-handle arr))
               "af-unlock-array")
   nil)
 
@@ -574,7 +575,7 @@
      (println \"Array is not locked\"))"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-is-locked-array result-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-is-locked-array result-buf (jvm/af-handle arr))
                 "af-is-locked-array")
     (not (zero? (mem/read-int result-buf 0)))))
 
@@ -596,7 +597,7 @@
      ptr)"
   [^AFArray arr]
   (let [ptr-buf (mem/alloc 8)]
-    (jvm/check! (device-ffi/af-get-device-ptr ptr-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-get-device-ptr ptr-buf (jvm/af-handle arr))
                 "af-get-device-ptr")
     (mem/read-long ptr-buf 0)))
 
@@ -622,7 +623,7 @@
    ;; Build computation graph
    (set-manual-eval-flag! false) ; Re-enable automatic evaluation"
   [flag]
-  (jvm/check! (device-ffi/af-set-manual-eval-flag (if flag 1 0))
+  (check! (device-ffi/af-set-manual-eval-flag (if flag 1 0))
               "af-set-manual-eval-flag")
   nil)
 
@@ -638,7 +639,7 @@
      (println \"Automatic evaluation enabled\"))"
   []
   (let [flag-buf (mem/alloc 4)]
-    (jvm/check! (device-ffi/af-get-manual-eval-flag flag-buf)
+    (check! (device-ffi/af-get-manual-eval-flag flag-buf)
                 "af-get-manual-eval-flag")
     (not (zero? (mem/read-int flag-buf 0)))))
 
@@ -667,7 +668,7 @@
    (let [arena (Arena/ofConfined)]
      (try
        (let [path-segment (jvm/string->c-string path arena)]
-         (jvm/check! (device-ffi/af-set-kernel-cache-directory
+         (check! (device-ffi/af-set-kernel-cache-directory
                       path-segment
                       (if override-eval 1 0))
                      "af-set-kernel-cache-directory")
@@ -689,13 +690,13 @@
     (try
       (let [len-buf (mem/alloc 8) ; Buffer to hold size_t* length
             ;; First call to get the required buffer size
-            _ (jvm/check! (device-ffi/af-get-kernel-cache-directory len-buf mem/null)
+            _ (check! (device-ffi/af-get-kernel-cache-directory len-buf mem/null)
                           "af-get-kernel-cache-directory (get length)")
             length (mem/read-long len-buf 0)
             ;; Allocate buffer for the string (length includes null terminator)
             str-buf (mem/alloc length arena)]
         ;; Second call to get the actual string
-        (jvm/check! (device-ffi/af-get-kernel-cache-directory len-buf str-buf)
+        (check! (device-ffi/af-get-kernel-cache-directory len-buf str-buf)
                     "af-get-kernel-cache-directory (get string)")
         (jvm/c-string->string str-buf))
       (finally

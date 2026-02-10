@@ -48,6 +48,7 @@
    ```"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.moments :as moments-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -224,7 +225,7 @@
   [^AFArray in moment-type]
   (let [moment-int (moment-type->int moment-type)
         out (jvm/native-af-array-pointer)]
-    (jvm/check! (moments-ffi/af-moments out (jvm/af-handle in) (int moment-int))
+    (check! (moments-ffi/af-moments out (jvm/af-handle in) (int moment-int))
                 "af-moments")
     (jvm/af-array-new (jvm/deref-af-array out))))
 
@@ -313,7 +314,7 @@
          ;; Allocate buffer for up to 4 moments (doubles)
          num-moments (Integer/bitCount moment-int)
          out-buf (mem/alloc (* num-moments 8))]
-     (jvm/check! (moments-ffi/af-moments-all out-buf (jvm/af-handle in) (int moment-int))
+     (check! (moments-ffi/af-moments-all out-buf (jvm/af-handle in) (int moment-int))
                  "af-moments-all")
      ;; Read results and build map
      (let [result (transient {})]

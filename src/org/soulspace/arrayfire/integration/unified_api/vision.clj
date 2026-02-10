@@ -293,6 +293,7 @@
             [org.soulspace.arrayfire.ffi.c-api.match-template :as match-template]
             [org.soulspace.arrayfire.ffi.c-api.dog :as dog]
             [org.soulspace.arrayfire.ffi.c-api.homography :as homography-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -469,7 +470,7 @@
    (fast in thr arc-length non-max feature-ratio 3))
   ([^AFArray in thr arc-length non-max feature-ratio edge]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (fast/af-fast out (jvm/af-handle in) (float thr) (int arc-length)
+     (check! (fast/af-fast out (jvm/af-handle in) (float thr) (int arc-length)
                                (if non-max 1 0) (float feature-ratio) (int edge))
                  "af-fast")
      (jvm/deref-af-array out))))
@@ -555,7 +556,7 @@
    (harris in max-corners min-response sigma block-size 0.04))
   ([^AFArray in max-corners min-response sigma block-size k-thr]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (harris/af-harris out (jvm/af-handle in) (int max-corners)
+     (check! (harris/af-harris out (jvm/af-handle in) (int max-corners)
                                    (float min-response) (float sigma)
                                    (int block-size) (float k-thr))
                  "af-harris")
@@ -661,7 +662,7 @@
    (susan in radius diff-thr geom-thr feature-ratio radius))
   ([^AFArray in radius diff-thr geom-thr feature-ratio edge]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (susan/af-susan out (jvm/af-handle in) (int radius)
+     (check! (susan/af-susan out (jvm/af-handle in) (int radius)
                                  (float diff-thr) (float geom-thr)
                                  (float feature-ratio) (int edge))
                  "af-susan")
@@ -778,7 +779,7 @@
   ([^AFArray in fast-thr max-feat scl-fctr levels blur-img]
    (let [feat-ptr (jvm/native-af-array-pointer)
          desc-ptr (jvm/native-af-array-pointer)]
-     (jvm/check! (orb/af-orb feat-ptr desc-ptr (jvm/af-handle in)
+     (check! (orb/af-orb feat-ptr desc-ptr (jvm/af-handle in)
                              (float fast-thr) (int max-feat) (float scl-fctr)
                              (int levels) (if blur-img 1 0))
                  "af-orb")
@@ -898,7 +899,7 @@
   ([^AFArray in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale feature-ratio]
    (let [feat-ptr (jvm/native-af-array-pointer)
          desc-ptr (jvm/native-af-array-pointer)]
-     (jvm/check! (sift/af-sift feat-ptr desc-ptr (jvm/af-handle in)
+     (check! (sift/af-sift feat-ptr desc-ptr (jvm/af-handle in)
                                (int n-layers) (float contrast-thr) (float edge-thr)
                                (float init-sigma) (if double-input 1 0)
                                (float intensity-scale) (float feature-ratio))
@@ -980,7 +981,7 @@
   ([^AFArray in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale feature-ratio]
    (let [feat-ptr (jvm/native-af-array-pointer)
          desc-ptr (jvm/native-af-array-pointer)]
-     (jvm/check! (sift/af-gloh feat-ptr desc-ptr (jvm/af-handle in)
+     (check! (sift/af-gloh feat-ptr desc-ptr (jvm/af-handle in)
                                (int n-layers) (float contrast-thr) (float edge-thr)
                                (float init-sigma) (if double-input 1 0)
                                (float intensity-scale) (float feature-ratio))
@@ -1088,7 +1089,7 @@
   ([^AFArray query ^AFArray train dist-dim n-dist]
    (let [idx-ptr (jvm/native-af-array-pointer)
          dist-ptr (jvm/native-af-array-pointer)]
-     (jvm/check! (hamming/af-hamming-matcher idx-ptr dist-ptr
+     (check! (hamming/af-hamming-matcher idx-ptr dist-ptr
                                              (jvm/af-handle query) (jvm/af-handle train)
                                              (long dist-dim) (int n-dist))
                  "af-hamming-matcher")
@@ -1175,7 +1176,7 @@
                     :ssd 0    ; AF_SSD
                     :sad 1    ; AF_SAD
                     0)]
-     (jvm/check! (nn/af-nearest-neighbour idx-ptr dist-ptr
+     (check! (nn/af-nearest-neighbour idx-ptr dist-ptr
                                           (jvm/af-handle query) (jvm/af-handle train)
                                           (long dist-dim) (int n-dist) (int type-val))
                  "af-nearest-neighbour")
@@ -1280,7 +1281,7 @@
                       :zncc MATCH_ZNCC
                       MATCH_SAD)
                     match-type)]
-     (jvm/check! (match-template/af-match-template out
+     (check! (match-template/af-match-template out
                                                    (jvm/af-handle search-img)
                                                    (jvm/af-handle template-img)
                                                    (int type-val))
@@ -1349,7 +1350,7 @@
    (dog in radius1 6))
   ([^AFArray in radius1 radius2]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (dog/af-dog out (jvm/af-handle in) (int radius1) (int radius2))
+     (check! (dog/af-dog out (jvm/af-handle in) (int radius1) (int radius2))
                  "af-dog")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -1472,7 +1473,7 @@
                       :lmeds HOMOGRAPHY_LMEDS
                       HOMOGRAPHY_RANSAC)
                     htype)]
-     (jvm/check! (homography-ffi/af-homography H-ptr inliers-buf
+     (check! (homography-ffi/af-homography H-ptr inliers-buf
                                                (jvm/af-handle x-src) (jvm/af-handle y-src)
                                                (jvm/af-handle x-dst) (jvm/af-handle y-dst)
                                                (int type-val) (float inlier-thr)

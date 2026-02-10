@@ -12,6 +12,7 @@
             [org.soulspace.arrayfire.ffi.c-api.set :as set-ops]
             [org.soulspace.arrayfire.ffi.c-api.where :as where]
             [org.soulspace.arrayfire.ffi.c-api.diff :as diff]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -32,7 +33,7 @@
    (sum in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-sum out (jvm/af-handle in) (int dim))
+     (check! (reduce/af-sum out (jvm/af-handle in) (int dim))
                  "af-sum")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -50,7 +51,7 @@
    (sum-nan in dim 0.0))
   ([^AFArray in dim nan-val]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-sum-nan out (jvm/af-handle in) (int dim) (double nan-val))
+     (check! (reduce/af-sum-nan out (jvm/af-handle in) (int dim) (double nan-val))
                  "af-sum-nan")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -67,7 +68,7 @@
    (product in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-product out (jvm/af-handle in) (int dim))
+     (check! (reduce/af-product out (jvm/af-handle in) (int dim))
                  "af-product")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -84,7 +85,7 @@
    (min in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-min out (jvm/af-handle in) (int dim))
+     (check! (reduce/af-min out (jvm/af-handle in) (int dim))
                  "af-min")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -101,7 +102,7 @@
    (max in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-max out (jvm/af-handle in) (int dim))
+     (check! (reduce/af-max out (jvm/af-handle in) (int dim))
                  "af-max")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -118,7 +119,7 @@
    (all-true in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-all-true out (jvm/af-handle in) (int dim))
+     (check! (reduce/af-all-true out (jvm/af-handle in) (int dim))
                  "af-all-true")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -135,7 +136,7 @@
    (any-true in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-any-true out (jvm/af-handle in) (int dim))
+     (check! (reduce/af-any-true out (jvm/af-handle in) (int dim))
                  "af-any-true")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -152,7 +153,7 @@
    (count in -1))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-count out (jvm/af-handle in) (int dim))
+     (check! (reduce/af-count out (jvm/af-handle in) (int dim))
                  "af-count")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -175,7 +176,7 @@
    (scan in dim op true))
   ([^AFArray in dim op inclusive]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (scan/af-scan out (jvm/af-handle in) (int dim) (int op) (if inclusive 1 0))
+     (check! (scan/af-scan out (jvm/af-handle in) (int dim) (int op) (if inclusive 1 0))
                  "af-scan")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -195,7 +196,7 @@
    (scan-by-key key in dim op true))
   ([^AFArray key ^AFArray in dim op inclusive]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (scan/af-scan-by-key out (jvm/af-handle key) (jvm/af-handle in) (int dim) (int op) (if inclusive 1 0))
+     (check! (scan/af-scan-by-key out (jvm/af-handle key) (jvm/af-handle in) (int dim) (int op) (if inclusive 1 0))
                  "af-scan-by-key")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -219,7 +220,7 @@
    (sort in dim true))
   ([^AFArray in dim is-ascending]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (sort/af-sort out (jvm/af-handle in) (int dim) (if is-ascending 1 0))
+     (check! (sort/af-sort out (jvm/af-handle in) (int dim) (if is-ascending 1 0))
                  "af-sort")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -240,7 +241,7 @@
   ([^AFArray in dim is-ascending]
    (let [out (jvm/native-af-array-pointer)
          indices (jvm/native-af-array-pointer)]
-     (jvm/check! (sort/af-sort-index out indices (jvm/af-handle in) (int dim) (if is-ascending 1 0))
+     (check! (sort/af-sort-index out indices (jvm/af-handle in) (int dim) (if is-ascending 1 0))
                  "af-sort-index")
      [(jvm/af-array-new (jvm/deref-af-array out))
       (jvm/af-array-new (jvm/deref-af-array indices))])))
@@ -263,7 +264,7 @@
   ([^AFArray keys ^AFArray values dim is-ascending]
    (let [out-keys (jvm/native-af-array-pointer)
          out-values (jvm/native-af-array-pointer)]
-     (jvm/check! (sort/af-sort-by-key out-keys out-values (jvm/af-handle keys) (jvm/af-handle values) (int dim) (if is-ascending 1 0))
+     (check! (sort/af-sort-by-key out-keys out-values (jvm/af-handle keys) (jvm/af-handle values) (int dim) (if is-ascending 1 0))
                  "af-sort-by-key")
      [(jvm/af-array-new (jvm/deref-af-array out-keys))
       (jvm/af-array-new (jvm/deref-af-array out-values))])))
@@ -285,7 +286,7 @@
    (set-unique in false))
   ([^AFArray in is-sorted]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (set-ops/af-set-unique out (jvm/af-handle in) (if is-sorted 1 0))
+     (check! (set-ops/af-set-unique out (jvm/af-handle in) (if is-sorted 1 0))
                  "af-set-unique")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -303,7 +304,7 @@
    (set-union first second false))
   ([^AFArray first ^AFArray second is-unique]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (set-ops/af-set-union out (jvm/af-handle first) (jvm/af-handle second) (if is-unique 1 0))
+     (check! (set-ops/af-set-union out (jvm/af-handle first) (jvm/af-handle second) (if is-unique 1 0))
                  "af-set-union")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -321,7 +322,7 @@
    (set-intersect first second false))
   ([^AFArray first ^AFArray second is-unique]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (set-ops/af-set-intersect out (jvm/af-handle first) (jvm/af-handle second) (if is-unique 1 0))
+     (check! (set-ops/af-set-intersect out (jvm/af-handle first) (jvm/af-handle second) (if is-unique 1 0))
                  "af-set-intersect")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -339,7 +340,7 @@
    AFArray with linear indices of non-zero elements"
   [^AFArray in]
   (let [idx (jvm/native-af-array-pointer)]
-    (jvm/check! (where/af-where idx (jvm/af-handle in))
+    (check! (where/af-where idx (jvm/af-handle in))
                 "af-where")
     (jvm/af-array-new (jvm/deref-af-array idx))))
 
@@ -381,7 +382,7 @@
   ([^AFArray keys ^AFArray vals dim]
    (let [keys-out (jvm/native-af-array-pointer)
          vals-out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-sum-by-key keys-out vals-out 
+     (check! (reduce/af-sum-by-key keys-out vals-out 
                                        (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
                  "af-sum-by-key")
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
@@ -416,7 +417,7 @@
   ([^AFArray keys ^AFArray vals dim]
    (let [keys-out (jvm/native-af-array-pointer)
          vals-out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-product-by-key keys-out vals-out
+     (check! (reduce/af-product-by-key keys-out vals-out
                                            (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
                  "af-product-by-key")
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
@@ -448,7 +449,7 @@
   ([^AFArray keys ^AFArray vals dim]
    (let [keys-out (jvm/native-af-array-pointer)
          vals-out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-min-by-key keys-out vals-out
+     (check! (reduce/af-min-by-key keys-out vals-out
                                        (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
                  "af-min-by-key")
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
@@ -480,7 +481,7 @@
   ([^AFArray keys ^AFArray vals dim]
    (let [keys-out (jvm/native-af-array-pointer)
          vals-out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-max-by-key keys-out vals-out
+     (check! (reduce/af-max-by-key keys-out vals-out
                                        (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
                  "af-max-by-key")
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
@@ -520,7 +521,7 @@
   ([^AFArray keys ^AFArray vals dim]
    (let [keys-out (jvm/native-af-array-pointer)
          vals-out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-all-true-by-key keys-out vals-out
+     (check! (reduce/af-all-true-by-key keys-out vals-out
                                             (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
                  "af-all-true-by-key")
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
@@ -561,7 +562,7 @@
   ([^AFArray keys ^AFArray vals dim]
    (let [keys-out (jvm/native-af-array-pointer)
          vals-out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-any-true-by-key keys-out vals-out
+     (check! (reduce/af-any-true-by-key keys-out vals-out
                                             (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
                  "af-any-true-by-key")
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
@@ -601,7 +602,7 @@
   ([^AFArray keys ^AFArray vals dim]
    (let [keys-out (jvm/native-af-array-pointer)
          vals-out (jvm/native-af-array-pointer)]
-     (jvm/check! (reduce/af-count-by-key keys-out vals-out
+     (check! (reduce/af-count-by-key keys-out vals-out
                                          (jvm/af-handle keys) (jvm/af-handle vals) (int dim))
                  "af-count-by-key")
      [(jvm/af-array-new (jvm/deref-af-array keys-out))
@@ -657,7 +658,7 @@
    (accum in 0))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (scan/af-accum out (jvm/af-handle in) (int dim))
+     (check! (scan/af-accum out (jvm/af-handle in) (int dim))
                  "af-accum")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -701,7 +702,7 @@
    (diff1 in 0))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (diff/af-diff1 out (jvm/af-handle in) (int dim))
+     (check! (diff/af-diff1 out (jvm/af-handle in) (int dim))
                  "af-diff1")
      (jvm/af-array-new (jvm/deref-af-array out)))))
 
@@ -742,6 +743,6 @@
    (diff2 in 0))
   ([^AFArray in dim]
    (let [out (jvm/native-af-array-pointer)]
-     (jvm/check! (diff/af-diff2 out (jvm/af-handle in) (int dim))
+     (check! (diff/af-diff2 out (jvm/af-handle in) (int dim))
                  "af-diff2")
      (jvm/af-array-new (jvm/deref-af-array out)))))

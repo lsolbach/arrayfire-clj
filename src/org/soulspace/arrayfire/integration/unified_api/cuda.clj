@@ -6,6 +6,7 @@
    AF_ERR_NOT_SUPPORTED if the current backend is not CUDA."
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.cuda :as cuda-ffi]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
@@ -42,7 +43,7 @@
      stream)"
   [id]
   (let [stream-buf (mem/alloc 8)] ; pointer size
-    (jvm/check! (cuda-ffi/afcu-get-stream stream-buf (int id))
+    (check! (cuda-ffi/afcu-get-stream stream-buf (int id))
                 "afcu-get-stream")
     (mem/read-long stream-buf 0)))
 
@@ -68,7 +69,7 @@
      native-id)"
   [id]
   (let [native-id-buf (mem/alloc 4)]
-    (jvm/check! (cuda-ffi/afcu-get-native-id native-id-buf (int id))
+    (check! (cuda-ffi/afcu-get-native-id native-id-buf (int id))
                 "afcu-get-native-id")
     (mem/read-int native-id-buf 0)))
 
@@ -90,7 +91,7 @@
    Example:
    (set-native-id! 0) ; Set device 0 as active using native CUDA id"
   [native-id]
-  (jvm/check! (cuda-ffi/afcu-set-native-id (int native-id))
+  (check! (cuda-ffi/afcu-set-native-id (int native-id))
               "afcu-set-native-id")
   nil)
 
@@ -123,6 +124,6 @@
    ;; Revert to default math mode
    (cublas-set-math-mode! CUBLAS_DEFAULT_MATH)"
   [mode]
-  (jvm/check! (cuda-ffi/afcu-cublas-set-math-mode (int mode))
+  (check! (cuda-ffi/afcu-cublas-set-math-mode (int mode))
               "afcu-cublas-set-math-mode")
   nil)

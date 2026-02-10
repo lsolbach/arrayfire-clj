@@ -31,7 +31,8 @@
    that resources are released when the AFArray instance is garbage collected,
    preventing memory leaks."
   (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.c-api.array :refer [af-release-array af-retain-array]])
+            [org.soulspace.arrayfire.ffi.c-api.array :refer [af-release-array af-retain-array]]
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]])
   (:import [java.lang AutoCloseable]
            [java.lang.ref Cleaner Cleaner$Cleanable]
            [java.util.concurrent.atomic AtomicBoolean]
@@ -107,21 +108,6 @@
 (def AF_ERR_ARR_BKND_MISMATCH 503)
 (def AF_ERR_INTERNAL 998)
 (def AF_ERR_UNKNOWN 999)
-
-;;;
-;;; Error handling
-;;;
-(defn check!
-  "Check ArrayFire error code and throw exception if non-zero.
-   
-   Parameters:
-   - rc: return code from ArrayFire function
-   - where: string indicating where the error occurred
-   
-   Throws an exception with error code and location if rc is non-zero."
-  [rc where]
-  (when-not (zero? rc)
-    (throw (ex-info (str "ArrayFire error at " where) {:code rc :where where}))))
 
 ;;;
 ;;; AFArray resource management
