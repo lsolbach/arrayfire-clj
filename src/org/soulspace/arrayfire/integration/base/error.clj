@@ -16,4 +16,3 @@
   [rc where]
   (when-not (zero? rc)
     (throw (ex-info (str "ArrayFire error at " where) {:code rc :where where}))))
-

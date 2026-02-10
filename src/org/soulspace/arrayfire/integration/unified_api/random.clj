@@ -70,6 +70,7 @@
    - ArrayFire random documentation for statistical properties
    - integration.device for backend management"
   (:require [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.ffi.c-api.random :as random]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
@@ -79,22 +80,17 @@
 ;;;
 
 ;; Re-export engine type constants from FFI layer
-(def RANDOM-ENGINE-PHILOX random/AF-RANDOM-ENGINE-PHILOX)
-(def RANDOM-ENGINE-THREEFRY random/AF-RANDOM-ENGINE-THREEFRY)
-(def RANDOM-ENGINE-MERSENNE random/AF-RANDOM-ENGINE-MERSENNE)
-(def RANDOM-ENGINE-DEFAULT random/AF-RANDOM-ENGINE-DEFAULT)
-
 ;; Engine type keyword mapping
 (def ^:private engine-type-map
-  {:philox RANDOM-ENGINE-PHILOX
-   :threefry RANDOM-ENGINE-THREEFRY
-   :mersenne RANDOM-ENGINE-MERSENNE
-   :default RANDOM-ENGINE-DEFAULT})
+  {:philox defs/AF_RANDOM_ENGINE_PHILOX
+   :threefry defs/AF_RANDOM_ENGINE_THREEFRY
+   :mersenne defs/AF_RANDOM_ENGINE_MERSENNE
+   :default defs/AF_RANDOM_ENGINE_DEFAULT})
 
 (def ^:private engine-type-names
-  {RANDOM-ENGINE-PHILOX "Philox"
-   RANDOM-ENGINE-THREEFRY "Threefry"
-   RANDOM-ENGINE-MERSENNE "Mersenne"})
+  {defs/AF_RANDOM_ENGINE_PHILOX "Philox"
+   defs/AF_RANDOM_ENGINE_THREEFRY "Threefry"
+   defs/AF_RANDOM_ENGINE_MERSENNE "Mersenne"})
 
 ;;;
 ;;; Helper Functions

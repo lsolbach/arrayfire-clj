@@ -48,6 +48,7 @@
    ```"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.moments :as moments-ffi]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
@@ -55,12 +56,6 @@
 ;;;
 ;;; Moment Type Constants
 ;;;
-
-(def ^:const moment-m00 1)        ; Zeroth moment (total mass/area)
-(def ^:const moment-m01 2)        ; First moment about y-axis
-(def ^:const moment-m10 4)        ; First moment about x-axis
-(def ^:const moment-m11 8)        ; Second mixed moment
-(def ^:const moment-first-order 15) ; All four moments (1|2|4|8)
 
 (defn moment-type->int
   "Convert moment type keyword to integer constant.
@@ -81,11 +76,11 @@
   (cond
     (keyword? type)
     (case type
-      :m00 moment-m00
-      :m01 moment-m01
-      :m10 moment-m10
-      :m11 moment-m11
-      :first-order moment-first-order
+      :m00 defs/AF_MOMENT_M00
+      :m01 defs/AF_MOMENT_M01
+      :m10 defs/AF_MOMENT_M10
+      :m11 defs/AF_MOMENT_M11
+      :first-order defs/AF_MOMENT_FIRST_ORDER
       (throw (ex-info "Unknown moment type" {:type type})))
     
     (set? type)

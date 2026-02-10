@@ -4,6 +4,7 @@
   (:refer-clojure :exclude [identity range])
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.data :as data]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
@@ -23,7 +24,7 @@
    Returns:
    AFArray filled with the constant value"
   ([value dims]
-   (constant value dims jvm/AF_DTYPE_F32))
+   (constant value dims defs/AF_DTYPE_F32))
   ([value dims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
@@ -44,7 +45,7 @@
    Returns:
    AFArray filled with the complex constant value"
   ([real imag dims]
-   (constant-complex real imag dims jvm/AF_DTYPE_C32))
+   (constant-complex real imag dims defs/AF_DTYPE_C32))
   ([real imag dims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
@@ -97,7 +98,7 @@
    Returns:
    AFArray identity matrix/array"
   ([dims]
-   (identity dims jvm/AF_DTYPE_F32))
+   (identity dims defs/AF_DTYPE_F32))
   ([dims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
@@ -117,7 +118,7 @@
    Returns:
    AFArray with sequential values along specified dimension"
   ([dims seq-dim]
-   (range dims seq-dim jvm/AF_DTYPE_F32))
+   (range dims seq-dim defs/AF_DTYPE_F32))
   ([dims seq-dim dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
@@ -137,7 +138,7 @@
    Returns:
    AFArray with sequential values modified by tiling"
   ([dims tdims]
-   (iota dims tdims jvm/AF_DTYPE_F32))
+   (iota dims tdims defs/AF_DTYPE_F32))
   ([dims tdims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)

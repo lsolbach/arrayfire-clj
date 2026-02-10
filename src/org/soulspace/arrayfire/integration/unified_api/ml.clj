@@ -44,19 +44,12 @@
    - If using bias terms in convolution
    - Sum of incoming gradient over spatial dimensions
    - One value per output channel"
-  (:require [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve-ffi]
+  (:require [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
-;;;
-;;; Gradient Type Constants
-;;;
-
-(def ^:const gradient-type-default 0)
-(def ^:const gradient-type-filter 1)
-(def ^:const gradient-type-data 2)
-(def ^:const gradient-type-bias 3)
 
 (defn gradient-type->int
   "Convert gradient type keyword to integer constant.
@@ -68,10 +61,10 @@
    Integer constant for gradient type"
   [type]
   (case type
-    :default gradient-type-default
-    :filter gradient-type-filter
-    :data gradient-type-data
-    :bias gradient-type-bias
+    :default defs/AF_CONV_GRADIENT_DEFAULT
+    :filter defs/AF_CONV_GRADIENT_FILTER
+    :data defs/AF_CONV_GRADIENT_DATA
+    :bias defs/AF_CONV_GRADIENT_BIAS
     (throw (ex-info "Unknown gradient type" {:type type}))))
 
 ;;;

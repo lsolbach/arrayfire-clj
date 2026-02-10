@@ -21,6 +21,7 @@
    optimization."
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.internal :as internal-ffi]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
@@ -62,7 +63,7 @@
    (create-strided-array data-seg 100 [50 50] [1 50] jvm/AF_DTYPE_F32 0)
    ```"
   ([data dims strides]
-   (create-strided-array data 0 dims strides jvm/AF_DTYPE_F32 0))
+   (create-strided-array data 0 dims strides defs/AF_DTYPE_F32 0))
   ([data offset dims strides dtype location]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)

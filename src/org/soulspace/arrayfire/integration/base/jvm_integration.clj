@@ -44,64 +44,6 @@
    Many ArrayFire functions accept NULL for optional parameters."
   (mem/as-segment 0))
 
-;;
-;; ArrayFire dtype constants (af/defines.h - enum af_dtype)
-;;
-(def AF_DTYPE_F32 0)   ; float
-(def AF_DTYPE_C32 1)   ; complex float
-(def AF_DTYPE_F64 2)   ; double
-(def AF_DTYPE_C64 3)   ; complex double
-(def AF_DTYPE_B8  4)   ; bool
-(def AF_DTYPE_S32 5)   ; int
-(def AF_DTYPE_U32 6)   ; unsigned int
-(def AF_DTYPE_U8  7)   ; unsigned char
-(def AF_DTYPE_S64 8)   ; long long
-(def AF_DTYPE_U64 9)   ; unsigned long long
-(def AF_DTYPE_S16 10)  ; short
-(def AF_DTYPE_U16 11)  ; unsigned short
-
-;; Type size lookup
-(def type-sizes
-  "Size in bytes for each ArrayFire dtype."
-  {AF_DTYPE_F32 4    ; float
-   AF_DTYPE_C32 8    ; complex float (2 floats)
-   AF_DTYPE_F64 8    ; double
-   AF_DTYPE_C64 16   ; complex double (2 doubles)
-   AF_DTYPE_B8  1    ; bool
-   AF_DTYPE_S32 4    ; int
-   AF_DTYPE_U32 4    ; unsigned int
-   AF_DTYPE_U8  1    ; unsigned char
-   AF_DTYPE_S64 8    ; long long
-   AF_DTYPE_U64 8    ; unsigned long long
-   AF_DTYPE_S16 2    ; short
-   AF_DTYPE_U16 2})  ; unsigned short
-   
-;;
-;; ArrayFire error codes (af/defines.h - enum af_err)
-;;
-(def AF_SUCCESS 0)
-(def AF_ERR_NO_MEM 101)
-(def AF_ERR_DRIVER 102)
-(def AF_ERR_RUNTIME 103)
-(def AF_ERR_INVALID_ARRAY 201)
-(def AF_ERR_ARG 202)
-(def AF_ERR_SIZE 203)
-(def AF_ERR_TYPE 204)
-(def AF_ERR_DIFF_TYPE 205)
-(def AF_ERR_BATCH 207)
-(def AF_ERR_DEVICE 208)
-(def AF_ERR_NOT_SUPPORTED 301)
-(def AF_ERR_NOT_CONFIGURED 302)
-(def AF_ERR_NONFREE 303)
-(def AF_ERR_NO_DBL 401)
-(def AF_ERR_NO_GFX 402)
-(def AF_ERR_NO_HALF 403)
-(def AF_ERR_LOAD_LIB 501)
-(def AF_ERR_LOAD_SYM 502)
-(def AF_ERR_ARR_BKND_MISMATCH 503)
-(def AF_ERR_INTERNAL 998)
-(def AF_ERR_UNKNOWN 999)
-
 ;;;
 ;;; AFArray resource management
 ;;;

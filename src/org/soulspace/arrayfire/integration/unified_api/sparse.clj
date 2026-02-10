@@ -143,45 +143,11 @@
   - Linear algebra operations for sparse×dense multiplication
   - BLAS operations for dense matrices"
   (:require [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.ffi.c-api.sparse :as sparse]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
-
-;;;
-;;; Storage Format Constants
-;;;
-
-(def COO
-  "Coordinate list (COO) format - stores (row, col, value) triplets.
-   
-   Most flexible format, easy to construct and modify.
-   Best for: matrix assembly, general purpose operations.
-   Storage: 3×nnz elements."
-  0)
-
-(def CSR
-  "Compressed Sparse Row (CSR) format - row-oriented compressed storage.
-   
-   Efficient for row-wise operations and sparse matrix-vector multiplication.
-   Best for: iterative solvers, row slicing, SpMV operations.
-   Storage: 2×nnz + (nRows+1) elements."
-  1)
-
-(def CSC
-  "Compressed Sparse Column (CSC) format - column-oriented compressed storage.
-   
-   Efficient for column-wise operations and matrix transposition.
-   Best for: column slicing, transposition.
-   Storage: 2×nnz + (nCols+1) elements.
-   Note: Limited support in ArrayFire."
-  2)
-
-(def DENSE
-  "Dense storage format (should not occur for sparse arrays).
-   
-   Used only in conversion operations to indicate dense destination."
-  3)
 
 ;;;
 ;;; Sparse Matrix Creation
@@ -239,7 +205,7 @@
    - from-dense: Create sparse from dense matrix
    - from-ptr: Create from raw pointers"
   ([n-rows n-cols ^AFArray values ^AFArray row-idx ^AFArray col-idx]
-   (create n-rows n-cols values row-idx col-idx COO))
+   (create n-rows n-cols values row-idx col-idx defs/AF_STORAGE_COO))
   ([n-rows n-cols ^AFArray values ^AFArray row-idx ^AFArray col-idx storage-type]
    (let [out (jvm/native-af-array-pointer)]
      (check! (sparse/af-create-sparse-array
@@ -351,7 +317,7 @@
    - to-dense: Convert sparse to dense
    - create: Create from coordinate arrays"
   ([^AFArray in]
-   (from-dense in COO))
+   (from-dense in defs/AF_STORAGE_COO))
   ([^AFArray in storage-type]
    (let [out (jvm/native-af-array-pointer)]
      (check! (sparse/af-create-sparse-array-from-dense

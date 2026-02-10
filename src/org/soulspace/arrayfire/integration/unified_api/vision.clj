@@ -283,6 +283,7 @@
    - Image processing functions for preprocessing
    - BLAS operations for geometric transformations"
   (:require [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.ffi.c-api.fast :as fast]
             [org.soulspace.arrayfire.ffi.c-api.harris :as harris]
             [org.soulspace.arrayfire.ffi.c-api.susan :as susan]
@@ -296,89 +297,6 @@
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
-
-;;;
-;;; Match Type Constants
-;;;
-
-(def MATCH_SAD
-  "Sum of Absolute Differences (SAD) - fast, simple matching.
-   
-   d(a,b) = Σ|aᵢ - bᵢ|
-   
-   Lower values = better match."
-  0)
-
-(def MATCH_ZSAD
-  "Zero-mean SAD - robust to brightness changes.
-   
-   Subtracts mean from patches before computing SAD.
-   Lower values = better match."
-  1)
-
-(def MATCH_LSAD
-  "Locally scaled SAD - robust to contrast changes.
-   
-   Normalizes patches by local standard deviation.
-   Lower values = better match."
-  2)
-
-(def MATCH_SSD
-  "Sum of Squared Differences (SSD) - emphasizes large errors.
-   
-   d(a,b) = Σ(aᵢ - bᵢ)²
-   
-   Lower values = better match."
-  3)
-
-(def MATCH_ZSSD
-  "Zero-mean SSD - robust to brightness changes.
-   
-   Subtracts mean from patches before computing SSD.
-   Lower values = better match."
-  4)
-
-(def MATCH_LSSD
-  "Locally scaled SSD - robust to contrast changes.
-   
-   Normalizes patches by local standard deviation.
-   Lower values = better match."
-  5)
-
-(def MATCH_NCC
-  "Normalized Cross-Correlation (NCC) - robust to brightness and contrast.
-   
-   r(a,b) = Σ(aᵢ × bᵢ) / √(Σaᵢ² × Σbᵢ²)
-   
-   Higher values = better match. Range: [-1, 1]."
-  6)
-
-(def MATCH_ZNCC
-  "Zero-mean NCC - most robust, compensates for brightness and contrast.
-   
-   Uses normalized cross-correlation with mean-subtracted patches.
-   Higher values = better match. Range: [-1, 1]."
-  7)
-
-;;;
-;;; Homography Type Constants
-;;;
-
-(def HOMOGRAPHY_RANSAC
-  "RANSAC (Random Sample Consensus) homography estimation.
-   
-   Robust to outliers up to ~80% outlier ratio.
-   Iteratively fits model to random subsets.
-   Standard choice for most applications."
-  0)
-
-(def HOMOGRAPHY_LMEDS
-  "LMedS (Least Median of Squares) homography estimation.
-   
-   Robust to <50% outliers.
-   Minimizes median of squared residuals.
-   More deterministic than RANSAC."
-  1)
 
 ;;;
 ;;; Feature Detection (Corners)
@@ -1271,15 +1189,15 @@
    (let [out (jvm/native-af-array-pointer)
          type-val (if (keyword? match-type)
                     (case match-type
-                      :sad MATCH_SAD
-                      :zsad MATCH_ZSAD
-                      :lsad MATCH_LSAD
-                      :ssd MATCH_SSD
-                      :zssd MATCH_ZSSD
-                      :lssd MATCH_LSSD
-                      :ncc MATCH_NCC
-                      :zncc MATCH_ZNCC
-                      MATCH_SAD)
+                      :sad defs/AF_SAD
+                      :zsad defs/AF_ZSAD
+                      :lsad defs/AF_LSAD
+                      :ssd defs/AF_SSD
+                      :zssd defs/AF_ZSSD
+                      :lssd defs/AF_LSSD
+                      :ncc defs/AF_NCC
+                      :zncc defs/AF_ZNCC
+                      defs/AF_SAD)
                     match-type)]
      (check! (match-template/af-match-template out
                                                    (jvm/af-handle search-img)
@@ -1457,21 +1375,21 @@
    - Feature matching: Generate point correspondences
    - Transform functions: Apply homography to images"
   ([x-src y-src x-dst y-dst]
-   (homography x-src y-src x-dst y-dst :ransac 3.0 1000 jvm/AF_DTYPE_F32))
+   (homography x-src y-src x-dst y-dst :ransac 3.0 1000 defs/AF_DTYPE_F32))
   ([x-src y-src x-dst y-dst htype]
-   (homography x-src y-src x-dst y-dst htype 3.0 1000 jvm/AF_DTYPE_F32))
+   (homography x-src y-src x-dst y-dst htype 3.0 1000 defs/AF_DTYPE_F32))
   ([x-src y-src x-dst y-dst htype inlier-thr]
-   (homography x-src y-src x-dst y-dst htype inlier-thr 1000 jvm/AF_DTYPE_F32))
+   (homography x-src y-src x-dst y-dst htype inlier-thr 1000 defs/AF_DTYPE_F32))
   ([x-src y-src x-dst y-dst htype inlier-thr iterations]
-   (homography x-src y-src x-dst y-dst htype inlier-thr iterations jvm/AF_DTYPE_F32))
+   (homography x-src y-src x-dst y-dst htype inlier-thr iterations defs/AF_DTYPE_F32))
   ([x-src y-src x-dst y-dst htype inlier-thr iterations dtype]
    (let [H-ptr (jvm/native-af-array-pointer)
          inliers-buf (mem/alloc-instance ::mem/int)
          type-val (if (keyword? htype)
                     (case htype
-                      :ransac HOMOGRAPHY_RANSAC
-                      :lmeds HOMOGRAPHY_LMEDS
-                      HOMOGRAPHY_RANSAC)
+                      :ransac defs/AF_HOMOGRAPHY_RANSAC 
+                      :lmeds defs/AF_HOMOGRAPHY_LMEDS
+                      defs/AF_HOMOGRAPHY_RANSAC)
                     htype)]
      (check! (homography-ffi/af-homography H-ptr inliers-buf
                                                (jvm/af-handle x-src) (jvm/af-handle y-src)

@@ -213,6 +213,7 @@
   - BLAS operations for linear algebra"
   (:refer-clojure :exclude [var])
   (:require [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.ffi.c-api.mean :as mean]
             [org.soulspace.arrayfire.ffi.c-api.var :as variance]
             [org.soulspace.arrayfire.ffi.c-api.stdev :as stdev]
@@ -223,53 +224,6 @@
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
-
-;;;
-;;; Variance Bias Constants
-;;;
-
-(def VARIANCE_DEFAULT
-  "Sample variance with Bessel's correction (N-1 denominator).
-   
-   Provides unbiased estimator for samples from larger population.
-   This is the default and recommended for most use cases."
-  0)
-
-(def VARIANCE_SAMPLE
-  "Sample variance with Bessel's correction (N-1 denominator).
-   
-   Same as VARIANCE_DEFAULT but with explicit name for clarity.
-   Use when data represents a sample from a larger population."
-  1)
-
-(def VARIANCE_POPULATION
-  "Population variance (N denominator).
-   
-   Use only when data represents the complete population,
-   not a sample. Slightly smaller than sample variance."
-  2)
-
-;;;
-;;; Top-K Order Constants
-;;;
-
-(def TOPK_MIN
-  "Select k smallest values in ascending order."
-  1)
-
-(def TOPK_MAX
-  "Select k largest values in descending order."
-  2)
-
-(def TOPK_STABLE
-  "Stability flag - preserves relative order of equal values.
-   
-   Use with bitwise OR: (bit-or TOPK_MAX TOPK_STABLE)"
-  4)
-
-(def TOPK_DEFAULT
-  "Default order - same as TOPK_MAX."
-  0)
 
 ;;;
 ;;; Mean (Central Tendency)
@@ -480,7 +434,7 @@
    - var-all: Reduce to scalar"
   ([^AFArray in]
    (let [out (jvm/native-af-array-pointer)]
-     (check! (variance/af-var-v2 out (jvm/af-handle in) (int VARIANCE_SAMPLE) (int -1))
+     (check! (variance/af-var-v2 out (jvm/af-handle in) (int defs/AF_VARIANCE_SAMPLE) (int -1))
                  "af-var-v2")
      (jvm/af-array-new (jvm/deref-af-array out))))
   ([^AFArray in bias]
@@ -552,7 +506,7 @@
    - var: Dimension-wise variance
    - stdev-all: Scalar standard deviation"
   ([^AFArray in]
-   (var-all in VARIANCE_SAMPLE))
+   (var-all in defs/AF_VARIANCE_SAMPLE))
   ([^AFArray in bias]
    (let [real-buf (mem/alloc-instance ::mem/double)
          imag-buf (mem/alloc-instance ::mem/double)]
@@ -637,7 +591,7 @@
    - stdev-all: Reduce to scalar
    - mean: For normalization"
   ([^AFArray in]
-   (stdev in VARIANCE_SAMPLE -1))
+   (stdev in defs/AF_VARIANCE_SAMPLE -1))
   ([^AFArray in bias]
    (stdev in bias -1))
   ([^AFArray in bias dim]
@@ -670,7 +624,7 @@
    - stdev: Dimension-wise stdev
    - var-all: Scalar variance"
   ([^AFArray in]
-   (stdev-all in VARIANCE_SAMPLE))
+   (stdev-all in defs/AF_VARIANCE_SAMPLE))
   ([^AFArray in bias]
    (let [real-buf (mem/alloc-instance ::mem/double)
          imag-buf (mem/alloc-instance ::mem/double)]
@@ -804,7 +758,7 @@
    - mean-weighted: Weighted mean
    - var-weighted: Weighted variance"
   ([^AFArray in ^AFArray weights]
-   (meanvar in weights VARIANCE_SAMPLE -1))
+   (meanvar in weights defs/AF_VARIANCE_SAMPLE -1))
   ([^AFArray in ^AFArray weights bias]
    (meanvar in weights bias -1))
   ([^AFArray in ^AFArray weights bias dim]
@@ -858,7 +812,7 @@
    - corrcoef: Normalized correlation [-1, 1]
    - meanvar: Combined mean and variance"
   ([^AFArray x ^AFArray y]
-   (cov x y VARIANCE_SAMPLE))
+   (cov x y defs/AF_VARIANCE_SAMPLE))
   ([^AFArray x ^AFArray y bias]
    (let [out (jvm/native-af-array-pointer)]
      (check! (covariance/af-cov-v2 out (jvm/af-handle x) (jvm/af-handle y) (int bias))
@@ -974,9 +928,9 @@
    - sort: Full sorting (slower for small k)
    - max/min: Single extreme value"
   ([^AFArray in k]
-   (topk in k -1 TOPK_MAX))
+   (topk in k -1 defs/AF_TOPK_MAX))
   ([^AFArray in k dim]
-   (topk in k dim TOPK_MAX))
+   (topk in k dim defs/AF_TOPK_MAX))
   ([^AFArray in k dim order]
    (let [values-ptr (jvm/native-af-array-pointer)
          indices-ptr (jvm/native-af-array-pointer)]
