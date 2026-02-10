@@ -222,7 +222,7 @@
    - af-gaussian-kernel: Isotropic smoothing kernel"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; Flux function constants (af_flux_function enum values)
 (def AF_FLUX_DEFAULT 0)     ; Default (exponential)

@@ -2,7 +2,7 @@
   "Bindings for the ArrayFire binary functions."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; Arithmetic operations
 ;; af_err af_add(af_array *out, const af_array lhs, const af_array rhs, const bool batch)

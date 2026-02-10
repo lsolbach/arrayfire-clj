@@ -4,7 +4,7 @@
    Maps to src/api/c/cholesky.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_cholesky(af_array *out, int *info, const af_array in, const bool is_upper)
 (defcfn af-cholesky

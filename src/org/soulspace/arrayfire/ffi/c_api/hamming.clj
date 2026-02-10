@@ -88,7 +88,7 @@
    af_nearest_neighbour directly with the appropriate distance type."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_hamming_matcher(af_array *idx, af_array *dist,
 ;;                           const af_array query, const af_array train,

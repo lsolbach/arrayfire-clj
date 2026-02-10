@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.ffi.loader
+(ns org.soulspace.arrayfire.ffi.base.loader
   "ArrayFire library loader.
    
    This namespace is responsible for loading the ArrayFire native library.

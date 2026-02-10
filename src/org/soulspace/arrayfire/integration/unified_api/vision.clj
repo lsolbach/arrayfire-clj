@@ -293,7 +293,7 @@
             [org.soulspace.arrayfire.ffi.c-api.match-template :as match-template]
             [org.soulspace.arrayfire.ffi.c-api.dog :as dog]
             [org.soulspace.arrayfire.ffi.c-api.homography :as homography-ffi]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

@@ -12,7 +12,7 @@
             [org.soulspace.arrayfire.ffi.c-api.lu :as lu]
             [org.soulspace.arrayfire.ffi.c-api.qr :as qr]
             [org.soulspace.arrayfire.ffi.c-api.svd :as svd]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

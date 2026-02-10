@@ -128,7 +128,7 @@
    - af-load-image-native, af-save-image-native: No type conversion"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;;;
 ;;; File I/O

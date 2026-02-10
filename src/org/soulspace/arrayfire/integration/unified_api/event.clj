@@ -74,7 +74,7 @@
    - Minimize synchronization points for better performance"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.events :as event-ffi]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
 ;;; Event Lifecycle Management

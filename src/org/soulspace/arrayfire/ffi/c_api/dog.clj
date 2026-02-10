@@ -435,7 +435,7 @@
    - Lindeberg, T. (1998). Feature detection with automatic scale selection."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_dog(af_array *out, const af_array in, const int radius1, const int radius2)
 (defcfn af-dog

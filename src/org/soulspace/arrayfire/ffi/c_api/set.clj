@@ -95,7 +95,7 @@
    - af-sort-index: Get indices of sorted unique values"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_set_unique(af_array *out, const af_array in, const bool is_sorted)
 (defcfn af-set-unique

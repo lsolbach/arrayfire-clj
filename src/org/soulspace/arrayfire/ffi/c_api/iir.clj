@@ -873,7 +873,7 @@
       - Official IIR filter documentation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_iir(af_array *y, const af_array b, const af_array a, const af_array x)
 (defcfn af-iir

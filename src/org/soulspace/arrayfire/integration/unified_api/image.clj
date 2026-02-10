@@ -42,7 +42,7 @@
             [org.soulspace.arrayfire.ffi.c-api.anisotropic-diffusion :as aniso]
             [org.soulspace.arrayfire.ffi.c-api.deconvolution :as deconv]
             [org.soulspace.arrayfire.ffi.c-api.confidence-connected :as confidence]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

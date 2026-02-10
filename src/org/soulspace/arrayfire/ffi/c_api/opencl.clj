@@ -87,7 +87,7 @@
    - af/array.h for array creation from cl_mem"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;;;
 ;;; Device Type Constants (afcl_device_type enum)

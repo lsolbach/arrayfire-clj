@@ -66,7 +66,7 @@
    - **Standard deviation**: af_stdev (square root of variance)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_cov(af_array *out, const af_array X, const af_array Y, const bool isbiased)
 (defcfn af-cov

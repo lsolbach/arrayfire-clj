@@ -261,7 +261,7 @@
    - Good Features to Track: Similar to Harris but uses min eigenvalue"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_harris(af_features *out, const af_array in,
 ;;                  const unsigned max_corners, const float min_response,

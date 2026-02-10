@@ -600,7 +600,7 @@
    - Comparison functions for validation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_print_array(af_array arr)
 (defcfn af-print-array

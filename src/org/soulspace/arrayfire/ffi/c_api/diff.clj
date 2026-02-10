@@ -166,7 +166,7 @@
    - af_sobel: Sobel edge detector (uses gradients internally)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_diff1(af_array *out, const af_array in, const int dim)
 (defcfn af-diff1

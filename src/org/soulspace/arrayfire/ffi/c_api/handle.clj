@@ -207,7 +207,7 @@
    - af_print_mem_info: Print detailed memory manager state"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; Memory locking functions
 

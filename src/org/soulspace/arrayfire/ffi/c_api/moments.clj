@@ -360,7 +360,7 @@
    - Feature detectors (Harris, FAST) for keypoint moments"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; Moment type enum values (from af/defines.h)
 ;; typedef enum {

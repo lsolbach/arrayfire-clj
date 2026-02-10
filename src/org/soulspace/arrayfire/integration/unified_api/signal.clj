@@ -96,7 +96,7 @@
             [org.soulspace.arrayfire.ffi.c-api.iir :as iir]
             [org.soulspace.arrayfire.ffi.c-api.filters :as filters]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

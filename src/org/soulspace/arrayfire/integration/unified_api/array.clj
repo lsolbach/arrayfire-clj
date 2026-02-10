@@ -5,7 +5,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.array :as array-ffi]
             [org.soulspace.arrayfire.ffi.c-api.internal :as internal]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

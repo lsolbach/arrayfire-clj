@@ -5,7 +5,7 @@
    and src/api/c/colorspace.cpp in ArrayFire."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; Colorspace conversion constants (af_cspace_t enum):
 ;; AF_GRAY = 0   - Grayscale

@@ -45,7 +45,7 @@
    - Sum of incoming gradient over spatial dimensions
    - One value per output channel"
   (:require [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve-ffi]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

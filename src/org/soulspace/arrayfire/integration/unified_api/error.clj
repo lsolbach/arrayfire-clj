@@ -38,7 +38,7 @@
    ```"
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.error :as error-ffi]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import [java.lang.foreign Arena MemorySegment]))
 
 ;;;

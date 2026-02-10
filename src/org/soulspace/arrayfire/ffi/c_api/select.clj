@@ -355,7 +355,7 @@
    - af-where: Get indices of true values"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_select(af_array *out, const af_array cond, const af_array a, const af_array b)
 (defcfn af-select

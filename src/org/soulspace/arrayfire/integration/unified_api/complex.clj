@@ -3,7 +3,7 @@
    handling and resource management on the JVM."
   (:refer-clojure :exclude [abs])
   (:require [org.soulspace.arrayfire.ffi.c-api.complex :as complex-ffi]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 

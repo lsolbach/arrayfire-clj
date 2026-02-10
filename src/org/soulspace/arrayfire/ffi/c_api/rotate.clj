@@ -133,7 +133,7 @@
    - Flip functions for 90° rotations (faster)"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_rotate(af_array *out, const af_array in, const float theta, const bool crop, const af_interp_type method)
 (defcfn af-rotate

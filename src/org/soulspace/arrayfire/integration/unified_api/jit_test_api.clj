@@ -44,7 +44,7 @@
    tuning. Most applications should use the default settings."
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.jit-test-api :as jit-ffi]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
 ;;; JIT Control Functions

@@ -6,7 +6,7 @@
             [org.soulspace.arrayfire.ffi.c-api.binary :as binary]
             [org.soulspace.arrayfire.ffi.c-api.cast :as ffi-cast]
             [org.soulspace.arrayfire.ffi.c-api.clamp :as ffi-clamp]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

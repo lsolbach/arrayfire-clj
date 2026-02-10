@@ -354,7 +354,7 @@
      International Journal of Computer Vision, 23(1), 45-78"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_susan(af_features *out, const af_array in, const unsigned radius,
 ;;                 const float diff_thr, const float geom_thr,

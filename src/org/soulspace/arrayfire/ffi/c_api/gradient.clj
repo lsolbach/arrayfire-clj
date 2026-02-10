@@ -2,7 +2,7 @@
   "Bindings for the ArrayFire gradient function."
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_gradient(af_array *dx, af_array *dy, const af_array in)
 (defcfn af-gradient

@@ -190,7 +190,7 @@
    - Type conversion functions for converting between types"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;;;
 ;;; Native Image I/O (No Type Conversion)

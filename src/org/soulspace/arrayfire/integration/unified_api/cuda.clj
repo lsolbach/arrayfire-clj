@@ -6,7 +6,7 @@
    AF_ERR_NOT_SUPPORTED if the current backend is not CUDA."
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.cuda :as cuda-ffi]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm]))
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
 ;;; CUDA Backend Constants

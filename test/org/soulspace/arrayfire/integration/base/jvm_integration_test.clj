@@ -1,6 +1,6 @@
-(ns org.soulspace.arrayfire.integration.jvm-integration-test
+(ns org.soulspace.arrayfire.integration.base.jvm-integration-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.ffi.c-api.array :as af-array]
             [coffi.mem :as mem])

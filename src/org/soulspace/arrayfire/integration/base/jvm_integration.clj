@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.integration.jvm-integration
+(ns org.soulspace.arrayfire.integration.base.jvm-integration
   "This namespace contains the JVM integration of ArrayFire.
    
    It contains functions and types for:

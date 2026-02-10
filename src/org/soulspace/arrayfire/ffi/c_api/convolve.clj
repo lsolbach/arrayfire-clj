@@ -46,7 +46,7 @@
    - Includes gradient computation via af_convolve2_gradient_nn"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; General convolution functions (auto-dispatch to 1D/2D/3D)
 

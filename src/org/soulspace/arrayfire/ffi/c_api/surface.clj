@@ -251,7 +251,7 @@
   - Window management: af_create_window, af_set_visibility"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;;
 ;; Surface Plotting Functions

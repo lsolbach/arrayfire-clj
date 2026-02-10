@@ -312,7 +312,7 @@
    - af_sum: Verify histogram sum equals element count"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_histogram(af_array *out, const af_array in,
 ;;                     const unsigned nbins, const double minval, const double maxval)

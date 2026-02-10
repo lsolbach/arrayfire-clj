@@ -100,7 +100,7 @@
    - af-tile: Replicate array along dimensions"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_shift(af_array *out, const af_array in, const int x, const int y, const int z, const int w)
 (defcfn af-shift

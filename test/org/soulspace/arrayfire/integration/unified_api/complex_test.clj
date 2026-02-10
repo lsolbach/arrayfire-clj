@@ -3,7 +3,7 @@
             [org.soulspace.arrayfire.integration.unified-api.complex :as complex]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [coffi.mem :as mem]))
 
 (defn- approx=

@@ -67,7 +67,7 @@
    - Vector field rendering in vector_field.clj"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; Window creation and lifecycle
 

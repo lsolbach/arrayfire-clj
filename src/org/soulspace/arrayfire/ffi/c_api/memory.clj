@@ -1,9 +1,9 @@
 (ns org.soulspace.arrayfire.ffi.c-api.memory
   "Bindings for the ArrayFire memory functions."
-  (:require [org.soulspace.arrayfire.ffi.loader]
+  (:require [org.soulspace.arrayfire.ffi.base.loader]
             [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; Memory management functions
 

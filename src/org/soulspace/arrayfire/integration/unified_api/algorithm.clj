@@ -12,7 +12,7 @@
             [org.soulspace.arrayfire.ffi.c-api.set :as set-ops]
             [org.soulspace.arrayfire.ffi.c-api.where :as where]
             [org.soulspace.arrayfire.ffi.c-api.diff :as diff]
-            [org.soulspace.arrayfire.integration.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.jvm_integration AFArray)))
 
 ;;;

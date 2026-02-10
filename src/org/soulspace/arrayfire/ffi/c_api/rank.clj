@@ -392,7 +392,7 @@
    - Norm (af-norm): Used in relative tolerance computation"
   (:require [coffi.ffi :as ffi :refer [defcfn]]
             [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.loader]))
+            [org.soulspace.arrayfire.ffi.base.loader]))
 
 ;; af_err af_rank(unsigned *rank, const af_array in, const double tol)
 (defcfn af-rank
