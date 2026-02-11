@@ -6,6 +6,7 @@
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
+            [org.soulspace.arrayfire.integration.unified-api.lapack :as lapack]
             [org.soulspace.arrayfire.integration.unified-api.random :as random]
             [org.soulspace.arrayfire.integration.unified-api.util :as util]
             [coffi.mem :as mem]))
@@ -178,18 +179,29 @@
 ;; including element-wise operations, reductions, and linear algebra functions.
 
 ;; Let's perform some basic operations on arrays.
-(with-open [array1 (data/constant 3.14 [2 2] defs/AF_DTYPE_F32)
-            array2 (data/constant 2.71 [2 2] defs/AF_DTYPE_F32)
+(with-open [array1 (data/constant 3.14 [4 4] defs/AF_DTYPE_F32)
+            array2 (data/range [4 4 1 1] 0 defs/AF_DTYPE_F32)
             ;; Element-wise addition
             added (arith/add array1 array2)
             ;; Element-wise multiplication
             multiplied (arith/mul array1 array2)
             ;; Element-wise sine
-            sine (arith/sin array1)]
+            sine (arith/sin array2)]
 
   ;; Array representation
   (println (util/array-to-string "Array1" array1 2))
   (println (util/array-to-string "Array2" array2 2))
   (println (util/array-to-string "Added" added 2))
   (println (util/array-to-string "Multiplied" multiplied 2))
-  (println (util/array-to-string "Sine" sine 2)))
+  (println (util/array-to-string "Sine" sine 2))
+
+  
+  (let [v (lapack/lu array1)]
+    (with-open [l (first v)
+                u (second v)
+                p (nth v 2)]
+      (println (util/array-to-string "L" l 2))
+      (println (util/array-to-string "U" u 2))
+      (println (util/array-to-string "P" p 2))))
+  ;
+  )
