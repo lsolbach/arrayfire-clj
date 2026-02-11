@@ -48,9 +48,15 @@
 <title>Clay</title></head><body data-spy="scroll" data-target="#toc" style="border:;margin:auto;">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" type="text/javascript"></script><script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js" type="text/javascript"></script><script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" type="text/javascript"></script>
 <div class="container"><div class="row"><div class="col-sm-12"><div><div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(ns introduction
-  (:require [org.soulspace.arrayfire.integration.unified-api.device :as device]
+  (:require [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.unified-api.arith :as arith]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.data :as data]
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
+            [org.soulspace.arrayfire.integration.unified-api.random :as random]
+            [org.soulspace.arrayfire.integration.unified-api.util :as util]
             [coffi.mem :as mem]))</code></pre></div></div><div style="margin:15px;"><div><h1 id="introduction-to-arrayfire-clj">Introduction to ArrayFire-CLJ</h1><p>This notebook provides an introduction to using the <a href="https://github.com/lsolbach/arrayfire-clj">ArrayFire-CLJ</a> library, a Clojure wrapper for the <a href="https://github.com/arrayfire/arrayfire">ArrayFire</a> tensor math library. We will cover the basics of initializing the library, creating and manipulating arrays, and managing resources.</p><h2 id="arrayfire">ArrayFire</h2><p><a href="https://github.com/arrayfire/arrayfire">ArrayFire</a> is a general-purpose tensor library that simplifies the software development process for the parallel architectures found in CPUs, GPUs, and other hardware acceleration devices.</p><p>ArrayFire provides:</p><ul><li>Hundreds of functions in the following categories<ul><li>Array handling</li><li>Computer vision</li><li>Image processing</li><li>Linear algebra</li><li>Machine learning</li><li>Standard math</li><li>Signal Processing</li><li>Statistics</li><li>Vector algorithms</li></ul></li><li>Cross-platform compatibility with support for CUDA, oneAPI, OpenCL, and native CPU on Windows, Mac, and Linux</li></ul><h2 id="arrayfire-clj">ArrayFire-CLJ</h2><p><a href="https://github.com/lsolbach/arrayfire-clj">ArrayFire-CLJ</a> is a Clojure wrapper around the ArrayFire library, providing a more idiomatic Clojure interface for working with ArrayFire. It abstracts away the complexities of the underlying C API and allows you to work with ArrayFire arrays using familiar Clojure data structures and functions.</p><p>The library also includes integration tests to ensure that the core functionality works correctly across different platforms and configurations.</p><p>In this notebook, we will explore the core features of ArrayFire-CLJ and how to use it effectively in your Clojure projects. We will cover device initialization, array creation and manipulation, memory management, and error handling. By the end of this notebook, you should have a solid understanding of how to use ArrayFire-CLJ to perform high-performance computations in Clojure.</p><h2 id="initialization">Initialization</h2><p>Before using ArrayFire, we need to initialize the library and select a device. The <code>device</code> namespace provides functions for this purpose.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(device/init!)</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">true
 </code></pre></div></div><div style="margin:15px;"><div><p>This initializes ArrayFire and selects the default device. You can also specify a backend (e.g., CUDA, OpenCL) if you have multiple backends available.</p><h2 id="device-information">Device Information</h2><p>We can query information about the available devices and their capabilities.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(let [device-count (device/get-device-count)
       current-device (device/get-device)
@@ -66,14 +72,217 @@
   (println &quot;Memory Info:&quot; mem-info))</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Device Count: 1
 Current Device ID: 0
 Device Info:
- ArrayFire v3.10.0 (oneAPI, 64-bit Linux, build 492718b5a)
-[0] Intel(R) OpenCL Graphics: Intel(R) UHD Graphics, 14293 MB (fp64 fp16 )
+ ArrayFire v3.10.0 (oneAPI, 64-bit Windows, build 492718b5a)
+[0] Intel(R) OpenCL Graphics: Intel(R) Arc(TM) Graphics, 34366 MB (fp64 fp16 )
 
 Double Precision Support: true
 Half Precision Support: true
-Memory Info: {:alloc-bytes 0, :alloc-buffers 0, :lock-bytes 0, :lock-buffers 0}
+Memory Info: {:alloc-bytes 4096, :alloc-buffers 3, :lock-bytes 0, :lock-buffers 0}
 </code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
-</code></pre></div></div><div style="margin:15px;"><div><h2 id="array-creation-and-manipulation">Array Creation and Manipulation</h2><p>The <code>array</code> namespace provides functions for creating and manipulating ArrayFire arrays. We can create arrays from Clojure data structures or directly from memory.</p></div></div><div style="margin:15px;"><div style="background-color:grey;height:2px;width:100%;"></div></div><div style="margin:15px;"><div><pre><small><small>source: notebooks/introduction.clj</small></small></pre></div></div></div></div></div></div></div><script type="text/javascript">/*!
+</code></pre></div></div><div style="margin:15px;"><div><h2 id="array-creation-and-properties">Array Creation and Properties</h2><p>The <code>array</code> namespace provides functions for creating ArrayFire arrays. We can create arrays from Clojure data structures or directly from memory. We can also create arrays filled with random or constant values, using the <code>random</code> and <code>data</code> namespaces.</p><p>Let's create a random 3x3 array of complex numbers and explore its properties. Note that we use <code>with-open</code> to ensure that the array is properly closed and resources are released when we're done with it.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(with-open [array (random/randu [6 6] defs/AF_DTYPE_C64)]
+
+  ;; Array representation
+  (println (util/array-to-string &quot;Array&quot; array 2))
+
+  ;; Array metadata
+  (println &quot;Array Allocated Bytes:&quot; (array/allocated-bytes array))
+  (println &quot;Array Type:&quot; (array/get-type array))
+  (println &quot;Array Num Dims:&quot; (array/get-numdims array))
+  (println &quot;Array Dims:&quot; (array/get-dims array))
+  (println &quot;Array Elements:&quot; (array/get-elements array))
+
+  ;; Array shape predicates
+  (println &quot;Array Empty?&quot; (array/empty? array))
+  (println &quot;Array Column?&quot; (array/column? array))
+  (println &quot;Array Row?&quot; (array/row? array))
+  (println &quot;Array Scalar?&quot; (array/scalar? array))
+  (println &quot;Array Vector?&quot; (array/vector? array))
+  (println &quot;Array Sparse?&quot; (array/sparse? array))
+
+  ;; Array data type predicates
+  (println &quot;Array Boolean?&quot; (array/bool? array))
+  (println &quot;Array Bytes?&quot; (array/bytes? array))
+  (println &quot;Array Complex?&quot; (array/complex? array))
+  (println &quot;Array Complex Floats?&quot; (array/complex-floats? array))
+  (println &quot;Array Complex Doubles?&quot; (array/complex-doubles? array))
+  (println &quot;Array Complex Pair?&quot; (array/complex-pair? array))
+  (println &quot;Array Double?&quot; (array/double? array))
+  (println &quot;Array Doubles?&quot; (array/doubles? array))
+  (println &quot;Array Floating?&quot; (array/floating? array))
+  (println &quot;Array Floats?&quot; (array/floats? array))
+  (println &quot;Array Half?&quot; (array/half? array))
+  (println &quot;Array Integer?&quot; (array/integer? array))
+  (println &quot;Array Ints?&quot; (array/ints? array))
+  (println &quot;Array Longs?&quot; (array/longs? array))
+  (println &quot;Array Real?&quot; (array/real? array))
+  (println &quot;Array Real Floating?&quot; (array/realfloating? array))
+  (println &quot;Array Short?&quot; (array/short? array))
+  (println &quot;Array Shorts?&quot; (array/shorts? array))
+  (println &quot;Array Single?&quot; (array/single? array)))</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Array
+[6 6 1 1]
+       (0.21,0.11)        (0.36,0.06)        (0.20,0.93)        (0.75,0.10)        (0.01,0.01)        (0.42,0.70) 
+       (0.06,0.51)        (0.67,0.94)        (0.09,0.29)        (0.63,0.33)        (0.73,0.80)        (0.37,0.16) 
+       (0.61,0.64)        (0.59,0.87)        (0.37,0.11)        (0.91,0.14)        (0.03,0.45)        (0.46,0.11) 
+       (0.63,0.14)        (0.42,0.79)        (0.22,0.53)        (0.36,0.70)        (0.42,0.79)        (0.39,0.34) 
+       (0.85,0.60)        (0.40,0.22)        (0.31,0.39)        (0.79,0.51)        (0.12,0.99)        (0.08,0.85) 
+       (0.96,0.40)        (0.51,0.87)        (0.95,0.44)        (0.56,0.08)        (0.85,0.24)        (0.66,0.52) 
+
+
+Array Allocated Bytes: 1024
+Array Type: 3
+Array Num Dims: 2
+Array Dims: [6 6 1 1]
+Array Elements: 36
+Array Empty? false
+Array Column? false
+Array Row? false
+Array Scalar? false
+Array Vector? false
+Array Sparse? false
+Array Boolean? false
+Array Bytes? false
+Array Complex? true
+Array Complex Floats? false
+Array Complex Doubles? false
+Array Complex Pair? false
+Array Double? true
+Array Doubles? false
+Array Floating? true
+Array Floats? false
+Array Half? false
+Array Integer? false
+Array Ints? false
+Array Longs? false
+Array Real? false
+Array Real Floating? false
+Array Short? false
+Array Shorts? false
+Array Single? false
+</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
+</code></pre></div></div><div style="margin:15px;"><div><p>Now let's create a 4x4 array of integers filled with the value 42 and explore its properties.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(with-open [array (data/constant 42 [4 4] defs/AF_DTYPE_S32)]
+
+  ;; Array representation
+  (println (util/array-to-string &quot;Array&quot; array 2))
+
+  ;; Array metadata
+  (println &quot;Array Allocated Bytes:&quot; (array/allocated-bytes array))
+  (println &quot;Array Type:&quot; (array/get-type array))
+  (println &quot;Array Num Dims:&quot; (array/get-numdims array))
+  (println &quot;Array Dims:&quot; (array/get-dims array))
+  (println &quot;Array Elements:&quot; (array/get-elements array))
+
+  ;; Array shape predicates
+  (println &quot;Array Empty?&quot; (array/empty? array))
+  (println &quot;Array Column?&quot; (array/column? array))
+  (println &quot;Array Row?&quot; (array/row? array))
+  (println &quot;Array Scalar?&quot; (array/scalar? array))
+  (println &quot;Array Vector?&quot; (array/vector? array))
+  (println &quot;Array Sparse?&quot; (array/sparse? array))
+
+  ;; Array data type predicates
+  (println &quot;Array Boolean?&quot; (array/bool? array))
+  (println &quot;Array Bytes?&quot; (array/bytes? array))
+  (println &quot;Array Complex?&quot; (array/complex? array))
+  (println &quot;Array Complex Floats?&quot; (array/complex-floats? array))
+  (println &quot;Array Complex Doubles?&quot; (array/complex-doubles? array))
+  (println &quot;Array Complex Pair?&quot; (array/complex-pair? array))
+  (println &quot;Array Double?&quot; (array/double? array))
+  (println &quot;Array Doubles?&quot; (array/doubles? array))
+  (println &quot;Array Floating?&quot; (array/floating? array))
+  (println &quot;Array Floats?&quot; (array/floats? array))
+  (println &quot;Array Half?&quot; (array/half? array))
+  (println &quot;Array Integer?&quot; (array/integer? array))
+  (println &quot;Array Ints?&quot; (array/ints? array))
+  (println &quot;Array Longs?&quot; (array/longs? array))
+  (println &quot;Array Real?&quot; (array/real? array))
+  (println &quot;Array Real Floating?&quot; (array/realfloating? array))
+  (println &quot;Array Short?&quot; (array/short? array))
+  (println &quot;Array Shorts?&quot; (array/shorts? array))
+  (println &quot;Array Single?&quot; (array/single? array)))</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Array
+[4 4 1 1]
+      42       42       42       42 
+      42       42       42       42 
+      42       42       42       42 
+      42       42       42       42 
+
+
+Array Allocated Bytes: 0
+Array Type: 5
+Array Num Dims: 2
+Array Dims: [4 4 1 1]
+Array Elements: 16
+Array Empty? false
+Array Column? false
+Array Row? false
+Array Scalar? false
+Array Vector? false
+Array Sparse? false
+Array Boolean? false
+Array Bytes? false
+Array Complex? false
+Array Complex Floats? false
+Array Complex Doubles? false
+Array Complex Pair? false
+Array Double? false
+Array Doubles? false
+Array Floating? false
+Array Floats? false
+Array Half? false
+Array Integer? true
+Array Ints? false
+Array Longs? false
+Array Real? true
+Array Real Floating? false
+Array Short? false
+Array Shorts? false
+Array Single? false
+</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
+</code></pre></div></div><div style="margin:15px;"><div><h2 id="array-operations">Array Operations</h2><p>ArrayFire provides a wide range of operations that can be performed on arrays, including element-wise operations, reductions, and linear algebra functions.</p><p>Let's perform some basic operations on arrays.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(with-open [array1 (data/constant 3.14 [2 2] defs/AF_DTYPE_F32)
+            array2 (data/constant 2.71 [2 2] defs/AF_DTYPE_F32)
+            ;; Element-wise addition
+            added (arith/add array1 array2)
+            ;; Element-wise multiplication
+            multiplied (arith/mul array1 array2)
+            ;; Element-wise sine
+            sine (arith/sin array1)]
+
+  ;; Array representation
+  (println (util/array-to-string &quot;Array1&quot; array1 2))
+  (println (util/array-to-string &quot;Array2&quot; array2 2))
+  (println (util/array-to-string &quot;Added&quot; added 2))
+  (println (util/array-to-string &quot;Multiplied&quot; multiplied 2))
+  (println (util/array-to-string &quot;Sine&quot; sine 2)))</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Array1
+[2 2 1 1]
+    3.14     3.14 
+    3.14     3.14 
+
+
+Array2
+[2 2 1 1]
+    2.71     2.71 
+    2.71     2.71 
+
+
+Added
+[2 2 1 1]
+    5.85     5.85 
+    5.85     5.85 
+
+
+Multiplied
+[2 2 1 1]
+    8.51     8.51 
+    8.51     8.51 
+
+
+Sine
+[2 2 1 1]
+    0.00     0.00 
+    0.00     0.00 
+
+
+</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
+</code></pre></div></div><div style="margin:15px;"><div style="background-color:grey;height:2px;width:100%;"></div></div><div style="margin:15px;"><div></div></div></div></div></div></div></div><script type="text/javascript">/*!
   Highlight.js v11.9.0 (git: b7ec4bfafc)
   (c) 2006-2023 undefined and other contributors
   License: BSD-3-Clause

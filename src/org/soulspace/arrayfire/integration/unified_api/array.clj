@@ -143,6 +143,7 @@
     (check! (array-ffi/af-create-handle out (int ndims) dims-seg (int dtype))
                 "af-create-handle")
     (jvm/af-array-new (jvm/deref-af-array out))))
+
 (defn- handle->segment
   "Convert an AFArray handle to a MemorySegment for FFI calls."
   ^java.lang.foreign.MemorySegment
