@@ -1,17 +1,13 @@
 (ns org.soulspace.arrayfire.integration.unified-api.moments-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.util.test :refer [approx=]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.moments :as moments]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.base.resource :as jvm]
             [coffi.mem :as mem])
   (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
-
-(defn- approx=
-  "Compare expected/actual values within a tolerance."
-  [expected actual tolerance]
-  (<= (Math/abs (- (double expected) (double actual)))
-      (double tolerance)))
 
 ;;;
 ;;; Moment Type Conversion Tests
@@ -60,7 +56,7 @@
 (deftest test-moments-m00
   (testing "moments computes M00 (zeroth moment)"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 1.0 1.0 1.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 1.0 1.0 1.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/moments img :m00)
           buf (mem/alloc 4)]
       (try
@@ -75,7 +71,7 @@
 (deftest test-moments-first-order
   (testing "moments computes all first-order moments"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/moments img :first-order)
           buf (mem/alloc (* 4 4))]
       (try
@@ -94,7 +90,7 @@
     (let [;; 3x3 binary image with 5 foreground pixels
           img (array/create-array (float-array [1.0 0.0 1.0
                                                  0.0 1.0 0.0
-                                                 1.0 0.0 1.0]) [3 3] jvm/AF_DTYPE_F32)
+                                                 1.0 0.0 1.0]) [3 3] defs/AF_DTYPE_F32)
           result (moments/moments img :m00)
           buf (mem/alloc 4)]
       (try
@@ -107,7 +103,7 @@
 (deftest test-moments-multiple-types
   (testing "moments computes multiple specific moment types"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/moments img #{:m00 :m01})]
       (try
         (is (instance? AFArray result))
@@ -123,7 +119,7 @@
 (deftest test-moments-all-default
   (testing "moments-all returns map with all first-order moments"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/moments-all img)]
       (try
         (is (map? result))
@@ -138,7 +134,7 @@
 (deftest test-moments-all-m00
   (testing "moments-all computes only M00 when requested"
     (device/init!)
-    (let [img (array/create-array (float-array [2.0 2.0 2.0 2.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [2.0 2.0 2.0 2.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/moments-all img :m00)]
       (try
         (is (map? result))
@@ -151,7 +147,7 @@
 (deftest test-moments-all-subset
   (testing "moments-all computes subset of moments"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 1.0 1.0 1.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 1.0 1.0 1.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/moments-all img #{:m00 :m10})]
       (try
         (is (map? result))
@@ -172,7 +168,7 @@
     (let [;; Simple 3x3 image with center pixel set
           img (array/create-array (float-array [0.0 0.0 0.0
                                                  0.0 1.0 0.0
-                                                 0.0 0.0 0.0]) [3 3] jvm/AF_DTYPE_F32)
+                                                 0.0 0.0 0.0]) [3 3] defs/AF_DTYPE_F32)
           result (moments/centroid img)]
       (try
         (is (map? result))
@@ -189,7 +185,7 @@
 (deftest test-centroid-empty
   (testing "centroid returns nil for empty image"
     (device/init!)
-    (let [img (array/create-array (float-array [0.0 0.0 0.0 0.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [0.0 0.0 0.0 0.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/centroid img)]
       (try
         (is (nil? result))
@@ -199,7 +195,7 @@
 (deftest test-centroid-uniform
   (testing "centroid of uniform image is at geometric center"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 1.0 1.0 1.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 1.0 1.0 1.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/centroid img)]
       (try
         (is (map? result))
@@ -213,7 +209,7 @@
 (deftest test-area
   (testing "area computes total mass (M00)"
     (device/init!)
-    (let [img (array/create-array (float-array [2.0 3.0 4.0 5.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [2.0 3.0 4.0 5.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/area img)]
       (try
         (is (number? result))
@@ -224,7 +220,7 @@
 (deftest test-area-binary
   (testing "area counts pixels in binary image"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 1.0 0.0 1.0 1.0 1.0]) [2 3] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 1.0 0.0 1.0 1.0 1.0]) [2 3] defs/AF_DTYPE_F32)
           result (moments/area img)]
       (try
         (is (approx= 5.0 result 0.01)) ; 5 pixels set to 1.0
@@ -234,7 +230,7 @@
 (deftest test-area-zero
   (testing "area returns 0 for empty image"
     (device/init!)
-    (let [img (array/create-array (float-array [0.0 0.0 0.0 0.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [0.0 0.0 0.0 0.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/area img)]
       (try
         (is (approx= 0.0 result 0.01))
@@ -244,7 +240,7 @@
 (deftest test-moments-first-order-fn
   (testing "moments-first-order returns all first-order moments as map"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           result (moments/moments-first-order img)]
       (try
         (is (map? result))
@@ -263,7 +259,7 @@
 (deftest test-centroid-from-moments
   (testing "Centroid calculated from moments matches centroid function"
     (device/init!)
-    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           direct (moments/centroid img)
           from-moments (moments/moments-first-order img)
           cx (/ (:M01 from-moments) (:M00 from-moments))
@@ -278,8 +274,8 @@
 (deftest test-moments-different-dtypes
   (testing "moments works with different data types"
     (device/init!)
-    (let [img-f32 (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
-          img-f64 (array/create-array (double-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F64)
+    (let [img-f32 (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
+          img-f64 (array/create-array (double-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F64)
           result-f32 (moments/area img-f32)
           result-f64 (moments/area img-f64)]
       (try

@@ -7,8 +7,8 @@
             [org.soulspace.arrayfire.ffi.c-api.internal :as internal]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Type Helper Functions
@@ -104,7 +104,7 @@
      arr)"
   ^AFArray
   [data dims dtype]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         data-seg (cond
                    (floats? data) (bmem/float-array->segment data)
                    (doubles? data) (bmem/double-array->segment data)
@@ -118,7 +118,7 @@
         dims-seg (bmem/dims->segment dims)]
     (check! (array-ffi/af-create-array out data-seg (clojure.core/count dims) dims-seg (int dtype))
                 "af-create-array")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn create-handle
   "Create an empty array with specified dimensions and type.
@@ -138,18 +138,18 @@
      arr)"
   ^AFArray
   [dims dtype]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         ndims (clojure.core/count dims)
         dims-seg (bmem/dims->segment dims)]
     (check! (array-ffi/af-create-handle out (int ndims) dims-seg (int dtype))
                 "af-create-handle")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn- handle->segment
   "Convert an AFArray handle to a MemorySegment for FFI calls."
   ^java.lang.foreign.MemorySegment
   [^AFArray arr]
-  (jvm/af-handle arr))
+  (res/af-handle arr))
 
 (defn copy-array
   "Create a deep copy of an array.
@@ -166,10 +166,10 @@
      copy)"
   ^AFArray
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
+  (let [out (res/native-af-array-pointer)]
     (check! (array-ffi/af-copy-array out (handle->segment in))
                 "af-copy-array")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Array Data Transfer

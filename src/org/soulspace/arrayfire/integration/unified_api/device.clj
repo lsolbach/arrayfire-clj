@@ -6,8 +6,8 @@
             [org.soulspace.arrayfire.ffi.c-api.memory :as memory-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)
            (java.lang.foreign Arena MemorySegment)))
 
 ;;;
@@ -367,7 +367,7 @@
      (eval-array! a)
      ;; Now safe to access data"
   [^AFArray arr]
-  (check! (device-ffi/af-eval (jvm/af-handle arr))
+  (check! (device-ffi/af-eval (res/af-handle arr))
               "af-eval")
   nil)
 
@@ -392,7 +392,7 @@
         ;; Create array of array handles
         handles-buf (mem/alloc (* n 8))] ; 8 bytes per pointer
     (doseq [[i arr] (map-indexed vector arrays)]
-      (mem/write-long handles-buf (* i 8) (jvm/af-handle-value arr)))
+      (mem/write-long handles-buf (* i 8) (res/af-handle-value arr)))
     (check! (device-ffi/af-eval-multiple n handles-buf)
                 "af-eval-multiple")
     nil))
@@ -402,6 +402,7 @@
 ;;;
 
 ;; Backend constants
+; TODO use constants from ffi.base.definitions
 (def AF_BACKEND_DEFAULT 0)
 (def AF_BACKEND_CPU 1)
 (def AF_BACKEND_CUDA 2)
@@ -494,7 +495,7 @@
      (println \"Array is on backend\" backend-id))"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (check! (device-ffi/af-get-backend-id result-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-get-backend-id result-buf (res/af-handle arr))
                 "af-get-backend-id")
     (mem/read-int result-buf 0)))
 
@@ -512,7 +513,7 @@
      (println \"Array is on device\" device-id))"
   [^AFArray arr]
   (let [device-buf (mem/alloc 4)]
-    (check! (device-ffi/af-get-device-id device-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-get-device-id device-buf (res/af-handle arr))
                 "af-get-device-id")
     (mem/read-int device-buf 0)))
 
@@ -538,7 +539,7 @@
    ;; Array memory is now locked
    (unlock-array! my-array) ; Don't forget to unlock!"
   [^AFArray arr]
-  (check! (device-ffi/af-lock-array (jvm/af-handle arr))
+  (check! (device-ffi/af-lock-array (res/af-handle arr))
               "af-lock-array")
   nil)
 
@@ -557,7 +558,7 @@
    Example:
    (unlock-array! my-array)"
   [^AFArray arr]
-  (check! (device-ffi/af-unlock-array (jvm/af-handle arr))
+  (check! (device-ffi/af-unlock-array (res/af-handle arr))
               "af-unlock-array")
   nil)
 
@@ -576,7 +577,7 @@
      (println \"Array is not locked\"))"
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
-    (check! (device-ffi/af-is-locked-array result-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-is-locked-array result-buf (res/af-handle arr))
                 "af-is-locked-array")
     (not (zero? (mem/read-int result-buf 0)))))
 
@@ -598,7 +599,7 @@
      ptr)"
   [^AFArray arr]
   (let [ptr-buf (mem/alloc 8)]
-    (check! (device-ffi/af-get-device-ptr ptr-buf (jvm/af-handle arr))
+    (check! (device-ffi/af-get-device-ptr ptr-buf (res/af-handle arr))
                 "af-get-device-ptr")
     (mem/read-long ptr-buf 0)))
 

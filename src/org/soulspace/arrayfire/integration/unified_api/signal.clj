@@ -98,8 +98,8 @@
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Fast Fourier Transform (FFT)
@@ -146,10 +146,10 @@
   ([in norm-factor]
    (fft in norm-factor 0))
   ([^AFArray in norm-factor output-size]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft out (jvm/af-handle in) (double norm-factor) (long output-size))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft out (res/af-handle in) (double norm-factor) (long output-size))
                  "af-fft")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft2
   "Compute the 2D Fast Fourier Transform (forward).
@@ -184,11 +184,11 @@
   ([in norm-factor output-size0]
    (fft2 in norm-factor output-size0 0))
   ([^AFArray in norm-factor output-size0 output-size1]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft2 out (jvm/af-handle in) (double norm-factor) 
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft2 out (res/af-handle in) (double norm-factor) 
                                (long output-size0) (long output-size1))
                  "af-fft2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft3
   "Compute the 3D Fast Fourier Transform (forward).
@@ -216,11 +216,11 @@
   ([in norm-factor output-size0 output-size1]
    (fft3 in norm-factor output-size0 output-size1 0))
   ([^AFArray in norm-factor output-size0 output-size1 output-size2]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft3 out (jvm/af-handle in) (double norm-factor)
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft3 out (res/af-handle in) (double norm-factor)
                                (long output-size0) (long output-size1) (long output-size2))
                  "af-fft3")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;
 ;; 1D Inverse FFT
@@ -255,10 +255,10 @@
   ([in norm-factor]
    (ifft in norm-factor 0))
   ([^AFArray in norm-factor output-size]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-ifft out (jvm/af-handle in) (double norm-factor) (long output-size))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-ifft out (res/af-handle in) (double norm-factor) (long output-size))
                  "af-ifft")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn ifft2
   "Compute the 2D Inverse Fast Fourier Transform.
@@ -281,11 +281,11 @@
   ([in norm-factor output-size0]
    (ifft2 in norm-factor output-size0 0))
   ([^AFArray in norm-factor output-size0 output-size1]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-ifft2 out (jvm/af-handle in) (double norm-factor)
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-ifft2 out (res/af-handle in) (double norm-factor)
                                 (long output-size0) (long output-size1))
                  "af-ifft2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn ifft3
   "Compute the 3D Inverse Fast Fourier Transform.
@@ -311,11 +311,11 @@
   ([in norm-factor output-size0 output-size1]
    (ifft3 in norm-factor output-size0 output-size1 0))
   ([^AFArray in norm-factor output-size0 output-size1 output-size2]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-ifft3 out (jvm/af-handle in) (double norm-factor)
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-ifft3 out (res/af-handle in) (double norm-factor)
                                 (long output-size0) (long output-size1) (long output-size2))
                  "af-ifft3")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;  
 ;; Normalized FFT Operations (convenience functions)
@@ -517,10 +517,10 @@
   ([in norm-factor]
    (fft-r2c in norm-factor 0))
   ([^AFArray in norm-factor pad0]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft-r2c out (jvm/af-handle in) (double norm-factor) (long pad0))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft-r2c out (res/af-handle in) (double norm-factor) (long pad0))
                  "af-fft-r2c")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft2-r2c
   "Compute 2D Real-to-Complex FFT.
@@ -543,11 +543,11 @@
   ([in norm-factor pad0]
    (fft2-r2c in norm-factor pad0 0))
   ([^AFArray in norm-factor pad0 pad1]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft2-r2c out (jvm/af-handle in) (double norm-factor)
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft2-r2c out (res/af-handle in) (double norm-factor)
                                    (long pad0) (long pad1))
                  "af-fft2-r2c")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft3-r2c
   "Compute 3D Real-to-Complex FFT.
@@ -573,11 +573,11 @@
   ([in norm-factor pad0 pad1]
    (fft3-r2c in norm-factor pad0 pad1 0))
   ([^AFArray in norm-factor pad0 pad1 pad2]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft3-r2c out (jvm/af-handle in) (double norm-factor)
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft3-r2c out (res/af-handle in) (double norm-factor)
                                    (long pad0) (long pad1) (long pad2))
                  "af-fft3-r2c")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;
 ;; Complex-to-Real FFT (inverse of R2C)
@@ -607,10 +607,10 @@
   ([in is-odd]
    (fft-c2r in 1.0 is-odd))
   ([^AFArray in norm-factor is-odd]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft-c2r out (jvm/af-handle in) (double norm-factor) (if is-odd 1 0))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft-c2r out (res/af-handle in) (double norm-factor) (if is-odd 1 0))
                  "af-fft-c2r")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft2-c2r
   "Compute 2D Complex-to-Real inverse FFT.
@@ -628,10 +628,10 @@
   ([in is-odd]
    (fft2-c2r in 1.0 is-odd))
   ([^AFArray in norm-factor is-odd]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft2-c2r out (jvm/af-handle in) (double norm-factor) (if is-odd 1 0))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft2-c2r out (res/af-handle in) (double norm-factor) (if is-odd 1 0))
                  "af-fft2-c2r")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft3-c2r
   "Compute 3D Complex-to-Real inverse FFT.
@@ -649,10 +649,10 @@
   ([in is-odd]
    (fft3-c2r in 1.0 is-odd))
   ([^AFArray in norm-factor is-odd]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fft/af-fft3-c2r out (jvm/af-handle in) (double norm-factor) (if is-odd 1 0))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fft/af-fft3-c2r out (res/af-handle in) (double norm-factor) (if is-odd 1 0))
                  "af-fft3-c2r")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;
 ;; In-place FFT (memory-efficient)
@@ -682,7 +682,7 @@
   ([in]
    (fft! in 1.0))
   ([^AFArray in norm-factor]
-   (check! (fft/af-fft-inplace (jvm/af-handle in) (double norm-factor))
+   (check! (fft/af-fft-inplace (res/af-handle in) (double norm-factor))
                "af-fft-inplace")
    in))
 
@@ -701,7 +701,7 @@
   ([in]
    (fft2! in 1.0))
   ([^AFArray in norm-factor]
-   (check! (fft/af-fft2-inplace (jvm/af-handle in) (double norm-factor))
+   (check! (fft/af-fft2-inplace (res/af-handle in) (double norm-factor))
                "af-fft2-inplace")
    in))
 
@@ -720,7 +720,7 @@
   ([in]
    (fft3! in 1.0))
   ([^AFArray in norm-factor]
-   (check! (fft/af-fft3-inplace (jvm/af-handle in) (double norm-factor))
+   (check! (fft/af-fft3-inplace (res/af-handle in) (double norm-factor))
                "af-fft3-inplace")
    in))
 
@@ -739,7 +739,7 @@
   ([in]
    (ifft! in 1.0))
   ([^AFArray in norm-factor]
-   (check! (fft/af-ifft-inplace (jvm/af-handle in) (double norm-factor))
+   (check! (fft/af-ifft-inplace (res/af-handle in) (double norm-factor))
                "af-ifft-inplace")
    in))
 
@@ -758,7 +758,7 @@
   ([in]
    (ifft2! in 1.0))
   ([^AFArray in norm-factor]
-   (check! (fft/af-ifft2-inplace (jvm/af-handle in) (double norm-factor))
+   (check! (fft/af-ifft2-inplace (res/af-handle in) (double norm-factor))
                "af-ifft2-inplace")
    in))
 
@@ -777,7 +777,7 @@
   ([in]
    (ifft3! in 1.0))
   ([^AFArray in norm-factor]
-   (check! (fft/af-ifft3-inplace (jvm/af-handle in) (double norm-factor))
+   (check! (fft/af-ifft3-inplace (res/af-handle in) (double norm-factor))
                "af-ifft3-inplace")
    in))
 
@@ -822,11 +822,11 @@
   ([signal filter mode]
    (convolve1 signal filter mode 0))
   ([^AFArray signal ^AFArray filter mode domain]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (convolve/af-convolve1 out (jvm/af-handle signal) (jvm/af-handle filter)
+   (let [out (res/native-af-array-pointer)]
+     (check! (convolve/af-convolve1 out (res/af-handle signal) (res/af-handle filter)
                                          (int mode) (int domain))
                  "af-convolve1")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn convolve2
   "Compute 2D convolution of signal and filter.
@@ -859,11 +859,11 @@
   ([signal filter mode]
    (convolve2 signal filter mode 0))
   ([^AFArray signal ^AFArray filter mode domain]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (convolve/af-convolve2 out (jvm/af-handle signal) (jvm/af-handle filter)
+   (let [out (res/native-af-array-pointer)]
+     (check! (convolve/af-convolve2 out (res/af-handle signal) (res/af-handle filter)
                                          (int mode) (int domain))
                  "af-convolve2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn convolve3
   "Compute 3D convolution of signal and filter.
@@ -886,11 +886,11 @@
   ([signal filter mode]
    (convolve3 signal filter mode 0))
   ([^AFArray signal ^AFArray filter mode domain]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (convolve/af-convolve3 out (jvm/af-handle signal) (jvm/af-handle filter)
+   (let [out (res/native-af-array-pointer)]
+     (check! (convolve/af-convolve3 out (res/af-handle signal) (res/af-handle filter)
                                          (int mode) (int domain))
                  "af-convolve3")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn convolve2-sep
   "Compute 2D separable convolution (faster for separable kernels).
@@ -920,12 +920,12 @@
   ([col-filter row-filter signal]
    (convolve2-sep col-filter row-filter signal 0))
   ([^AFArray col-filter ^AFArray row-filter ^AFArray signal mode]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (convolve/af-convolve2-sep out (jvm/af-handle col-filter) 
-                                             (jvm/af-handle row-filter)
-                                             (jvm/af-handle signal) (int mode))
+   (let [out (res/native-af-array-pointer)]
+     (check! (convolve/af-convolve2-sep out (res/af-handle col-filter) 
+                                             (res/af-handle row-filter)
+                                             (res/af-handle signal) (int mode))
                  "af-convolve2-sep")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn convolve2-nn
   "Compute 2D convolution optimized for neural networks.
@@ -991,12 +991,12 @@
         dilation-buf (bmem/dims->segment dilations)
         
         ;; Allocate output
-        out (jvm/native-af-array-pointer)]
+        out (res/native-af-array-pointer)]
     
     (check! (convolve/af-convolve2-nn
                   out
-                  (jvm/af-handle signal)
-                  (jvm/af-handle filter)
+                  (res/af-handle signal)
+                  (res/af-handle filter)
                   (int stride-count)
                   stride-buf
                   (int padding-count)
@@ -1005,7 +1005,7 @@
                   dilation-buf)
                 "af-convolve2-nn")
     
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn fft-convolve1
   "Compute 1D convolution using FFT (frequency domain).
@@ -1026,11 +1026,11 @@
   ([signal filter]
    (fft-convolve1 signal filter 0))
   ([^AFArray signal ^AFArray filter mode]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fftconvolve/af-fft-convolve1 out (jvm/af-handle signal) 
-                                                 (jvm/af-handle filter) (int mode))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fftconvolve/af-fft-convolve1 out (res/af-handle signal) 
+                                                 (res/af-handle filter) (int mode))
                  "af-fft-convolve1")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft-convolve2
   "Compute 2D convolution using FFT.
@@ -1048,11 +1048,11 @@
   ([signal filter]
    (fft-convolve2 signal filter 0))
   ([^AFArray signal ^AFArray filter mode]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fftconvolve/af-fft-convolve2 out (jvm/af-handle signal)
-                                                 (jvm/af-handle filter) (int mode))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fftconvolve/af-fft-convolve2 out (res/af-handle signal)
+                                                 (res/af-handle filter) (int mode))
                  "af-fft-convolve2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn fft-convolve3
   "Compute 3D convolution using FFT.
@@ -1070,11 +1070,11 @@
   ([signal filter]
    (fft-convolve3 signal filter 0))
   ([^AFArray signal ^AFArray filter mode]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fftconvolve/af-fft-convolve3 out (jvm/af-handle signal)
-                                                 (jvm/af-handle filter) (int mode))
+   (let [out (res/native-af-array-pointer)]
+     (check! (fftconvolve/af-fft-convolve3 out (res/af-handle signal)
+                                                 (res/af-handle filter) (int mode))
                  "af-fft-convolve3")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Digital Filters
@@ -1110,10 +1110,10 @@
    See also:
    - fir: Finite impulse response filter"
   [^AFArray b ^AFArray a ^AFArray x]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (iir/af-iir out (jvm/af-handle b) (jvm/af-handle a) (jvm/af-handle x))
+  (let [out (res/native-af-array-pointer)]
+    (check! (iir/af-iir out (res/af-handle b) (res/af-handle a) (res/af-handle x))
                 "af-iir")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Median Filtering
@@ -1156,11 +1156,11 @@
   ([in wind-length wind-width]
    (medfilt in wind-length wind-width 0))
   ([^AFArray in wind-length wind-width edge-pad]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (filters/af-medfilt out (jvm/af-handle in) (long wind-length) 
+   (let [out (res/native-af-array-pointer)]
+     (check! (filters/af-medfilt out (res/af-handle in) (long wind-length) 
                                       (long wind-width) (int edge-pad))
                  "af-medfilt")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn medfilt1
   "Apply 1D median filter.
@@ -1186,10 +1186,10 @@
   ([in wind-width]
    (medfilt1 in wind-width 0))
   ([^AFArray in wind-width edge-pad]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (filters/af-medfilt1 out (jvm/af-handle in) (long wind-width) (int edge-pad))
+   (let [out (res/native-af-array-pointer)]
+     (check! (filters/af-medfilt1 out (res/af-handle in) (long wind-width) (int edge-pad))
                  "af-medfilt1")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn medfilt2
   "Apply 2D median filter (alias for medfilt).
@@ -1212,11 +1212,11 @@
   ([in wind-length wind-width]
    (medfilt2 in wind-length wind-width 0))
   ([^AFArray in wind-length wind-width edge-pad]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (filters/af-medfilt2 out (jvm/af-handle in) (long wind-length)
+   (let [out (res/native-af-array-pointer)]
+     (check! (filters/af-medfilt2 out (res/af-handle in) (long wind-length)
                                        (long wind-width) (int edge-pad))
                  "af-medfilt2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Interpolation/Approximation
@@ -1254,11 +1254,11 @@
   ([yi xo method]
    (approx1 yi xo method 0.0))
   ([^AFArray yi ^AFArray xo method off-grid]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (approx/af-approx1-v2 out (jvm/af-handle yi) (jvm/af-handle xo)
+   (let [out (res/native-af-array-pointer)]
+     (check! (approx/af-approx1-v2 out (res/af-handle yi) (res/af-handle xo)
                                         (int method) (float off-grid))
                  "af-approx1-v2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn approx1-uniform
   "1D interpolation on uniform grid.
@@ -1288,12 +1288,12 @@
   ([yi xo xdim xi-beg xi-step method]
    (approx1-uniform yi xo xdim xi-beg xi-step method 0.0))
   ([^AFArray yi ^AFArray xo xdim xi-beg xi-step method off-grid]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (approx/af-approx1-uniform-v2 out (jvm/af-handle yi) (jvm/af-handle xo)
+   (let [out (res/native-af-array-pointer)]
+     (check! (approx/af-approx1-uniform-v2 out (res/af-handle yi) (res/af-handle xo)
                                                  (int xdim) (double xi-beg) (double xi-step)
                                                  (int method) (float off-grid))
                  "af-approx1-uniform-v2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn approx2
   "2D interpolation/approximation at specified positions.
@@ -1323,11 +1323,11 @@
   ([zi xo yo method]
    (approx2 zi xo yo method 0.0))
   ([^AFArray zi ^AFArray xo ^AFArray yo method off-grid]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (approx/af-approx2-v2 out (jvm/af-handle zi) (jvm/af-handle xo)
-                                        (jvm/af-handle yo) (int method) (float off-grid))
+   (let [out (res/native-af-array-pointer)]
+     (check! (approx/af-approx2-v2 out (res/af-handle zi) (res/af-handle xo)
+                                        (res/af-handle yo) (int method) (float off-grid))
                  "af-approx2-v2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn approx2-uniform
   "2D interpolation on uniform grid.
@@ -1359,11 +1359,11 @@
   ([zi xo xdim xi-beg xi-step yo ydim yi-beg yi-step method]
    (approx2-uniform zi xo xdim xi-beg xi-step yo ydim yi-beg yi-step method 0.0))
   ([^AFArray zi ^AFArray xo xdim xi-beg xi-step ^AFArray yo ydim yi-beg yi-step method off-grid]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (approx/af-approx2-uniform-v2 out (jvm/af-handle zi) (jvm/af-handle xo)
+   (let [out (res/native-af-array-pointer)]
+     (check! (approx/af-approx2-uniform-v2 out (res/af-handle zi) (res/af-handle xo)
                                                  (int xdim) (double xi-beg) (double xi-step)
-                                                 (jvm/af-handle yo) (int ydim) (double yi-beg)
+                                                 (res/af-handle yo) (int ydim) (double yi-beg)
                                                  (double yi-step) (int method) (float off-grid))
                  "af-approx2-uniform-v2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 

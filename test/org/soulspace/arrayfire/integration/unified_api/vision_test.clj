@@ -1,10 +1,11 @@
 (ns org.soulspace.arrayfire.integration.unified-api.vision-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.vision :as vision]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Feature Detection Tests
@@ -17,7 +18,7 @@
           img-data (float-array (* 32 32))
           _ (aset img-data 0 1.0) ;; corner at origin
           _ (aset img-data 1023 1.0) ;; corner at opposite corner
-          img (array/create-array img-data [32 32] jvm/AF_DTYPE_F32)
+          img (array/create-array img-data [32 32] defs/AF_DTYPE_F32)
           threshold 20.0
           arc-length 9
           non-max true
@@ -33,7 +34,7 @@
 (deftest test-fast-parameters
   (testing "FAST with different parameter combinations"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] defs/AF_DTYPE_F32)
           ;; Lower threshold for simple test image
           features-low (vision/fast img 10.0 9 true 0.1 3)
           features-high (vision/fast img 30.0 9 true 0.05 3)]
@@ -49,7 +50,7 @@
     (let [;; Create test image with clear corners
           img-data (float-array (* 32 32))
           _ (dotimes [i 10] (aset img-data i 1.0)) ;; horizontal edge
-          img (array/create-array img-data [32 32] jvm/AF_DTYPE_F32)
+          img (array/create-array img-data [32 32] defs/AF_DTYPE_F32)
           max-corners 100
           min-response 1.0e5
           sigma 1.0
@@ -64,7 +65,7 @@
 (deftest test-harris-parameters
   (testing "Harris with different sigma and k values"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] defs/AF_DTYPE_F32)
           features-small (vision/harris img 50 1.0e4 0.5 3 0.04)
           features-large (vision/harris img 50 1.0e4 2.0 5 0.06)]
       (try
@@ -79,7 +80,7 @@
     (let [;; Create test image with corners
           img-data (float-array (* 32 32))
           _ (dotimes [i 10] (aset img-data i 1.0)) ;; horizontal edge
-          img (array/create-array img-data [32 32] jvm/AF_DTYPE_F32)
+          img (array/create-array img-data [32 32] defs/AF_DTYPE_F32)
           radius 3
           diff-thr 20.0
           geom-thr 14.0 ;; ≈ 0.5 * π * radius²
@@ -95,7 +96,7 @@
 (deftest test-susan-parameters
   (testing "SUSAN with different radius and threshold values"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 16 16) 0.5)) [16 16] defs/AF_DTYPE_F32)
           ;; Small radius for fine details
           features-small (vision/susan img 2 15.0 6.0 0.2 2)
           ;; Large radius for noise robustness
@@ -109,7 +110,7 @@
 (deftest test-orb
   (testing "ORB feature detection and description"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] defs/AF_DTYPE_F32)
           fast-thr 20.0
           max-feat 100
           scl-fctr 1.5
@@ -126,7 +127,7 @@
 (deftest test-orb-with-blur
   (testing "ORB with image blurring enabled"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] defs/AF_DTYPE_F32)
           [features descriptors] (vision/orb img 15.0 50 1.2 4 true)]
       (try
         (is (integer? features))
@@ -138,7 +139,7 @@
 (deftest test-sift
   (testing "SIFT feature detection and description"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] defs/AF_DTYPE_F32)
           n-layers 3
           contrast-thr 0.04
           edge-thr 10.0
@@ -159,7 +160,7 @@
 (deftest test-sift-double-input
   (testing "SIFT with double input size"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] defs/AF_DTYPE_F32)
           [features descriptors] (vision/sift img 3 0.04 10.0 1.6 true 0.00390625 0.05)]
       (try
         (is (integer? features))
@@ -171,7 +172,7 @@
 (deftest test-gloh
   (testing "GLOH feature detection and description"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] defs/AF_DTYPE_F32)
           n-layers 3
           contrast-thr 0.04
           edge-thr 10.0
@@ -199,8 +200,8 @@
     (let [;; Create simple descriptor arrays for matching
           desc1-data (float-array [1.0 0.0 1.0 0.0])
           desc2-data (float-array [1.0 0.0 1.0 0.0])
-          desc1 (array/create-array desc1-data [4 1] jvm/AF_DTYPE_F32)
-          desc2 (array/create-array desc2-data [4 1] jvm/AF_DTYPE_F32)
+          desc1 (array/create-array desc1-data [4 1] defs/AF_DTYPE_F32)
+          desc2 (array/create-array desc2-data [4 1] defs/AF_DTYPE_F32)
           dist-dim 0
           n-dist 1
           [idx dist] (vision/hamming-matcher desc1 desc2 dist-dim n-dist)]
@@ -216,8 +217,8 @@
 (deftest test-hamming-matcher-multiple-matches
   (testing "Hamming matcher with multiple nearest neighbors"
     (device/init!)
-    (let [desc1 (array/create-array (float-array (repeat 16 0.5)) [8 2] jvm/AF_DTYPE_F32)
-          desc2 (array/create-array (float-array (repeat 24 0.5)) [8 3] jvm/AF_DTYPE_F32)
+    (let [desc1 (array/create-array (float-array (repeat 16 0.5)) [8 2] defs/AF_DTYPE_F32)
+          desc2 (array/create-array (float-array (repeat 24 0.5)) [8 3] defs/AF_DTYPE_F32)
           [idx dist] (vision/hamming-matcher desc1 desc2 0 2)]
       (try
         (is (instance? AFArray idx))
@@ -231,8 +232,8 @@
 (deftest test-nearest-neighbour
   (testing "Nearest neighbor matching between feature sets"
     (device/init!)
-    (let [query (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4 1] jvm/AF_DTYPE_F32)
-          train (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4 1] jvm/AF_DTYPE_F32)
+    (let [query (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4 1] defs/AF_DTYPE_F32)
+          train (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4 1] defs/AF_DTYPE_F32)
           dist-dim 0
           n-dist 1
           dist-type :sad ;; Sum of absolute differences
@@ -249,8 +250,8 @@
 (deftest test-nearest-neighbour-ssd
   (testing "Nearest neighbor with sum of squared differences"
     (device/init!)
-    (let [query (array/create-array (float-array (repeat 8 1.0)) [4 2] jvm/AF_DTYPE_F32)
-          train (array/create-array (float-array (repeat 12 1.0)) [4 3] jvm/AF_DTYPE_F32)
+    (let [query (array/create-array (float-array (repeat 8 1.0)) [4 2] defs/AF_DTYPE_F32)
+          train (array/create-array (float-array (repeat 12 1.0)) [4 3] defs/AF_DTYPE_F32)
           [idx dist] (vision/nearest-neighbour query train 0 1 :ssd)]
       (try
         (is (instance? AFArray idx))
@@ -264,8 +265,8 @@
 (deftest test-match-template
   (testing "Template matching in search image"
     (device/init!)
-    (let [search-img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
-          template-img (array/create-array (float-array (repeat (* 8 8) 0.5)) [8 8] jvm/AF_DTYPE_F32)
+    (let [search-img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] defs/AF_DTYPE_F32)
+          template-img (array/create-array (float-array (repeat (* 8 8) 0.5)) [8 8] defs/AF_DTYPE_F32)
           match-type :sad
           output (vision/match-template search-img template-img match-type)]
       (try
@@ -278,8 +279,8 @@
 (deftest test-match-template-zsad
   (testing "Template matching with zero-mean SAD"
     (device/init!)
-    (let [search-img (array/create-array (float-array (repeat (* 32 32) 1.0)) [32 32] jvm/AF_DTYPE_F32)
-          template-img (array/create-array (float-array (repeat (* 4 4) 0.8)) [4 4] jvm/AF_DTYPE_F32)
+    (let [search-img (array/create-array (float-array (repeat (* 32 32) 1.0)) [32 32] defs/AF_DTYPE_F32)
+          template-img (array/create-array (float-array (repeat (* 4 4) 0.8)) [4 4] defs/AF_DTYPE_F32)
           output (vision/match-template search-img template-img :zsad)]
       (try
         (is (instance? AFArray output))
@@ -295,7 +296,7 @@
 (deftest test-dog
   (testing "Difference of Gaussians pyramid"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] defs/AF_DTYPE_F32)
           radius1 3
           radius2 6
           dog-output (vision/dog img radius1 radius2)]
@@ -308,7 +309,7 @@
 (deftest test-dog-different-scales
   (testing "DoG with various radius combinations"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] defs/AF_DTYPE_F32)
           dog-fine (vision/dog img 1 2)
           dog-coarse (vision/dog img 4 6)] ; radius must be ≤ 8 on OneAPI
       (try
@@ -327,14 +328,14 @@
           y-src-data (float-array [0.0 0.0 10.0 10.0])
           x-dst-data (float-array [1.0 11.0 11.0 1.0])
           y-dst-data (float-array [1.0 1.0 11.0 11.0])
-          x-src (array/create-array x-src-data [4] jvm/AF_DTYPE_F32)
-          y-src (array/create-array y-src-data [4] jvm/AF_DTYPE_F32)
-          x-dst (array/create-array x-dst-data [4] jvm/AF_DTYPE_F32)
-          y-dst (array/create-array y-dst-data [4] jvm/AF_DTYPE_F32)
+          x-src (array/create-array x-src-data [4] defs/AF_DTYPE_F32)
+          y-src (array/create-array y-src-data [4] defs/AF_DTYPE_F32)
+          x-dst (array/create-array x-dst-data [4] defs/AF_DTYPE_F32)
+          y-dst (array/create-array y-dst-data [4] defs/AF_DTYPE_F32)
           hmat-type :ransac
           inlier-thr 3.0
           iterations 1000
-          otype jvm/AF_DTYPE_F32
+          otype defs/AF_DTYPE_F32
           [H inliers] (vision/homography x-src y-src x-dst y-dst hmat-type inlier-thr iterations otype)]
       (try
         (is (instance? AFArray H))
@@ -350,11 +351,11 @@
 (deftest test-homography-lmeds
   (testing "Homography with LMedS method"
     (device/init!)
-    (let [x-src (array/create-array (float-array [0.0 5.0 5.0 0.0]) [4] jvm/AF_DTYPE_F32)
-          y-src (array/create-array (float-array [0.0 0.0 5.0 5.0]) [4] jvm/AF_DTYPE_F32)
-          x-dst (array/create-array (float-array [0.0 5.0 5.0 0.0]) [4] jvm/AF_DTYPE_F32)
-          y-dst (array/create-array (float-array [0.0 0.0 5.0 5.0]) [4] jvm/AF_DTYPE_F32)
-          [H inliers] (vision/homography x-src y-src x-dst y-dst :lmeds 3.0 1000 jvm/AF_DTYPE_F32)]
+    (let [x-src (array/create-array (float-array [0.0 5.0 5.0 0.0]) [4] defs/AF_DTYPE_F32)
+          y-src (array/create-array (float-array [0.0 0.0 5.0 5.0]) [4] defs/AF_DTYPE_F32)
+          x-dst (array/create-array (float-array [0.0 5.0 5.0 0.0]) [4] defs/AF_DTYPE_F32)
+          y-dst (array/create-array (float-array [0.0 0.0 5.0 5.0]) [4] defs/AF_DTYPE_F32)
+          [H inliers] (vision/homography x-src y-src x-dst y-dst :lmeds 3.0 1000 defs/AF_DTYPE_F32)]
       (try
         (is (instance? AFArray H))
         (is (integer? inliers))
@@ -372,8 +373,8 @@
 (deftest test-feature-detection-pipeline
   (testing "Full pipeline: detect features, describe, match"
     (device/init!)
-    (let [img1 (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
-          img2 (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] jvm/AF_DTYPE_F32)
+    (let [img1 (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] defs/AF_DTYPE_F32)
+          img2 (array/create-array (float-array (repeat (* 32 32) 0.5)) [32 32] defs/AF_DTYPE_F32)
           [feat1 desc1] (vision/orb img1 20.0 100 1.5 4 false)
           [feat2 desc2] (vision/orb img2 20.0 100 1.5 4 false)
           [idx dist] (vision/hamming-matcher desc1 desc2 0 1)]
@@ -395,7 +396,7 @@
 (deftest test-multi-scale-detection
   (testing "Feature detection at multiple scales"
     (device/init!)
-    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] jvm/AF_DTYPE_F32)
+    (let [img (array/create-array (float-array (repeat (* 64 64) 0.5)) [64 64] defs/AF_DTYPE_F32)
           fast-feat (vision/fast img 20.0 9 true 0.05 3)
           [orb-feat orb-desc] (vision/orb img 20.0 100 1.5 4 false)
           harris-feat (vision/harris img 100 1.0e5 1.0 3 0.04)]

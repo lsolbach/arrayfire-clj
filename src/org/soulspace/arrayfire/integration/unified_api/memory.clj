@@ -39,8 +39,8 @@
             [org.soulspace.arrayfire.ffi.c-api.memory :as mem-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Pinned Memory
@@ -90,7 +90,7 @@
   (let [ptr-buf (mem/alloc 8)]
     (check! (mem-ffi/af-alloc-pinned ptr-buf (long bytes))
                 "af-alloc-pinned")
-    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
+    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (res/address->long (mem/read-address ptr-buf)))
                      (long bytes))))
 
 (defn free-pinned!
@@ -148,7 +148,7 @@
   (let [ptr-buf (mem/alloc 8)]
     (check! (mem-ffi/af-alloc-host ptr-buf (long bytes))
                 "af-alloc-host")
-    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
+    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (res/address->long (mem/read-address ptr-buf)))
                      (long bytes))))
 
 (defn free-host!
@@ -209,7 +209,7 @@
   (let [ptr-buf (mem/alloc 8)]
     (check! (mem-ffi/af-alloc-device-v2 ptr-buf (long bytes))
                 "af-alloc-device-v2")
-    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))
+    (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress (res/address->long (mem/read-address ptr-buf)))
                      (long bytes))))
 
 (defn free-device!
@@ -455,7 +455,7 @@
          (unlock-array! arr))))
    ```"
   [^AFArray arr]
-  (check! (mem-ffi/af-lock-array (jvm/af-handle arr))
+  (check! (mem-ffi/af-lock-array (res/af-handle arr))
               "af-lock-array")
   nil)
 
@@ -476,7 +476,7 @@
    (unlock-array! arr)
    ```"
   [^AFArray arr]
-  (check! (mem-ffi/af-unlock-array (jvm/af-handle arr))
+  (check! (mem-ffi/af-unlock-array (res/af-handle arr))
               "af-unlock-array")
   nil)
 
@@ -505,7 +505,7 @@
   [^AFArray arr]
   (let [result-buf (mem/alloc 4)]
     (check! (mem-ffi/af-is-locked-array result-buf
-                        (jvm/af-handle arr))
+                        (res/af-handle arr))
                 "af-is-locked-array")
     (not (zero? (mem/read-int result-buf 0)))))
 
@@ -538,9 +538,9 @@
   [^AFArray arr]
   (let [ptr-buf (mem/alloc 8)]
     (check! (mem-ffi/af-get-device-ptr ptr-buf
-                         (jvm/af-handle arr))
+                         (res/af-handle arr))
                 "af-get-device-ptr")
-    (java.lang.foreign.MemorySegment/ofAddress (jvm/address->long (mem/read-address ptr-buf)))))
+    (java.lang.foreign.MemorySegment/ofAddress (res/address->long (mem/read-address ptr-buf)))))
 
 ;;;
 ;;; Convenience Functions

@@ -84,7 +84,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.features :as ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
+            [org.soulspace.arrayfire.integration.base.resource :as res]))
 
 ;;;
 ;;; Feature Lifecycle Management
@@ -345,7 +345,7 @@
         features-segment (mem/as-segment features)]
     (check! (ffi/af-get-features-xpos x-ptr-buf features-segment)
                 "af-get-features-xpos")
-    (jvm/af-array-retained (mem/read-long x-ptr-buf 0))))
+    (res/af-array-retained (mem/read-long x-ptr-buf 0))))
 
 (defn get-features-ypos
   "Get the Y coordinates array from features.
@@ -394,7 +394,7 @@
         features-segment (mem/as-segment features)]
     (check! (ffi/af-get-features-ypos y-ptr-buf features-segment)
                 "af-get-features-ypos")
-    (jvm/af-array-retained (mem/read-long y-ptr-buf 0))))
+    (res/af-array-retained (mem/read-long y-ptr-buf 0))))
 
 (defn get-features-score
   "Get the score/response array from features.
@@ -451,7 +451,7 @@
         features-segment (mem/as-segment features)]
     (check! (ffi/af-get-features-score score-ptr-buf features-segment)
                 "af-get-features-score")
-    (jvm/af-array-retained (mem/read-long score-ptr-buf 0))))
+    (res/af-array-retained (mem/read-long score-ptr-buf 0))))
 
 (defn get-features-orientation
   "Get the orientation array from features.
@@ -508,7 +508,7 @@
         features-segment (mem/as-segment features)]
     (check! (ffi/af-get-features-orientation ori-ptr-buf features-segment)
                 "af-get-features-orientation")
-    (jvm/af-array-retained (mem/read-long ori-ptr-buf 0))))
+    (res/af-array-retained (mem/read-long ori-ptr-buf 0))))
 
 (defn get-features-size
   "Get the size/scale array from features.
@@ -573,4 +573,4 @@
         features-segment (mem/as-segment features)]
     (check! (ffi/af-get-features-size size-ptr-buf features-segment)
                 "af-get-features-size")
-    (jvm/af-array-retained (mem/read-long size-ptr-buf 0))))
+    (res/af-array-retained (mem/read-long size-ptr-buf 0))))

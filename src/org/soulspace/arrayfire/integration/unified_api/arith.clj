@@ -7,8 +7,8 @@
             [org.soulspace.arrayfire.ffi.c-api.cast :as ffi-cast]
             [org.soulspace.arrayfire.ffi.c-api.clamp :as ffi-clamp]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Unary Arithmetic Operations
@@ -28,9 +28,9 @@
    Returns:
    An AFArray with values truncated to their integer parts."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-trunc out (jvm/af-handle a)) "af-trunc")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-trunc out (res/af-handle a)) "af-trunc")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn sign
   "Compute the sign bit of each element in the array.
@@ -45,9 +45,9 @@
    - 1 if the corresponding element in 'a' is negative
    - 0 otherwise."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-sign out (jvm/af-handle a)) "af-sign")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-sign out (res/af-handle a)) "af-sign")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn round
   "Round the elements of the array to the nearest integer.
@@ -60,9 +60,9 @@
    Returns:
    An AFArray with values rounded to the nearest integer."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-round out (jvm/af-handle a)) "af-round")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-round out (res/af-handle a)) "af-round")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn floor
   "Compute the floor of each element in the array.
@@ -75,9 +75,9 @@
    Returns:
    An AFArray with the largest integer less than or equal to each element."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-floor out (jvm/af-handle a)) "af-floor")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-floor out (res/af-handle a)) "af-floor")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn ceil
   "Compute the ceiling of each element in the array.
@@ -90,9 +90,9 @@
    Returns:
    An AFArray with the smallest integer greater than or equal to each element."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-ceil out (jvm/af-handle a)) "af-ceil")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-ceil out (res/af-handle a)) "af-ceil")
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;
 ;; Activation and special functions
@@ -110,9 +110,9 @@
    An AFArray where each element is transformed by the sigmoid function:
    sigmoid(x) = 1 / (1 + exp(-x))"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-sigmoid out (jvm/af-handle a)) "af-sigmoid")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-sigmoid out (res/af-handle a)) "af-sigmoid")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn expm1
   "Compute exp(x) - 1 for each element in the array.
@@ -126,9 +126,9 @@
    An AFArray where each element is transformed by the expm1 function:
    expm1(x) = exp(x) - 1"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-expm1 out (jvm/af-handle a)) "af-expm1")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-expm1 out (res/af-handle a)) "af-expm1")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn erf
   "Compute the error function for each element in the array.
@@ -142,9 +142,9 @@
    An AFArray where each element is transformed by the error function:
    erf(x) = (2/sqrt(π)) * ∫[0 to x] exp(-t²) dt"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-erf out (jvm/af-handle a)) "af-erf")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-erf out (res/af-handle a)) "af-erf")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn erfc
   "Compute the complementary error function for each element in the array.
@@ -158,9 +158,9 @@
    An AFArray where each element is transformed by the complementary error function:
    erfc(x) = 1 - erf(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-erfc out (jvm/af-handle a)) "af-erfc")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-erfc out (res/af-handle a)) "af-erfc")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn log10
   "Compute the base-10 logarithm for each element in the array.
@@ -174,9 +174,9 @@
    An AFArray where each element is transformed by the base-10 logarithm:
    log10(x) = log(x) / log(10)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-log10 out (jvm/af-handle a)) "af-log10")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-log10 out (res/af-handle a)) "af-log10")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn log1p
   "Compute log(1 + x) for each element in the array.
@@ -190,9 +190,9 @@
    An AFArray where each element is transformed by the log1p function:
    log1p(x) = log(1 + x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-log1p out (jvm/af-handle a)) "af-log1p")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-log1p out (res/af-handle a)) "af-log1p")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn log2
   "Compute the base-2 logarithm for each element in the array.
@@ -206,9 +206,9 @@
    An AFArray where each element is transformed by the base-2 logarithm:
    log2(x) = log(x) / log(2)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-log2 out (jvm/af-handle a)) "af-log2")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-log2 out (res/af-handle a)) "af-log2")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn cbrt
   "Compute the cube root for each element in the array.
@@ -222,9 +222,9 @@
    An AFArray where each element is transformed by the cube root function:
    cbrt(x) = x^(1/3)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-cbrt out (jvm/af-handle a)) "af-cbrt")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-cbrt out (res/af-handle a)) "af-cbrt")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn rsqrt
   "Compute the reciprocal square root for each element in the array.
@@ -238,9 +238,9 @@
    An AFArray where each element is transformed by the reciprocal square root function:
    rsqrt(x) = 1 / sqrt(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-rsqrt out (jvm/af-handle a)) "af-rsqrt")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-rsqrt out (res/af-handle a)) "af-rsqrt")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn tgamma
   "Compute the truncated gamma function for each element in the array.
@@ -253,9 +253,9 @@
    Returns:
    An AFArray where each element is transformed by the truncated gamma function."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-tgamma out (jvm/af-handle a)) "af-tgamma")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-tgamma out (res/af-handle a)) "af-tgamma")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn lgamma
   "Compute the natural logarithm of the absolute value of the gamma function
@@ -270,9 +270,9 @@
    An AFArray where each element is transformed by the lgamma function:
    lgamma(x) = log(|gamma(x)|)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-lgamma out (jvm/af-handle a)) "af-lgamma")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-lgamma out (res/af-handle a)) "af-lgamma")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn sin
   "Compute the sine of each element in the array.
@@ -286,9 +286,9 @@
    An AFArray where each element is transformed by the sine function:
    sin(x) = sin(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-sin out (jvm/af-handle a)) "af-sin")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-sin out (res/af-handle a)) "af-sin")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn cos
   "Compute the cosine of each element in the array.
@@ -302,9 +302,9 @@
    An AFArray where each element is transformed by the cosine function:
    cos(x) = cos(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-cos out (jvm/af-handle a)) "af-cos")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-cos out (res/af-handle a)) "af-cos")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn tan
   "Compute the tangent of each element in the array.
@@ -318,9 +318,9 @@
    An AFArray where each element is transformed by the tangent function:
    tan(x) = tan(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-tan out (jvm/af-handle a)) "af-tan")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-tan out (res/af-handle a)) "af-tan")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn asin
   "Compute the arcsine of each element in the array.
@@ -334,9 +334,9 @@
    An AFArray where each element is transformed by the arcsine function:
    asin(x) = arcsin(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-asin out (jvm/af-handle a)) "af-asin")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-asin out (res/af-handle a)) "af-asin")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn acos
   "Compute the arccosine of each element in the array.
@@ -350,9 +350,9 @@
    An AFArray where each element is transformed by the arccosine function:
    acos(x) = arccos(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-acos out (jvm/af-handle a)) "af-acos")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-acos out (res/af-handle a)) "af-acos")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn atan
   "Compute the arctangent of each element in the array.
@@ -366,9 +366,9 @@
    An AFArray where each element is transformed by the arctangent function:
    atan(x) = arctan(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-atan out (jvm/af-handle a)) "af-atan")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-atan out (res/af-handle a)) "af-atan")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn sinh
   "Compute the hyperbolic sine of each element in the array.
@@ -382,9 +382,9 @@
    An AFArray where each element is transformed by the hyperbolic sine function:
    sinh(x) = (exp(x) - exp(-x)) / 2"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-sinh out (jvm/af-handle a)) "af-sinh")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-sinh out (res/af-handle a)) "af-sinh")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn cosh
   "Compute the hyperbolic cosine of each element in the array.
@@ -398,9 +398,9 @@
    An AFArray where each element is transformed by the hyperbolic cosine function:
    cosh(x) = (exp(x) + exp(-x)) / 2"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-cosh out (jvm/af-handle a)) "af-cosh")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-cosh out (res/af-handle a)) "af-cosh")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn tanh
   "Compute the hyperbolic tangent of each element in the array.
@@ -414,9 +414,9 @@
    An AFArray where each element is transformed by the hyperbolic tangent function:
    tanh(x) = sinh(x) / cosh(x)"
   [^AFArray a]
-    (let [out (jvm/native-af-array-pointer)]
-        (check! (unary/af-tanh out (jvm/af-handle a)) "af-tanh")
-        (jvm/af-array-new (jvm/deref-af-array out))))
+    (let [out (res/native-af-array-pointer)]
+        (check! (unary/af-tanh out (res/af-handle a)) "af-tanh")
+        (res/af-array-new (res/deref-af-array out))))
 
 (defn asinh
   "Compute the inverse hyperbolic sine of each element in the array.
@@ -430,9 +430,9 @@
    An AFArray where each element is transformed by the inverse hyperbolic sine function:
    asinh(x) = log(x + sqrt(x² + 1))"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-asinh out (jvm/af-handle a)) "af-asinh")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-asinh out (res/af-handle a)) "af-asinh")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn acosh
   "Compute the inverse hyperbolic cosine of each element in the array.
@@ -446,9 +446,9 @@
    An AFArray where each element is transformed by the inverse hyperbolic cosine function:
    acosh(x) = log(x + sqrt(x² - 1))"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-acosh out (jvm/af-handle a)) "af-acosh")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-acosh out (res/af-handle a)) "af-acosh")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn atanh
   "Compute the inverse hyperbolic tangent of each element in the array.
@@ -462,9 +462,9 @@
    An AFArray where each element is transformed by the inverse hyperbolic tangent function:
    atanh(x) = 0.5 * log((1 + x) / (1 - x))"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-atanh out (jvm/af-handle a)) "af-atanh")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-atanh out (res/af-handle a)) "af-atanh")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn exp
   "Compute the exponential of each element in the array.
@@ -478,9 +478,9 @@
    An AFArray where each element is transformed by the exponential function:
    exp(x) = e^x"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-exp out (jvm/af-handle a)) "af-exp")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-exp out (res/af-handle a)) "af-exp")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn log
   "Compute the natural logarithm of each element in the array.
@@ -494,9 +494,9 @@
    An AFArray where each element is transformed by the natural logarithm function:
    log(x) = ln(x)"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-log out (jvm/af-handle a)) "af-log")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-log out (res/af-handle a)) "af-log")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn sqrt
   "Compute the square root of each element in the array.
@@ -510,9 +510,9 @@
    An AFArray where each element is transformed by the square root function:
    sqrt(x) = √x"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-sqrt out (jvm/af-handle a)) "af-sqrt")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-sqrt out (res/af-handle a)) "af-sqrt")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn nan?
   "Check for NaN (Not a Number) values in the array.
@@ -527,9 +527,9 @@
    An AFArray of boolean values where each element indicates whether the
    corresponding element in 'a' is NaN (true) or not (false)."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-isnan out (jvm/af-handle a)) "af-isnan")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-isnan out (res/af-handle a)) "af-isnan")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn inf?
   "Check for infinite values in the array.
@@ -544,9 +544,9 @@
    An AFArray of boolean values where each element indicates whether the
    corresponding element in 'a' is infinite (true) or not (false)."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-isinf out (jvm/af-handle a)) "af-isinf")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-isinf out (res/af-handle a)) "af-isinf")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn zero?
   "Check for zero values in the array.
@@ -561,9 +561,9 @@
    An AFArray of boolean values where each element indicates whether the
    corresponding element in 'a' is zero (true) or not (false)."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-iszero out (jvm/af-handle a)) "af-iszero")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-iszero out (res/af-handle a)) "af-iszero")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn not
   "Compute the logical NOT of each element in the array.
@@ -578,9 +578,9 @@
    An AFArray where each element is the logical NOT of the corresponding
    element in 'a'."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-not out (jvm/af-handle a)) "af-not")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-not out (res/af-handle a)) "af-not")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn bitnot
   "Compute the bitwise NOT of each element in the array.
@@ -594,9 +594,9 @@
    An AFArray where each element is the bitwise NOT of the corresponding
    element in 'a'."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-bitnot out (jvm/af-handle a)) "af-bitnot")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-bitnot out (res/af-handle a)) "af-bitnot")
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Complex and power functions
@@ -615,9 +615,9 @@
    An AFArray where each element is the argument (phase angle) of the
    corresponding complex element in 'a'."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-arg out (jvm/af-handle a)) "af-arg")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-arg out (res/af-handle a)) "af-arg")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn pow2
   "Compute 2 raised to the power of each element in the array.
@@ -631,9 +631,9 @@
    An AFArray where each element is computed as:
    pow2(x) = 2^x"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-pow2 out (jvm/af-handle a)) "af-pow2")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-pow2 out (res/af-handle a)) "af-pow2")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn factorial
   "Compute the factorial of each element in the array.
@@ -647,9 +647,9 @@
    An AFArray where each element is the factorial of the corresponding
    element in 'a'."
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (unary/af-factorial out (jvm/af-handle a)) "af-factorial")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-factorial out (res/af-handle a)) "af-factorial")
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Binary Arithmetic Operations
@@ -679,9 +679,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (add lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-add out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-add")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-add out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-add")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn sub
   "Subtract two arrays element-wise.
@@ -704,9 +704,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (sub lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-sub out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-sub")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-sub out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-sub")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn mul
   "Multiply two arrays element-wise.
@@ -729,9 +729,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (mul lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-mul out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-mul")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-mul out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-mul")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn div
   "Divide two arrays element-wise.
@@ -754,9 +754,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (div lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-div out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-div")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-div out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-div")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn mod
   "Compute the modulo operation on two arrays element-wise.
@@ -779,9 +779,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (mod lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-mod out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-mod")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-mod out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-mod")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn rem
   "Compute the remainder operation on two arrays element-wise.
@@ -801,9 +801,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (rem lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-rem out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-rem")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-rem out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-rem")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn pow
   "Raise elements of lhs to the power of elements in rhs.
@@ -826,9 +826,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (pow lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-pow out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-pow")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-pow out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-pow")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn root
   "Calculate the nth root element-wise.
@@ -851,9 +851,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (root lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-root out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-root")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-root out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-root")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn minof
   "Compute the element-wise minimum of two arrays.
@@ -876,9 +876,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (minof lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-minof out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-minof")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-minof out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-minof")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn maxof
   "Compute the element-wise maximum of two arrays.
@@ -901,9 +901,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (maxof lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-maxof out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-maxof")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-maxof out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-maxof")
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;
 ;; Comparison operations
@@ -930,9 +930,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (eq lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-eq out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-eq")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-eq out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-eq")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn neq
   "Element-wise inequality comparison.
@@ -956,9 +956,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (neq lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-neq out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-neq")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-neq out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-neq")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn lt
   "Element-wise less than comparison.
@@ -982,9 +982,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (lt lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-lt out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-lt")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-lt out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-lt")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn le
   "Element-wise less than or equal comparison.
@@ -1008,9 +1008,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (le lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-le out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-le")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-le out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-le")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn gt
   "Element-wise greater than comparison.
@@ -1034,9 +1034,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (gt lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-gt out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-gt")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-gt out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-gt")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn ge
   "Element-wise greater than or equal comparison.
@@ -1060,9 +1060,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (ge lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-ge out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-ge")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-ge out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-ge")
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;
 ;; Logical operations
@@ -1089,9 +1089,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (and lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-and out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-and")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-and out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-and")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn or
   "Element-wise logical OR.
@@ -1115,9 +1115,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (or lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-or out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-or")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-or out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-or")
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;
 ;; Bitwise operations
@@ -1143,9 +1143,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (bitand lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-bitand out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitand")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-bitand out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-bitand")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn bitor
   "Element-wise bitwise OR.
@@ -1168,9 +1168,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (bitor lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-bitor out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitor")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-bitor out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-bitor")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn bitxor
   "Element-wise bitwise XOR.
@@ -1193,9 +1193,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (bitxor lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-bitxor out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitxor")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-bitxor out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-bitxor")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn bitshiftl
   "Element-wise bitwise left shift.
@@ -1218,9 +1218,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (bitshiftl lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-bitshiftl out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitshiftl")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-bitshiftl out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-bitshiftl")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn bitshiftr
   "Element-wise bitwise right shift.
@@ -1243,9 +1243,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (bitshiftr lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-bitshiftr out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-bitshiftr")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-bitshiftr out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-bitshiftr")
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;
 ;; Complex and math operations
@@ -1272,9 +1272,9 @@
   ([^AFArray real ^AFArray imag]
    (cplx2 real imag false))
   ([^AFArray real ^AFArray imag batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-cplx2 out (jvm/af-handle real) (jvm/af-handle imag) (if batch 1 0)) "af-cplx2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-cplx2 out (res/af-handle real) (res/af-handle imag) (if batch 1 0)) "af-cplx2")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn atan2
   "Element-wise two-argument arctangent (atan2).
@@ -1300,9 +1300,9 @@
   ([^AFArray y ^AFArray x]
    (atan2 y x false))
   ([^AFArray y ^AFArray x batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-atan2 out (jvm/af-handle y) (jvm/af-handle x) (if batch 1 0)) "af-atan2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-atan2 out (res/af-handle y) (res/af-handle x) (if batch 1 0)) "af-atan2")
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn hypot
   "Element-wise hypotenuse calculation.
@@ -1327,9 +1327,9 @@
   ([^AFArray lhs ^AFArray rhs]
    (hypot lhs rhs false))
   ([^AFArray lhs ^AFArray rhs batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (binary/af-hypot out (jvm/af-handle lhs) (jvm/af-handle rhs) (if batch 1 0)) "af-hypot")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (binary/af-hypot out (res/af-handle lhs) (res/af-handle rhs) (if batch 1 0)) "af-hypot")
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Type Conversion and Clamping
@@ -1372,9 +1372,9 @@
          result (cast a jvm/AF_DTYPE_S32)]
      result) ; => [1 2 3] (as 32-bit integers)"
   [^AFArray in dtype]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (ffi-cast/af-cast out (jvm/af-handle in) (int dtype)) "af-cast")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (ffi-cast/af-cast out (res/af-handle in) (int dtype)) "af-cast")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn clamp
   "Clamp an array between lower and upper limits.
@@ -1427,6 +1427,6 @@
   ([^AFArray in ^AFArray lo ^AFArray hi]
    (clamp in lo hi false))
   ([^AFArray in ^AFArray lo ^AFArray hi batch]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (ffi-clamp/af-clamp out (jvm/af-handle in) (jvm/af-handle lo) (jvm/af-handle hi) (if batch 1 0)) "af-clamp")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+   (let [out (res/native-af-array-pointer)]
+     (check! (ffi-clamp/af-clamp out (res/af-handle in) (res/af-handle lo) (res/af-handle hi) (if batch 1 0)) "af-clamp")
+     (res/af-array-new (res/deref-af-array out)))))

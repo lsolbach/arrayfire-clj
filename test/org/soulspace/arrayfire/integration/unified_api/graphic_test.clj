@@ -1,11 +1,10 @@
 (ns org.soulspace.arrayfire.integration.unified-api.graphic-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.graphic :as graphic]
-            [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
 ;;;
 ;;; Note: Graphics tests require ArrayFire built with Forge support.
@@ -159,7 +158,7 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Image Test")
-            img (data/constant 0.5 [100 100] jvm/AF_DTYPE_F32)]
+            img (data/constant 0.5 [100 100] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-image! window img nil)))
           (finally
@@ -171,8 +170,8 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Plot 2D Test")
-            x (data/range [100] 0 jvm/AF_DTYPE_F32)
-            y (data/constant 1.0 [100] jvm/AF_DTYPE_F32)]
+            x (data/range [100] 0 defs/AF_DTYPE_F32)
+            y (data/constant 1.0 [100] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-plot-2d! window x y nil)))
           (finally
@@ -185,9 +184,9 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Plot 3D Test")
-            x (data/range [50] 0 jvm/AF_DTYPE_F32)
-            y (data/range [50] 0 jvm/AF_DTYPE_F32)
-            z (data/range [50] 0 jvm/AF_DTYPE_F32)]
+            x (data/range [50] 0 defs/AF_DTYPE_F32)
+            y (data/range [50] 0 defs/AF_DTYPE_F32)
+            z (data/range [50] 0 defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-plot-3d! window x y z nil)))
           (finally
@@ -201,7 +200,7 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Plot ND Test")
-            points (data/constant 1.0 [50 2] jvm/AF_DTYPE_F32)]
+            points (data/constant 1.0 [50 2] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-plot-nd! window points nil)))
           (finally
@@ -213,8 +212,8 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Scatter 2D Test")
-            x (data/range [50] 0 jvm/AF_DTYPE_F32)
-            y (data/range [50] 0 jvm/AF_DTYPE_F32)
+            x (data/range [50] 0 defs/AF_DTYPE_F32)
+            y (data/range [50] 0 defs/AF_DTYPE_F32)
             marker 0] ; Marker type constant
         (try
           (is (nil? (graphic/draw-scatter-2d! window x y marker nil)))
@@ -228,9 +227,9 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Scatter 3D Test")
-            x (data/range [30] 0 jvm/AF_DTYPE_F32)
-            y (data/range [30] 0 jvm/AF_DTYPE_F32)
-            z (data/range [30] 0 jvm/AF_DTYPE_F32)
+            x (data/range [30] 0 defs/AF_DTYPE_F32)
+            y (data/range [30] 0 defs/AF_DTYPE_F32)
+            z (data/range [30] 0 defs/AF_DTYPE_F32)
             marker 0]
         (try
           (is (nil? (graphic/draw-scatter-3d! window x y z marker nil)))
@@ -245,7 +244,7 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Scatter ND Test")
-            points (data/constant 1.0 [30 2] jvm/AF_DTYPE_F32)
+            points (data/constant 1.0 [30 2] defs/AF_DTYPE_F32)
             marker 0]
         (try
           (is (nil? (graphic/draw-scatter-nd! window points marker nil)))
@@ -258,7 +257,7 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Histogram Test")
-            hist-data (data/constant 10.0 [256] jvm/AF_DTYPE_F32)]
+            hist-data (data/constant 10.0 [256] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-hist! window hist-data 0.0 255.0 nil)))
           (finally
@@ -270,9 +269,9 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Surface Test")
-            x (data/range [20 20] 0 jvm/AF_DTYPE_F32)
-            y (data/range [20 20] 1 jvm/AF_DTYPE_F32)
-            z (data/constant 0.5 [20 20] jvm/AF_DTYPE_F32)]
+            x (data/range [20 20] 0 defs/AF_DTYPE_F32)
+            y (data/range [20 20] 1 defs/AF_DTYPE_F32)
+            z (data/constant 0.5 [20 20] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-surface! window x y z nil)))
           (finally
@@ -286,10 +285,10 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Vector Field 2D Test")
-            x-points (data/range [10 10] 0 jvm/AF_DTYPE_F32)
-            y-points (data/range [10 10] 1 jvm/AF_DTYPE_F32)
-            x-dirs (data/constant 0.1 [10 10] jvm/AF_DTYPE_F32)
-            y-dirs (data/constant 0.1 [10 10] jvm/AF_DTYPE_F32)]
+            x-points (data/range [10 10] 0 defs/AF_DTYPE_F32)
+            y-points (data/range [10 10] 1 defs/AF_DTYPE_F32)
+            x-dirs (data/constant 0.1 [10 10] defs/AF_DTYPE_F32)
+            y-dirs (data/constant 0.1 [10 10] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-vector-field-2d! window x-points y-points x-dirs y-dirs nil)))
           (finally
@@ -304,12 +303,12 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Vector Field 3D Test")
-            x-points (data/constant 1.0 [5 5 5] jvm/AF_DTYPE_F32)
-            y-points (data/constant 1.0 [5 5 5] jvm/AF_DTYPE_F32)
-            z-points (data/constant 1.0 [5 5 5] jvm/AF_DTYPE_F32)
-            x-dirs (data/constant 0.1 [5 5 5] jvm/AF_DTYPE_F32)
-            y-dirs (data/constant 0.1 [5 5 5] jvm/AF_DTYPE_F32)
-            z-dirs (data/constant 0.1 [5 5 5] jvm/AF_DTYPE_F32)]
+            x-points (data/constant 1.0 [5 5 5] defs/AF_DTYPE_F32)
+            y-points (data/constant 1.0 [5 5 5] defs/AF_DTYPE_F32)
+            z-points (data/constant 1.0 [5 5 5] defs/AF_DTYPE_F32)
+            x-dirs (data/constant 0.1 [5 5 5] defs/AF_DTYPE_F32)
+            y-dirs (data/constant 0.1 [5 5 5] defs/AF_DTYPE_F32)
+            z-dirs (data/constant 0.1 [5 5 5] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-vector-field-3d! window 
                                                    x-points y-points z-points 
@@ -328,8 +327,8 @@
     (when (has-forge-support?)
       (device/init!)
       (let [window (graphic/create-window 640 480 "Vector Field ND Test")
-            points (data/constant 1.0 [20 2] jvm/AF_DTYPE_F32)
-            directions (data/constant 0.1 [20 2] jvm/AF_DTYPE_F32)]
+            points (data/constant 1.0 [20 2] defs/AF_DTYPE_F32)
+            directions (data/constant 0.1 [20 2] defs/AF_DTYPE_F32)]
         (try
           (is (nil? (graphic/draw-vector-field-nd! window points directions nil)))
           (finally
@@ -350,7 +349,7 @@
           (graphic/set-position! window 100 100)
           (graphic/set-title! window "Updated")
           (graphic/grid! window 2 2)
-          (let [data (data/constant 1.0 [50] jvm/AF_DTYPE_F32)]
+          (let [data (data/constant 1.0 [50] defs/AF_DTYPE_F32)]
             (try
               (graphic/draw-plot-2d! window data data nil)
               (finally

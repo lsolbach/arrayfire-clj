@@ -1,9 +1,9 @@
 (ns org.soulspace.arrayfire.integration.unified-api.event-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.event :as event]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
 ;;;
 ;;; Event Lifecycle Management Tests
@@ -112,7 +112,7 @@
       (try
         ;; Create some GPU work
         (let [arr (array/create-array (float-array [1.0 2.0 3.0 4.0]) 
-                                       [4] jvm/AF_DTYPE_F32)]
+                                       [4] defs/AF_DTYPE_F32)]
           ;; Mark event after GPU work
           (event/mark-event! evt)
           ;; CPU waits for GPU
@@ -128,7 +128,7 @@
       (try
         ;; Some GPU operations
         (let [arr (array/create-array (float-array [1.0 2.0]) 
-                                       [2] jvm/AF_DTYPE_F32)]
+                                       [2] defs/AF_DTYPE_F32)]
           (event/mark-event! evt)
           (event/enqueue-wait-event! evt)
           (.close arr))
@@ -143,13 +143,13 @@
       (try
         ;; Create work for first event
         (let [arr1 (array/create-array (float-array [1.0 2.0]) 
-                                        [2] jvm/AF_DTYPE_F32)]
+                                        [2] defs/AF_DTYPE_F32)]
           (event/mark-event! evt1)
           (.close arr1))
         
         ;; Create work for second event
         (let [arr2 (array/create-array (float-array [3.0 4.0]) 
-                                        [2] jvm/AF_DTYPE_F32)]
+                                        [2] defs/AF_DTYPE_F32)]
           (event/mark-event! evt2)
           (.close arr2))
         
@@ -166,9 +166,9 @@
     (let [evt (event/create-event!)]
       (try
         ;; Create multiple operations
-        (let [arr1 (array/create-array (float-array [1.0]) [1] jvm/AF_DTYPE_F32)
-              arr2 (array/create-array (float-array [2.0]) [1] jvm/AF_DTYPE_F32)
-              arr3 (array/create-array (float-array [3.0]) [1] jvm/AF_DTYPE_F32)]
+        (let [arr1 (array/create-array (float-array [1.0]) [1] defs/AF_DTYPE_F32)
+              arr2 (array/create-array (float-array [2.0]) [1] defs/AF_DTYPE_F32)
+              arr3 (array/create-array (float-array [3.0]) [1] defs/AF_DTYPE_F32)]
           ;; Mark after all operations
           (event/mark-event! evt)
           ;; Block ensures all complete

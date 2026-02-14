@@ -227,8 +227,8 @@
             [org.soulspace.arrayfire.ffi.c-api.stream :as stream]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Array Printing and Display
@@ -270,7 +270,7 @@
    - print-array-gen: Named print with custom precision
    - array-to-string: Convert to string for programmatic use"
   [^AFArray arr]
-  (check! (print/af-print-array (jvm/af-handle arr))
+  (check! (print/af-print-array (res/af-handle arr))
               "af-print-array")
   nil)
 
@@ -315,7 +315,7 @@
    (print-array-gen expression arr 4))
   ([expression ^AFArray arr precision]
    (let [c-str (bmem/string->c-string expression)]
-     (check! (print/af-print-array-gen c-str (jvm/af-handle arr) (int precision))
+     (check! (print/af-print-array-gen c-str (res/af-handle arr) (int precision))
                  "af-print-array-gen")
      nil)))
 
@@ -362,11 +362,11 @@
    (array-to-string expression arr precision false))
   ([expression ^AFArray arr precision transpose]
    (let [c-expr (bmem/string->c-string expression)
-         output-ptr (jvm/native-af-array-pointer)]
-     (check! (print/af-array-to-string output-ptr c-expr (jvm/af-handle arr) 
+         output-ptr (res/native-af-array-pointer)]
+     (check! (print/af-array-to-string output-ptr c-expr (res/af-handle arr) 
                                            (int precision) (if transpose 1 0))
                  "af-array-to-string")
-     (let [str-addr (jvm/deref-af-array output-ptr)
+     (let [str-addr (res/deref-af-array output-ptr)
            str-segment (java.lang.foreign.MemorySegment/ofAddress str-addr)]
        (bmem/c-string->string str-segment)))))
 
@@ -429,7 +429,7 @@
    (let [c-key (bmem/string->c-string key)
          c-filename (bmem/string->c-string filename)
          index-buf (mem/alloc-instance ::mem/int)]
-     (check! (stream/af-save-array index-buf c-key (jvm/af-handle arr) 
+     (check! (stream/af-save-array index-buf c-key (res/af-handle arr) 
                                       c-filename (if append 1 0))
                  "af-save-array")
      (mem/read-int index-buf 0))))
@@ -471,10 +471,10 @@
    - read-array-key-check: Get index for a key"
   [filename index]
   (let [c-filename (bmem/string->c-string filename)
-        out (jvm/native-af-array-pointer)]
+        out (res/native-af-array-pointer)]
     (check! (stream/af-read-array-index out c-filename (int index))
                 "af-read-array-index")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn read-array-key
   "Read an array from a file by its key/tag name.
@@ -516,10 +516,10 @@
   [filename key]
   (let [c-filename (bmem/string->c-string filename)
         c-key (bmem/string->c-string key)
-        out (jvm/native-af-array-pointer)]
+        out (res/native-af-array-pointer)]
     (check! (stream/af-read-array-key out c-filename c-key)
                 "af-read-array-key")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn read-array-key-check
   "Check if a key exists in a file and return its index.

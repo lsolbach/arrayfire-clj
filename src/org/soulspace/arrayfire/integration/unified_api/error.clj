@@ -39,8 +39,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.error :as error-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
+            [org.soulspace.arrayfire.integration.base.memory :as bmem])
   (:import [java.lang.foreign Arena MemorySegment]))
 
 ;;;

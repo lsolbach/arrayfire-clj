@@ -1,13 +1,14 @@
 (ns org.soulspace.arrayfire.integration.unified-api.lapack-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [coffi.mem :as mem]
             [org.soulspace.arrayfire.util.test :refer [approx=]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.lapack :as lapack]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
-            [coffi.mem :as mem])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Matrix Decompositions Tests
@@ -19,7 +20,7 @@
     (let [a (array/create-array (float-array [1.0 2.0 3.0
                                                4.0 5.0 6.0
                                                7.0 8.0 10.0])
-                                 [3 3] jvm/AF_DTYPE_F32)
+                                 [3 3] defs/AF_DTYPE_F32)
           [l u p] (lapack/lu a)
           l-buf (mem/alloc (* 9 4))
           u-buf (mem/alloc (* 9 4))]
@@ -40,7 +41,7 @@
     (let [a (array/create-array (float-array [1.0 2.0 3.0
                                                4.0 5.0 6.0
                                                7.0 8.0 9.0])
-                                 [3 3] jvm/AF_DTYPE_F32)
+                                 [3 3] defs/AF_DTYPE_F32)
           [q r tau] (lapack/qr a)
           q-buf (mem/alloc (* 9 4))]
       (array/get-data-ptr q q-buf)
@@ -57,7 +58,7 @@
     (let [a (array/create-array (float-array [1.0 2.0
                                                3.0 4.0
                                                5.0 6.0])
-                                 [3 2] jvm/AF_DTYPE_F32)
+                                 [3 2] defs/AF_DTYPE_F32)
           [u s vt] (lapack/svd a)
           s-buf (mem/alloc (* 2 4))]
       (array/get-data-ptr s s-buf)
@@ -74,9 +75,9 @@
     (device/init!)
     (let [;; Create a positive definite matrix (A = B' * B)
           b (array/create-array (float-array [1.0 0.0
-                                               2.0 3.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 3.0]) [2 2] defs/AF_DTYPE_F32)
           a (array/create-array (float-array [5.0 6.0
-                                               6.0 13.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               6.0 13.0]) [2 2] defs/AF_DTYPE_F32)
           {:keys [result info]} (lapack/cholesky a)]
       (try
         (is (instance? AFArray result))
@@ -91,7 +92,7 @@
   (testing "cholesky with lower triangular output"
     (device/init!)
     (let [a (array/create-array (float-array [4.0 2.0
-                                               2.0 3.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 3.0]) [2 2] defs/AF_DTYPE_F32)
           {:keys [result info]} (lapack/cholesky a false)]
       (try
         (is (instance? AFArray result))
@@ -104,7 +105,7 @@
   (testing "cholesky with upper triangular output"
     (device/init!)
     (let [a (array/create-array (float-array [4.0 2.0
-                                               2.0 3.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 3.0]) [2 2] defs/AF_DTYPE_F32)
           {:keys [result info]} (lapack/cholesky a true)]
       (try
         (is (instance? AFArray result))
@@ -117,7 +118,7 @@
   (testing "cholesky! performs in-place decomposition"
     (device/init!)
     (let [a (array/create-array (float-array [4.0 2.0
-                                               2.0 3.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 3.0]) [2 2] defs/AF_DTYPE_F32)
           {:keys [result info]} (lapack/cholesky! a)]
       (try
         (is (= a result)) ; Same array
@@ -133,7 +134,7 @@
   (testing "det computes determinant of square matrix"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           d (lapack/det a)]
       (try
         (is (number? d))
@@ -144,7 +145,7 @@
 (deftest test-det-identity
   (testing "det of identity matrix is 1"
     (device/init!)
-    (let [a (data/identity [3 3] jvm/AF_DTYPE_F32)
+    (let [a (data/identity [3 3] defs/AF_DTYPE_F32)
           d (lapack/det a)]
       (try
         (is (approx= 1.0 d 0.001))
@@ -158,7 +159,7 @@
     ;; ArrayFire's det function fails on exactly singular matrices (error 998),
     ;; but works on near-singular matrices. Use rank to detect exact singularity.
     (let [a (array/create-array (float-array [1.0 2.0
-                                               2.0 4.001]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 4.001]) [2 2] defs/AF_DTYPE_F32)
           d (lapack/det a)]
       (try
         (is (number? d))
@@ -170,7 +171,7 @@
   (testing "rank computes matrix rank"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           r (lapack/rank a)]
       (try
         (is (integer? r))
@@ -182,7 +183,7 @@
   (testing "rank detects rank-deficient matrix"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               2.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           r (lapack/rank a)]
       (try
         (is (= 1 r))
@@ -193,7 +194,7 @@
   (testing "rank with custom tolerance"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           r (lapack/rank a 1e-6)]
       (try
         (is (integer? r))
@@ -207,7 +208,7 @@
 (deftest test-norm-l2
   (testing "norm computes L2 (Euclidean) norm"
     (device/init!)
-    (let [a (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
           n (lapack/norm a 2)]
       (try
         (is (number? n))
@@ -218,7 +219,7 @@
 (deftest test-norm-l1
   (testing "norm computes L1 norm"
     (device/init!)
-    (let [a (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
           n (lapack/norm a 0)]
       (try
         (is (approx= 7.0 n 0.001))
@@ -228,7 +229,7 @@
 (deftest test-norm-linf
   (testing "norm computes L-infinity norm"
     (device/init!)
-    (let [a (array/create-array (float-array [3.0 -7.0 4.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [3.0 -7.0 4.0]) [3] defs/AF_DTYPE_F32)
           n (lapack/norm a 1)]
       (try
         (is (approx= 7.0 n 0.001))
@@ -238,7 +239,7 @@
 (deftest test-norm-default
   (testing "norm with default parameters (L2)"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 1.0]) [2] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 1.0]) [2] defs/AF_DTYPE_F32)
           n (lapack/norm a)]
       (try
         (is (approx= (Math/sqrt 2.0) n 0.001))
@@ -253,7 +254,7 @@
   (testing "inverse computes matrix inverse"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           inv-a (lapack/inverse a)]
       (try
         (is (instance? AFArray inv-a))
@@ -265,7 +266,7 @@
 (deftest test-inverse-identity
   (testing "inverse of identity is identity"
     (device/init!)
-    (let [a (data/identity [3 3] jvm/AF_DTYPE_F32)
+    (let [a (data/identity [3 3] defs/AF_DTYPE_F32)
           inv-a (lapack/inverse a)
           buf (mem/alloc (* 9 4))]
       (try
@@ -280,7 +281,7 @@
   (testing "pinverse computes pseudo-inverse"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           pinv-a (lapack/pinverse a)]
       (try
         (is (instance? AFArray pinv-a))
@@ -293,7 +294,7 @@
   (testing "pinverse works with rectangular matrices"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0 3.0
-                                               4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
+                                               4.0 5.0 6.0]) [2 3] defs/AF_DTYPE_F32)
           pinv-a (lapack/pinverse a)]
       (try
         (is (instance? AFArray pinv-a))
@@ -306,7 +307,7 @@
   (testing "pinverse with custom tolerance"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               2.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           pinv-a (lapack/pinverse a 1e-5)]
       (try
         (is (instance? AFArray pinv-a))
@@ -322,8 +323,8 @@
   (testing "solve solves linear system A·x = b"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
-          b (array/create-array (float-array [5.0 11.0]) [2] jvm/AF_DTYPE_F32)
+                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
+          b (array/create-array (float-array [5.0 11.0]) [2] defs/AF_DTYPE_F32)
           x (lapack/solve a b)
           buf (mem/alloc (* 2 4))]
       (try
@@ -340,8 +341,8 @@
 (deftest test-solve-identity
   (testing "solve with identity matrix returns b"
     (device/init!)
-    (let [a (data/identity [3 3] jvm/AF_DTYPE_F32)
-          b (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (data/identity [3 3] defs/AF_DTYPE_F32)
+          b (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
           x (lapack/solve a b)
           buf (mem/alloc (* 3 4))]
       (try
@@ -358,8 +359,8 @@
   (testing "solve with method options"
     (device/init!)
     (let [a (array/create-array (float-array [2.0 0.0
-                                               0.0 3.0]) [2 2] jvm/AF_DTYPE_F32)
-          b (array/create-array (float-array [4.0 6.0]) [2] jvm/AF_DTYPE_F32)
+                                               0.0 3.0]) [2 2] defs/AF_DTYPE_F32)
+          b (array/create-array (float-array [4.0 6.0]) [2] defs/AF_DTYPE_F32)
           x (lapack/solve a b {:method 0})]
       (try
         (is (instance? AFArray x))
@@ -372,8 +373,8 @@
   (testing "solve-lu solves using pre-computed LU decomposition"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
-          b (array/create-array (float-array [5.0 11.0]) [2] jvm/AF_DTYPE_F32)
+                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
+          b (array/create-array (float-array [5.0 11.0]) [2] defs/AF_DTYPE_F32)
           [l u p] (lapack/lu a)
           x (lapack/solve-lu l p b)  ; Use l (lower) not u (upper)
           buf (mem/alloc 8)]
@@ -417,7 +418,7 @@
   (testing "Cholesky decomposition and determinant are consistent"
     (device/init!)
     (let [a (array/create-array (float-array [4.0 2.0
-                                               2.0 3.0]) [2 2] jvm/AF_DTYPE_F32)
+                                               2.0 3.0]) [2 2] defs/AF_DTYPE_F32)
           {:keys [result info]} (lapack/cholesky a)
           det-val (lapack/det a)]
       (try
@@ -431,8 +432,8 @@
   (testing "Solving via inverse gives same result as solve"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 5.0]) [2 2] jvm/AF_DTYPE_F32)
-          b (array/create-array (float-array [7.0 13.0]) [2] jvm/AF_DTYPE_F32)
+                                               3.0 5.0]) [2 2] defs/AF_DTYPE_F32)
+          b (array/create-array (float-array [7.0 13.0]) [2] defs/AF_DTYPE_F32)
           x-solve (lapack/solve a b)
           inv-a (lapack/inverse a)]
       (try

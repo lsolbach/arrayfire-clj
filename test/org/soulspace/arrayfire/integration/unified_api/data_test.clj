@@ -1,10 +1,11 @@
 (ns org.soulspace.arrayfire.integration.unified-api.data-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Data Generation Functions Tests
@@ -22,12 +23,12 @@
 (deftest test-constant-with-dtype
   (testing "constant creates array with specified dtype"
     (device/init!)
-    (let [f32-arr (data/constant 2.5 [2 2] jvm/AF_DTYPE_F32)
-          f64-arr (data/constant 2.5 [2 2] jvm/AF_DTYPE_F64)]
+    (let [f32-arr (data/constant 2.5 [2 2] defs/AF_DTYPE_F32)
+          f64-arr (data/constant 2.5 [2 2] defs/AF_DTYPE_F64)]
       (is (instance? AFArray f32-arr))
       (is (instance? AFArray f64-arr))
-      (is (= jvm/AF_DTYPE_F32 (array/get-type f32-arr)))
-      (is (= jvm/AF_DTYPE_F64 (array/get-type f64-arr)))
+      (is (= defs/AF_DTYPE_F32 (array/get-type f32-arr)))
+      (is (= defs/AF_DTYPE_F64 (array/get-type f64-arr)))
       (.close f64-arr)
       (.close f32-arr))))
 
@@ -43,12 +44,12 @@
 (deftest test-constant-complex-with-dtype
   (testing "constant-complex creates array with specified complex dtype"
     (device/init!)
-    (let [c32-arr (data/constant-complex 1.0 2.0 [2 2] jvm/AF_DTYPE_C32)
-          c64-arr (data/constant-complex 1.0 2.0 [2 2] jvm/AF_DTYPE_C64)]
+    (let [c32-arr (data/constant-complex 1.0 2.0 [2 2] defs/AF_DTYPE_C32)
+          c64-arr (data/constant-complex 1.0 2.0 [2 2] defs/AF_DTYPE_C64)]
       (is (instance? AFArray c32-arr))
       (is (instance? AFArray c64-arr))
-      (is (= jvm/AF_DTYPE_C32 (array/get-type c32-arr)))
-      (is (= jvm/AF_DTYPE_C64 (array/get-type c64-arr)))
+      (is (= defs/AF_DTYPE_C32 (array/get-type c32-arr)))
+      (is (= defs/AF_DTYPE_C64 (array/get-type c64-arr)))
       (.close c64-arr)
       (.close c32-arr))))
 
@@ -79,12 +80,12 @@
 (deftest test-identity-with-dtype
   (testing "identity creates identity matrix with specified dtype"
     (device/init!)
-    (let [f32-arr (data/identity [3 3] jvm/AF_DTYPE_F32)
-          f64-arr (data/identity [3 3] jvm/AF_DTYPE_F64)]
+    (let [f32-arr (data/identity [3 3] defs/AF_DTYPE_F32)
+          f64-arr (data/identity [3 3] defs/AF_DTYPE_F64)]
       (is (instance? AFArray f32-arr))
       (is (instance? AFArray f64-arr))
-      (is (= jvm/AF_DTYPE_F32 (array/get-type f32-arr)))
-      (is (= jvm/AF_DTYPE_F64 (array/get-type f64-arr)))
+      (is (= defs/AF_DTYPE_F32 (array/get-type f32-arr)))
+      (is (= defs/AF_DTYPE_F64 (array/get-type f64-arr)))
       (.close f64-arr)
       (.close f32-arr))))
 
@@ -107,9 +108,9 @@
 (deftest test-range-with-dtype
   (testing "range creates array with specified dtype"
     (device/init!)
-    (let [arr (data/range [5] 0 jvm/AF_DTYPE_F64)]
+    (let [arr (data/range [5] 0 defs/AF_DTYPE_F64)]
       (is (instance? AFArray arr))
-      (is (= jvm/AF_DTYPE_F64 (array/get-type arr)))
+      (is (= defs/AF_DTYPE_F64 (array/get-type arr)))
       (.close arr))))
 
 (deftest test-iota
@@ -123,9 +124,9 @@
 (deftest test-iota-with-dtype
   (testing "iota creates array with specified dtype"
     (device/init!)
-    (let [arr (data/iota [3 4] [1 1] jvm/AF_DTYPE_F32)]
+    (let [arr (data/iota [3 4] [1 1] defs/AF_DTYPE_F32)]
       (is (instance? AFArray arr))
-      (is (= jvm/AF_DTYPE_F32 (array/get-type arr)))
+      (is (= defs/AF_DTYPE_F32 (array/get-type arr)))
       (.close arr))))
 
 ;;;
@@ -135,7 +136,7 @@
 (deftest test-diag-create
   (testing "diag-create creates diagonal matrix from vector"
     (device/init!)
-    (let [vec (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
+    (let [vec (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
           diag-arr (data/diag-create vec)]
       (is (instance? AFArray diag-arr))
       (is (= [3 3 1 1] (array/get-dims diag-arr)))
@@ -145,7 +146,7 @@
 (deftest test-diag-create-with-offset
   (testing "diag-create creates diagonal matrix with offset"
     (device/init!)
-    (let [vec (array/create-array (float-array [1.0 2.0]) [2] jvm/AF_DTYPE_F32)
+    (let [vec (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
           diag-arr (data/diag-create vec 1)]
       (is (instance? AFArray diag-arr))
       (is (= [3 3 1 1] (array/get-dims diag-arr)))
@@ -382,7 +383,7 @@
 (deftest test-select
   (testing "select chooses elements based on condition"
     (device/init!)
-    (let [cond (array/create-array (byte-array [1 0 1 0]) [4] jvm/AF_DTYPE_B8)
+    (let [cond (array/create-array (byte-array [1 0 1 0]) [4] defs/AF_DTYPE_B8)
           a (data/constant 1.0 [4])
           b (data/constant 2.0 [4])
           result (data/select cond a b)]
@@ -396,7 +397,7 @@
 (deftest test-select-scalar-r
   (testing "select-scalar-r chooses between array and scalar"
     (device/init!)
-    (let [cond (array/create-array (byte-array [1 0 1 0]) [4] jvm/AF_DTYPE_B8)
+    (let [cond (array/create-array (byte-array [1 0 1 0]) [4] defs/AF_DTYPE_B8)
           a (data/constant 1.0 [4])
           result (data/select-scalar-r cond a 5.0)]
       (is (instance? AFArray result))
@@ -408,7 +409,7 @@
 (deftest test-select-scalar-l
   (testing "select-scalar-l chooses between scalar and array"
     (device/init!)
-    (let [cond (array/create-array (byte-array [1 0 1 0]) [4] jvm/AF_DTYPE_B8)
+    (let [cond (array/create-array (byte-array [1 0 1 0]) [4] defs/AF_DTYPE_B8)
           b (data/constant 2.0 [4])
           result (data/select-scalar-l cond 5.0 b)]
       (is (instance? AFArray result))
@@ -421,7 +422,7 @@
   (testing "replace! modifies array in place"
     (device/init!)
     (let [a (data/constant 1.0 [4])
-          cond (array/create-array (byte-array [0 1 0 1]) [4] jvm/AF_DTYPE_B8)
+          cond (array/create-array (byte-array [0 1 0 1]) [4] defs/AF_DTYPE_B8)
           b (data/constant 5.0 [4])
           result (data/replace! a cond b)]
       (is (identical? result a))
@@ -433,7 +434,7 @@
   (testing "replace-scalar! replaces with scalar value"
     (device/init!)
     (let [a (data/constant 1.0 [4])
-          cond (array/create-array (byte-array [0 1 0 1]) [4] jvm/AF_DTYPE_B8)
+          cond (array/create-array (byte-array [0 1 0 1]) [4] defs/AF_DTYPE_B8)
           result (data/replace-scalar! a cond 10.0)]
       (is (identical? result a))
       (.close cond)

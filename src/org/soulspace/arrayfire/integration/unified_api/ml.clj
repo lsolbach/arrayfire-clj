@@ -48,8 +48,8 @@
             [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 
 (defn gradient-type->int
@@ -330,14 +330,14 @@
         grad-type-int (gradient-type->int gradient-type)
         
         ;; Allocate output
-        out (jvm/native-af-array-pointer)]
+        out (res/native-af-array-pointer)]
     
     (check! (convolve-ffi/af-convolve2-gradient-nn
                   out
-                  (jvm/af-handle incoming-gradient)
-                  (jvm/af-handle original-signal)
-                  (jvm/af-handle original-filter)
-                  (jvm/af-handle convolved-output)
+                  (res/af-handle incoming-gradient)
+                  (res/af-handle original-signal)
+                  (res/af-handle original-filter)
+                  (res/af-handle convolved-output)
                   (int stride-count)
                   stride-buf
                   (int padding-count)
@@ -347,7 +347,7 @@
                   (int grad-type-int))
                 "af-convolve2-gradient-nn")
     
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Convenience Functions

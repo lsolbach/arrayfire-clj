@@ -5,8 +5,8 @@
             [org.soulspace.arrayfire.ffi.c-api.blas :as blas]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Matrix Operations
@@ -28,15 +28,15 @@
    Returns:
    AFArray containing the result C"
   [op-a op-b alpha ^AFArray a ^AFArray b beta]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         alpha-buf (mem/alloc 8)
         beta-buf (mem/alloc 8)
-        _ (jvm/write-double! alpha-buf 0 alpha)
-        _ (jvm/write-double! beta-buf 0 beta)]
+        _ (res/write-double! alpha-buf 0 alpha)
+        _ (res/write-double! beta-buf 0 beta)]
     (check! (blas/af-gemm out (int op-a) (int op-b) 
-                              alpha-buf (jvm/af-handle a) (jvm/af-handle b) beta-buf)
+                              alpha-buf (res/af-handle a) (res/af-handle b) beta-buf)
                 "af-gemm")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn matmul
   "Matrix multiplication.
@@ -57,11 +57,11 @@
   ([^AFArray lhs ^AFArray rhs]
    (matmul lhs rhs 0 0))
   ([^AFArray lhs ^AFArray rhs opt-lhs opt-rhs]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs) 
+   (let [out (res/native-af-array-pointer)]
+     (check! (blas/af-matmul out (res/af-handle lhs) (res/af-handle rhs) 
                                   (int opt-lhs) (int opt-rhs))
                  "af-matmul")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn dot
   "Dot product (inner product) of two vectors.
@@ -80,11 +80,11 @@
   ([^AFArray lhs ^AFArray rhs]
    (dot lhs rhs 0 0))
   ([^AFArray lhs ^AFArray rhs opt-lhs opt-rhs]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (blas/af-dot out (jvm/af-handle lhs) (jvm/af-handle rhs) 
+   (let [out (res/native-af-array-pointer)]
+     (check! (blas/af-dot out (res/af-handle lhs) (res/af-handle rhs) 
                               (int opt-lhs) (int opt-rhs))
                  "af-dot")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn dot-all
   "Dot product with immediate result extraction.
@@ -106,7 +106,7 @@
   ([^AFArray lhs ^AFArray rhs opt-lhs opt-rhs]
    (let [real-buf (mem/alloc 8)
          imag-buf (mem/alloc 8)]
-     (check! (blas/af-dot-all real-buf imag-buf (jvm/af-handle lhs) (jvm/af-handle rhs)
+     (check! (blas/af-dot-all real-buf imag-buf (res/af-handle lhs) (res/af-handle rhs)
                                   (int opt-lhs) (int opt-rhs))
                  "af-dot-all")
      (let [real (bmem/read-double real-buf 0)
@@ -130,10 +130,10 @@
   ([^AFArray in]
    (transpose in false))
   ([^AFArray in conjugate]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (blas/af-transpose out (jvm/af-handle in) (if conjugate 1 0))
+   (let [out (res/native-af-array-pointer)]
+     (check! (blas/af-transpose out (res/af-handle in) (if conjugate 1 0))
                  "af-transpose")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn transpose!
   "Transpose a matrix in-place.
@@ -150,7 +150,7 @@
   ([^AFArray in]
    (transpose! in false))
   ([^AFArray in conjugate]
-   (check! (blas/af-transpose-inplace (jvm/af-handle in) (if conjugate 1 0))
+   (check! (blas/af-transpose-inplace (res/af-handle in) (if conjugate 1 0))
                "af-transpose-inplace")
    in))
 
@@ -186,11 +186,11 @@
    - B is stored in transposed form
    - Avoiding explicit transpose operation for efficiency"
   [^AFArray lhs ^AFArray rhs]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+  (let [out (res/native-af-array-pointer)]
+    (check! (blas/af-matmul out (res/af-handle lhs) (res/af-handle rhs)
                                 0 1)  ; AF_MAT_NONE, AF_MAT_TRANS
                 "af-matmul")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn matmul-tn
   "Matrix multiplication: A^T * B (A transposed).
@@ -221,11 +221,11 @@
    - Computing Gram matrix: A^T * A
    - Normal equations: A^T * A * x = A^T * b"
   [^AFArray lhs ^AFArray rhs]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+  (let [out (res/native-af-array-pointer)]
+    (check! (blas/af-matmul out (res/af-handle lhs) (res/af-handle rhs)
                                 1 0)  ; AF_MAT_TRANS, AF_MAT_NONE
                 "af-matmul")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn matmul-tt
   "Matrix multiplication: A^T * B^T (both transposed).
@@ -255,11 +255,11 @@
    - Both matrices stored in transposed form
    - Specific computational patterns in algorithms"
   [^AFArray lhs ^AFArray rhs]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (blas/af-matmul out (jvm/af-handle lhs) (jvm/af-handle rhs)
+  (let [out (res/native-af-array-pointer)]
+    (check! (blas/af-matmul out (res/af-handle lhs) (res/af-handle rhs)
                                 1 1)  ; AF_MAT_TRANS, AF_MAT_TRANS
                 "af-matmul")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Chain Matrix Multiplication

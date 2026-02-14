@@ -1,16 +1,11 @@
 (ns org.soulspace.arrayfire.integration.unified-api.complex-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.util.test :refer [approx=]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.complex :as complex]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
-            [coffi.mem :as mem]))
-
-(defn- approx=
-  "Compare expected/actual values within a tolerance."
-  [expected actual tolerance]
-  (<= (Math/abs (- (double expected) (double actual)))
-      (double tolerance)))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
 ;;;
 ;;; Complex Number Creation Tests
@@ -19,7 +14,7 @@
 (deftest test-cplx
   (testing "cplx creates complex array from real array"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
           b (complex/cplx a)
           buf (mem/alloc (* 3 8))]  ; 3 elements * 8 bytes (2 floats)
       (array/get-data-ptr b buf)
@@ -37,8 +32,8 @@
 (deftest test-cplx2
   (testing "cplx2 creates complex array from real and imaginary arrays"
     (device/init!)
-    (let [real-part (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          imag-part (array/create-array (float-array [4.0 5.0 6.0]) [3] jvm/AF_DTYPE_F32)
+    (let [real-part (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+          imag-part (array/create-array (float-array [4.0 5.0 6.0]) [3] defs/AF_DTYPE_F32)
           c (complex/cplx2 real-part imag-part)
           buf (mem/alloc (* 3 8))]
       (array/get-data-ptr c buf)
@@ -57,8 +52,8 @@
 (deftest test-cplx2-batch
   (testing "cplx2 with batch mode"
     (device/init!)
-    (let [real-part (array/create-array (float-array [1.0 2.0]) [2] jvm/AF_DTYPE_F32)
-          imag-part (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
+    (let [real-part (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
+          imag-part (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
           c (complex/cplx2 real-part imag-part true)
           buf (mem/alloc (* 2 8))]
       (array/get-data-ptr c buf)
@@ -79,8 +74,8 @@
 (deftest test-real
   (testing "real extracts real part from complex array"
     (device/init!)
-    (let [real-part (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          imag-part (array/create-array (float-array [4.0 5.0 6.0]) [3] jvm/AF_DTYPE_F32)
+    (let [real-part (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+          imag-part (array/create-array (float-array [4.0 5.0 6.0]) [3] defs/AF_DTYPE_F32)
           c (complex/cplx2 real-part imag-part)
           r (complex/real c)
           buf (mem/alloc (* 3 4))]
@@ -96,8 +91,8 @@
 (deftest test-imag
   (testing "imag extracts imaginary part from complex array"
     (device/init!)
-    (let [real-part (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          imag-part (array/create-array (float-array [4.0 5.0 6.0]) [3] jvm/AF_DTYPE_F32)
+    (let [real-part (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+          imag-part (array/create-array (float-array [4.0 5.0 6.0]) [3] defs/AF_DTYPE_F32)
           c (complex/cplx2 real-part imag-part)
           im (complex/imag c)
           buf (mem/alloc (* 3 4))]
@@ -117,8 +112,8 @@
 (deftest test-conjg
   (testing "conjg computes complex conjugate"
     (device/init!)
-    (let [real-part (array/create-array (float-array [1.0 2.0]) [2] jvm/AF_DTYPE_F32)
-          imag-part (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
+    (let [real-part (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
+          imag-part (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
           c (complex/cplx2 real-part imag-part)
           conj-c (complex/conjg c)
           buf (mem/alloc (* 2 8))]
@@ -137,8 +132,8 @@
 (deftest test-abs
   (testing "abs computes magnitude of complex numbers"
     (device/init!)
-    (let [real-part (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
-          imag-part (array/create-array (float-array [4.0 3.0]) [2] jvm/AF_DTYPE_F32)
+    (let [real-part (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
+          imag-part (array/create-array (float-array [4.0 3.0]) [2] defs/AF_DTYPE_F32)
           c (complex/cplx2 real-part imag-part)
           mag (complex/abs c)
           buf (mem/alloc (* 2 4))]
@@ -155,8 +150,8 @@
 (deftest test-arg
   (testing "arg computes phase angle of complex numbers"
     (device/init!)
-    (let [real-part (array/create-array (float-array [1.0 0.0 -1.0]) [3] jvm/AF_DTYPE_F32)
-          imag-part (array/create-array (float-array [0.0 1.0 0.0]) [3] jvm/AF_DTYPE_F32)
+    (let [real-part (array/create-array (float-array [1.0 0.0 -1.0]) [3] defs/AF_DTYPE_F32)
+          imag-part (array/create-array (float-array [0.0 1.0 0.0]) [3] defs/AF_DTYPE_F32)
           c (complex/cplx2 real-part imag-part)
           phase (complex/arg c)
           buf (mem/alloc (* 3 4))]
@@ -179,7 +174,7 @@
 (deftest test-real-on-real-array
   (testing "real on real array returns retained reference"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
           r (complex/real a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr r buf)
@@ -192,7 +187,7 @@
 (deftest test-imag-on-real-array
   (testing "imag on real array returns zeros"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
           im (complex/imag a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr im buf)
@@ -205,7 +200,7 @@
 (deftest test-conjg-on-real-array
   (testing "conjg on real array returns retained reference"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
           c (complex/conjg a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr c buf)
@@ -222,10 +217,10 @@
 (deftest test-add
   (testing "add performs complex addition"
     (device/init!)
-    (let [real1 (array/create-array (float-array [1.0 2.0]) [2] jvm/AF_DTYPE_F32)
-          imag1 (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
-          real2 (array/create-array (float-array [5.0 6.0]) [2] jvm/AF_DTYPE_F32)
-          imag2 (array/create-array (float-array [7.0 8.0]) [2] jvm/AF_DTYPE_F32)
+    (let [real1 (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
+          imag1 (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
+          real2 (array/create-array (float-array [5.0 6.0]) [2] defs/AF_DTYPE_F32)
+          imag2 (array/create-array (float-array [7.0 8.0]) [2] defs/AF_DTYPE_F32)
           z1 (complex/cplx2 real1 imag1)
           z2 (complex/cplx2 real2 imag2)
           result (complex/add z1 z2)
@@ -248,10 +243,10 @@
 (deftest test-sub
   (testing "sub performs complex subtraction"
     (device/init!)
-    (let [real1 (array/create-array (float-array [5.0 6.0]) [2] jvm/AF_DTYPE_F32)
-          imag1 (array/create-array (float-array [7.0 8.0]) [2] jvm/AF_DTYPE_F32)
-          real2 (array/create-array (float-array [1.0 2.0]) [2] jvm/AF_DTYPE_F32)
-          imag2 (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
+    (let [real1 (array/create-array (float-array [5.0 6.0]) [2] defs/AF_DTYPE_F32)
+          imag1 (array/create-array (float-array [7.0 8.0]) [2] defs/AF_DTYPE_F32)
+          real2 (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
+          imag2 (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
           z1 (complex/cplx2 real1 imag1)
           z2 (complex/cplx2 real2 imag2)
           result (complex/sub z1 z2)
@@ -274,10 +269,10 @@
 (deftest test-mul
   (testing "mul performs complex multiplication"
     (device/init!)
-    (let [real1 (array/create-array (float-array [1.0 2.0]) [2] jvm/AF_DTYPE_F32)
-          imag1 (array/create-array (float-array [2.0 3.0]) [2] jvm/AF_DTYPE_F32)
-          real2 (array/create-array (float-array [3.0 4.0]) [2] jvm/AF_DTYPE_F32)
-          imag2 (array/create-array (float-array [4.0 5.0]) [2] jvm/AF_DTYPE_F32)
+    (let [real1 (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
+          imag1 (array/create-array (float-array [2.0 3.0]) [2] defs/AF_DTYPE_F32)
+          real2 (array/create-array (float-array [3.0 4.0]) [2] defs/AF_DTYPE_F32)
+          imag2 (array/create-array (float-array [4.0 5.0]) [2] defs/AF_DTYPE_F32)
           z1 (complex/cplx2 real1 imag1)
           z2 (complex/cplx2 real2 imag2)
           result (complex/mul z1 z2)
@@ -300,10 +295,10 @@
 (deftest test-div
   (testing "div performs complex division"
     (device/init!)
-    (let [real1 (array/create-array (float-array [1.0]) [1] jvm/AF_DTYPE_F32)
-          imag1 (array/create-array (float-array [2.0]) [1] jvm/AF_DTYPE_F32)
-          real2 (array/create-array (float-array [3.0]) [1] jvm/AF_DTYPE_F32)
-          imag2 (array/create-array (float-array [4.0]) [1] jvm/AF_DTYPE_F32)
+    (let [real1 (array/create-array (float-array [1.0]) [1] defs/AF_DTYPE_F32)
+          imag1 (array/create-array (float-array [2.0]) [1] defs/AF_DTYPE_F32)
+          real2 (array/create-array (float-array [3.0]) [1] defs/AF_DTYPE_F32)
+          imag2 (array/create-array (float-array [4.0]) [1] defs/AF_DTYPE_F32)
           z1 (complex/cplx2 real1 imag1)
           z2 (complex/cplx2 real2 imag2)
           result (complex/div z1 z2)
@@ -327,10 +322,10 @@
 (deftest test-eq
   (testing "eq performs complex equality comparison"
     (device/init!)
-    (let [real1 (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          imag1 (array/create-array (float-array [3.0 4.0 5.0]) [3] jvm/AF_DTYPE_F32)
-          real2 (array/create-array (float-array [1.0 5.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          imag2 (array/create-array (float-array [3.0 6.0 5.0]) [3] jvm/AF_DTYPE_F32)
+    (let [real1 (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+          imag1 (array/create-array (float-array [3.0 4.0 5.0]) [3] defs/AF_DTYPE_F32)
+          real2 (array/create-array (float-array [1.0 5.0 3.0]) [3] defs/AF_DTYPE_F32)
+          imag2 (array/create-array (float-array [3.0 6.0 5.0]) [3] defs/AF_DTYPE_F32)
           z1 (complex/cplx2 real1 imag1)
           z2 (complex/cplx2 real2 imag2)
           result (complex/eq z1 z2)
@@ -353,10 +348,10 @@
 (deftest test-neq
   (testing "neq performs complex inequality comparison"
     (device/init!)
-    (let [real1 (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          imag1 (array/create-array (float-array [3.0 4.0 5.0]) [3] jvm/AF_DTYPE_F32)
-          real2 (array/create-array (float-array [1.0 5.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          imag2 (array/create-array (float-array [3.0 6.0 5.0]) [3] jvm/AF_DTYPE_F32)
+    (let [real1 (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+          imag1 (array/create-array (float-array [3.0 4.0 5.0]) [3] defs/AF_DTYPE_F32)
+          real2 (array/create-array (float-array [1.0 5.0 3.0]) [3] defs/AF_DTYPE_F32)
+          imag2 (array/create-array (float-array [3.0 6.0 5.0]) [3] defs/AF_DTYPE_F32)
           z1 (complex/cplx2 real1 imag1)
           z2 (complex/cplx2 real2 imag2)
           result (complex/neq z1 z2)

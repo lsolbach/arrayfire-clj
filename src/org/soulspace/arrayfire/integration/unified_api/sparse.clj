@@ -146,8 +146,8 @@
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.ffi.c-api.sparse :as sparse]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Sparse Matrix Creation
@@ -207,17 +207,17 @@
   ([n-rows n-cols ^AFArray values ^AFArray row-idx ^AFArray col-idx]
    (create n-rows n-cols values row-idx col-idx defs/AF_STORAGE_COO))
   ([n-rows n-cols ^AFArray values ^AFArray row-idx ^AFArray col-idx storage-type]
-   (let [out (jvm/native-af-array-pointer)]
+   (let [out (res/native-af-array-pointer)]
      (check! (sparse/af-create-sparse-array
                   out
                   (long n-rows)
                   (long n-cols)
-                  (jvm/af-handle values)
-                  (jvm/af-handle row-idx)
-                  (jvm/af-handle col-idx)
+                  (res/af-handle values)
+                  (res/af-handle row-idx)
+                  (res/af-handle col-idx)
                   (int storage-type))
                  "af-create-sparse-array")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn from-ptr
   "Create a sparse matrix from raw memory pointers.
@@ -258,7 +258,7 @@
   ([n-rows n-cols nnz values row-idx col-idx dtype storage-type]
    (from-ptr n-rows n-cols nnz values row-idx col-idx dtype storage-type 0))
   ([n-rows n-cols nnz values row-idx col-idx dtype storage-type source]
-   (let [out (jvm/native-af-array-pointer)]
+   (let [out (res/native-af-array-pointer)]
      (check! (sparse/af-create-sparse-array-from-ptr
                   out
                   (long n-rows)
@@ -271,7 +271,7 @@
                   (int storage-type)
                   (int source))
                  "af-create-sparse-array-from-ptr")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn from-dense
   "Create a sparse matrix from a dense matrix.
@@ -319,13 +319,13 @@
   ([^AFArray in]
    (from-dense in defs/AF_STORAGE_COO))
   ([^AFArray in storage-type]
-   (let [out (jvm/native-af-array-pointer)]
+   (let [out (res/native-af-array-pointer)]
      (check! (sparse/af-create-sparse-array-from-dense
                   out
-                  (jvm/af-handle in)
+                  (res/af-handle in)
                   (int storage-type))
                  "af-create-sparse-array-from-dense")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Format Conversion
@@ -377,13 +377,13 @@
    - to-dense: Convert to dense matrix
    - storage-format: Query current format"
   [^AFArray in dest-storage]
-  (let [out (jvm/native-af-array-pointer)]
+  (let [out (res/native-af-array-pointer)]
     (check! (sparse/af-sparse-convert-to
                  out
-                 (jvm/af-handle in)
+                 (res/af-handle in)
                  (int dest-storage))
                 "af-sparse-convert-to")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn to-dense
   "Convert a sparse matrix to dense format.
@@ -428,12 +428,12 @@
    - from-dense: Convert dense to sparse
    - convert-to: Convert between sparse formats"
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
+  (let [out (res/native-af-array-pointer)]
     (check! (sparse/af-sparse-to-dense
                  out
-                 (jvm/af-handle in))
+                 (res/af-handle in))
                 "af-sparse-to-dense")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Sparse Matrix Inspection
@@ -487,20 +487,20 @@
    - col-indices: Get only the column index array
    - storage-format: Get only the storage format"
   [^AFArray in]
-  (let [values-ptr (jvm/native-af-array-pointer)
-        row-idx-ptr (jvm/native-af-array-pointer)
-        col-idx-ptr (jvm/native-af-array-pointer)
+  (let [values-ptr (res/native-af-array-pointer)
+        row-idx-ptr (res/native-af-array-pointer)
+        col-idx-ptr (res/native-af-array-pointer)
         storage-buf (mem/alloc-instance ::mem/int)]
     (check! (sparse/af-sparse-get-info
                  values-ptr
                  row-idx-ptr
                  col-idx-ptr
                  storage-buf
-                 (jvm/af-handle in))
+                 (res/af-handle in))
                 "af-sparse-get-info")
-    {:values (jvm/af-array-new (jvm/deref-af-array values-ptr))
-     :row-idx (jvm/af-array-new (jvm/deref-af-array row-idx-ptr))
-     :col-idx (jvm/af-array-new (jvm/deref-af-array col-idx-ptr))
+    {:values (res/af-array-new (res/deref-af-array values-ptr))
+     :row-idx (res/af-array-new (res/deref-af-array row-idx-ptr))
+     :col-idx (res/af-array-new (res/deref-af-array col-idx-ptr))
      :storage (mem/read-int storage-buf)}))
 
 (defn values
@@ -527,12 +527,12 @@
    - col-indices: Get column index array
    - info: Get all components"
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
+  (let [out (res/native-af-array-pointer)]
     (check! (sparse/af-sparse-get-values
                  out
-                 (jvm/af-handle in))
+                 (res/af-handle in))
                 "af-sparse-get-values")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn row-indices
   "Extract the row index array from a sparse matrix.
@@ -570,12 +570,12 @@
    - values: Get values array
    - info: Get all components"
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
+  (let [out (res/native-af-array-pointer)]
     (check! (sparse/af-sparse-get-row-idx
                  out
-                 (jvm/af-handle in))
+                 (res/af-handle in))
                 "af-sparse-get-row-idx")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn col-indices
   "Extract the column index array from a sparse matrix.
@@ -604,12 +604,12 @@
    - values: Get values array
    - info: Get all components"
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
+  (let [out (res/native-af-array-pointer)]
     (check! (sparse/af-sparse-get-col-idx
                  out
-                 (jvm/af-handle in))
+                 (res/af-handle in))
                 "af-sparse-get-col-idx")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn nnz
   "Get the number of non-zero elements in a sparse matrix.
@@ -658,7 +658,7 @@
   (let [nnz-buf (mem/alloc-instance ::mem/long)]
     (check! (sparse/af-sparse-get-nnz
                  nnz-buf
-                 (jvm/af-handle in))
+                 (res/af-handle in))
                 "af-sparse-get-nnz")
     (mem/read-long nnz-buf)))
 
@@ -703,7 +703,7 @@
   (let [storage-buf (mem/alloc-instance ::mem/int)]
     (check! (sparse/af-sparse-get-storage
                  storage-buf
-                 (jvm/af-handle in))
+                 (res/af-handle in))
                 "af-sparse-get-storage")
     (mem/read-int storage-buf)))
 

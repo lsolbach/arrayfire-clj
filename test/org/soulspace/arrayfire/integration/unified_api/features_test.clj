@@ -1,10 +1,11 @@
 (ns org.soulspace.arrayfire.integration.unified-api.features-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.features :as features]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Feature Lifecycle Management Tests
@@ -110,7 +111,7 @@
         (let [x (features/get-features-xpos feat)]
           (is (instance? AFArray x))
           (is (= [10 1 1 1] (array/get-dims x)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type x))))
+          (is (= defs/AF_DTYPE_F32 (array/get-type x))))
         (finally
           (features/release-features! feat))))))
 
@@ -122,7 +123,7 @@
         (let [y (features/get-features-ypos feat)]
           (is (instance? AFArray y))
           (is (= [10 1 1 1] (array/get-dims y)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type y))))
+          (is (= defs/AF_DTYPE_F32 (array/get-type y))))
         (finally
           (features/release-features! feat))))))
 
@@ -134,7 +135,7 @@
         (let [score (features/get-features-score feat)]
           (is (instance? AFArray score))
           (is (= [10 1 1 1] (array/get-dims score)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type score))))
+          (is (= defs/AF_DTYPE_F32 (array/get-type score))))
         (finally
           (features/release-features! feat))))))
 
@@ -146,7 +147,7 @@
         (let [ori (features/get-features-orientation feat)]
           (is (instance? AFArray ori))
           (is (= [10 1 1 1] (array/get-dims ori)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type ori))))
+          (is (= defs/AF_DTYPE_F32 (array/get-type ori))))
         (finally
           (features/release-features! feat))))))
 
@@ -158,7 +159,7 @@
         (let [size (features/get-features-size feat)]
           (is (instance? AFArray size))
           (is (= [10 1 1 1] (array/get-dims size)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type size))))
+          (is (= defs/AF_DTYPE_F32 (array/get-type size))))
         (finally
           (features/release-features! feat))))))
 
@@ -196,11 +197,11 @@
               score (features/get-features-score feat)
               ori (features/get-features-orientation feat)
               size (features/get-features-size feat)]
-          (is (= jvm/AF_DTYPE_F32 (array/get-type x)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type y)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type score)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type ori)))
-          (is (= jvm/AF_DTYPE_F32 (array/get-type size))))
+          (is (= defs/AF_DTYPE_F32 (array/get-type x)))
+          (is (= defs/AF_DTYPE_F32 (array/get-type y)))
+          (is (= defs/AF_DTYPE_F32 (array/get-type score)))
+          (is (= defs/AF_DTYPE_F32 (array/get-type ori)))
+          (is (= defs/AF_DTYPE_F32 (array/get-type size))))
         (finally
           (features/release-features! feat))))))
 

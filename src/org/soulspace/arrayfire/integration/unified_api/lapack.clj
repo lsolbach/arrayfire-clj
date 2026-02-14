@@ -13,8 +13,8 @@
             [org.soulspace.arrayfire.ffi.c-api.qr :as qr]
             [org.soulspace.arrayfire.ffi.c-api.svd :as svd]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Matrix Decompositions
@@ -44,13 +44,13 @@
      ;; Can use with solve-lu
      (solve-lu u p b))"
   [^AFArray a]
-  (let [l (jvm/native-af-array-pointer)
-        u (jvm/native-af-array-pointer)
-        p (jvm/native-af-array-pointer)]
-    (check! (lu/af-lu l u p (jvm/af-handle a)) "af-lu")
-    [(jvm/af-array-new (jvm/deref-af-array l))
-     (jvm/af-array-new (jvm/deref-af-array u))
-     (jvm/af-array-new (jvm/deref-af-array p))]))
+  (let [l (res/native-af-array-pointer)
+        u (res/native-af-array-pointer)
+        p (res/native-af-array-pointer)]
+    (check! (lu/af-lu l u p (res/af-handle a)) "af-lu")
+    [(res/af-array-new (res/deref-af-array l))
+     (res/af-array-new (res/deref-af-array u))
+     (res/af-array-new (res/deref-af-array p))]))
 
 (defn lu!
   "Perform in-place LU decomposition of a matrix.
@@ -72,10 +72,10 @@
   ([^AFArray in]
    (lu! in false))
   ([^AFArray in is-lapack-piv]
-   (let [pivot (jvm/native-af-array-pointer)]
-     (check! (lu/af-lu-inplace pivot (jvm/af-handle in) (if is-lapack-piv 1 0))
+   (let [pivot (res/native-af-array-pointer)]
+     (check! (lu/af-lu-inplace pivot (res/af-handle in) (if is-lapack-piv 1 0))
                  "af-lu-inplace")
-     (jvm/af-array-new (jvm/deref-af-array pivot)))))
+     (res/af-array-new (res/deref-af-array pivot)))))
 
 (defn qr
   "Compute the QR decomposition of a matrix.
@@ -101,13 +101,13 @@
      ;; Q is orthogonal, R is upper triangular
      r)"
   [^AFArray a]
-  (let [q (jvm/native-af-array-pointer)
-        r (jvm/native-af-array-pointer)
-        tau (jvm/native-af-array-pointer)]
-    (check! (qr/af-qr q r tau (jvm/af-handle a)) "af-qr")
-    [(jvm/af-array-new (jvm/deref-af-array q))
-     (jvm/af-array-new (jvm/deref-af-array r))
-     (jvm/af-array-new (jvm/deref-af-array tau))]))
+  (let [q (res/native-af-array-pointer)
+        r (res/native-af-array-pointer)
+        tau (res/native-af-array-pointer)]
+    (check! (qr/af-qr q r tau (res/af-handle a)) "af-qr")
+    [(res/af-array-new (res/deref-af-array q))
+     (res/af-array-new (res/deref-af-array r))
+     (res/af-array-new (res/deref-af-array tau))]))
 
 (defn qr!
   "Perform in-place QR decomposition of a matrix.
@@ -126,10 +126,10 @@
      ;; a is now overwritten with Q+R in compact form
      tau)"
   [^AFArray in]
-  (let [tau (jvm/native-af-array-pointer)]
-    (check! (qr/af-qr-inplace tau (jvm/af-handle in))
+  (let [tau (res/native-af-array-pointer)]
+    (check! (qr/af-qr-inplace tau (res/af-handle in))
                 "af-qr-inplace")
-    (jvm/af-array-new (jvm/deref-af-array tau))))
+    (res/af-array-new (res/deref-af-array tau))))
 
 (defn svd
   "Compute the Singular Value Decomposition (SVD) of a matrix.
@@ -158,13 +158,13 @@
      ;; A ≈ U * S * VT
      s) ; singular values"
   [^AFArray a]
-  (let [u  (jvm/native-af-array-pointer)
-        s  (jvm/native-af-array-pointer)
-        vt (jvm/native-af-array-pointer)]
-    (check! (svd/af-svd u s vt (jvm/af-handle a)) "af-svd")
-    [(jvm/af-array-new (jvm/deref-af-array u))
-     (jvm/af-array-new (jvm/deref-af-array s))
-     (jvm/af-array-new (jvm/deref-af-array vt))]))
+  (let [u  (res/native-af-array-pointer)
+        s  (res/native-af-array-pointer)
+        vt (res/native-af-array-pointer)]
+    (check! (svd/af-svd u s vt (res/af-handle a)) "af-svd")
+    [(res/af-array-new (res/deref-af-array u))
+     (res/af-array-new (res/deref-af-array s))
+     (res/af-array-new (res/deref-af-array vt))]))
 
 (defn svd!
   "Perform in-place Singular Value Decomposition (SVD) of a matrix.
@@ -186,13 +186,13 @@
      ;; a is destroyed, but we have U, S, VT
      s)"
   [^AFArray in]
-  (let [u  (jvm/native-af-array-pointer)
-        s  (jvm/native-af-array-pointer)
-        vt (jvm/native-af-array-pointer)]
-    (check! (svd/af-svd-inplace u s vt (jvm/af-handle in)) "af-svd-inplace")
-    [(jvm/af-array-new (jvm/deref-af-array u))
-     (jvm/af-array-new (jvm/deref-af-array s))
-     (jvm/af-array-new (jvm/deref-af-array vt))]))
+  (let [u  (res/native-af-array-pointer)
+        s  (res/native-af-array-pointer)
+        vt (res/native-af-array-pointer)]
+    (check! (svd/af-svd-inplace u s vt (res/af-handle in)) "af-svd-inplace")
+    [(res/af-array-new (res/deref-af-array u))
+     (res/af-array-new (res/deref-af-array s))
+     (res/af-array-new (res/deref-af-array vt))]))
 
 (defn cholesky
   "Perform Cholesky decomposition of a positive definite matrix.
@@ -220,11 +220,11 @@
   ([^AFArray in]
    (cholesky in false))
   ([^AFArray in is-upper]
-   (let [out (jvm/native-af-array-pointer)
+   (let [out (res/native-af-array-pointer)
          info-buf (mem/alloc 4)]
-     (check! (cholesky/af-cholesky out info-buf (jvm/af-handle in) (if is-upper 1 0))
+     (check! (cholesky/af-cholesky out info-buf (res/af-handle in) (if is-upper 1 0))
                  "af-cholesky")
-     {:result (jvm/af-array-new (jvm/deref-af-array out))
+     {:result (res/af-array-new (res/deref-af-array out))
       :info (mem/read-int info-buf 0)})))
 
 (defn cholesky!
@@ -245,7 +245,7 @@
    (cholesky! in false))
   ([^AFArray in is-upper]
    (let [info-buf (mem/alloc 4)]
-     (check! (cholesky/af-cholesky-inplace info-buf (jvm/af-handle in) (if is-upper 1 0))
+     (check! (cholesky/af-cholesky-inplace info-buf (res/af-handle in) (if is-upper 1 0))
                  "af-cholesky-inplace")
      {:result in
       :info (mem/read-int info-buf 0)})))
@@ -273,7 +273,7 @@
   [^AFArray in]
   (let [real-buf (mem/alloc 8)
         imag-buf (mem/alloc 8)]
-    (check! (det/af-det real-buf imag-buf (jvm/af-handle in))
+    (check! (det/af-det real-buf imag-buf (res/af-handle in))
                 "af-det")
     (let [real (mem/read-double real-buf 0)
           imag (mem/read-double imag-buf 0)]
@@ -302,7 +302,7 @@
    (rank in 1e-5))
   ([^AFArray in tol]
    (let [rank-buf (mem/alloc 4)]
-     (check! (rank/af-rank rank-buf (jvm/af-handle in) (double tol))
+     (check! (rank/af-rank rank-buf (res/af-handle in) (double tol))
                  "af-rank")
      (mem/read-int rank-buf 0))))
 
@@ -345,7 +345,7 @@
    (norm in norm-type p 1.0))
   ([^AFArray in norm-type p q]
    (let [out-buf (mem/alloc 8)]
-     (check! (norm/af-norm out-buf (jvm/af-handle in) (int norm-type) (double p) (double q))
+     (check! (norm/af-norm out-buf (res/af-handle in) (int norm-type) (double p) (double q))
                  "af-norm")
      (mem/read-double out-buf 0))))
 
@@ -376,11 +376,11 @@
   ([^AFArray in]
    (inverse in {}))
   ([^AFArray in options]
-   (let [out (jvm/native-af-array-pointer)
+   (let [out (res/native-af-array-pointer)
          method (get options :method 0)]
-     (check! (inverse/af-inverse out (jvm/af-handle in) (int method))
+     (check! (inverse/af-inverse out (res/af-handle in) (int method))
                  "af-inverse")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn pinverse
   "Compute the pseudo-inverse (Moore-Penrose inverse) of a matrix.
@@ -409,11 +409,11 @@
   ([^AFArray in tol]
    (pinverse in tol {}))
   ([^AFArray in tol options]
-   (let [out (jvm/native-af-array-pointer)
+   (let [out (res/native-af-array-pointer)
          method (get options :method 0)]
-     (check! (pinverse/af-pinverse out (jvm/af-handle in) (double tol) (int method))
+     (check! (pinverse/af-pinverse out (res/af-handle in) (double tol) (int method))
                  "af-pinverse")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Linear System Solving
@@ -446,11 +446,11 @@
   ([^AFArray a ^AFArray b]
    (solve a b {}))
   ([^AFArray a ^AFArray b options]
-   (let [out (jvm/native-af-array-pointer)
+   (let [out (res/native-af-array-pointer)
          method (get options :method 0)]
-     (check! (solve/af-solve out (jvm/af-handle a) (jvm/af-handle b) (int method))
+     (check! (solve/af-solve out (res/af-handle a) (res/af-handle b) (int method))
                  "af-solve")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn solve-lu
   "Solve a system using pre-computed LU decomposition.
@@ -475,11 +475,11 @@
   ([^AFArray a ^AFArray pivot ^AFArray b]
    (solve-lu a pivot b {}))
   ([^AFArray a ^AFArray pivot ^AFArray b options]
-   (let [out (jvm/native-af-array-pointer)
+   (let [out (res/native-af-array-pointer)
          method (get options :method 0)]
-     (check! (solve/af-solve-lu out (jvm/af-handle a) (jvm/af-handle pivot) (jvm/af-handle b) (int method))
+     (check! (solve/af-solve-lu out (res/af-handle a) (res/af-handle pivot) (res/af-handle b) (int method))
                  "af-solve-lu")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Utility Functions
