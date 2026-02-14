@@ -33,10 +33,6 @@
            [java.nio.charset StandardCharsets]))
 
 ;;;
-;;; Definitions
-;;;
-
-;;;
 ;;; AFArray resource management
 ;;;
 (defn native-af-array-pointer
