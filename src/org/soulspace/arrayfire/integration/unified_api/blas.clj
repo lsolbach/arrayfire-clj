@@ -31,8 +31,8 @@
   (let [out (res/native-af-array-pointer)
         alpha-buf (mem/alloc 8)
         beta-buf (mem/alloc 8)
-        _ (res/write-double! alpha-buf 0 alpha)
-        _ (res/write-double! beta-buf 0 beta)]
+        _ (bmem/write-double! alpha-buf 0 alpha)
+        _ (bmem/write-double! beta-buf 0 beta)]
     (check! (blas/af-gemm out (int op-a) (int op-b) 
                               alpha-buf (res/af-handle a) (res/af-handle b) beta-buf)
                 "af-gemm")

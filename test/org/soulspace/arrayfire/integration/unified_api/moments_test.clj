@@ -1,13 +1,13 @@
 (ns org.soulspace.arrayfire.integration.unified-api.moments-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [coffi.mem :as mem]
             [org.soulspace.arrayfire.util.test :refer [approx=]]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.moments :as moments]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.resource :as jvm]
-            [coffi.mem :as mem])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Moment Type Conversion Tests
