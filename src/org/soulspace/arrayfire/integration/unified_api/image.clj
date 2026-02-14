@@ -43,6 +43,7 @@
             [org.soulspace.arrayfire.ffi.c-api.deconvolution :as deconv]
             [org.soulspace.arrayfire.ffi.c-api.confidence-connected :as confidence]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -167,7 +168,7 @@
    (load-image filename true))
   ([filename is-color]
    (let [out (jvm/native-af-array-pointer)
-         c-filename (jvm/string->c-string filename)]
+         c-filename (bmem/string->c-string filename)]
      (check! (imageio/af-load-image out c-filename (if is-color 1 0))
                  "af-load-image")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -189,7 +190,7 @@
    (save-image \"output.png\" processed-img)
    ```"
   [filename ^AFArray in]
-  (let [c-filename (jvm/string->c-string filename)]
+  (let [c-filename (bmem/string->c-string filename)]
     (check! (imageio/af-save-image c-filename (jvm/af-handle in))
                 "af-save-image")
     nil))
@@ -204,7 +205,7 @@
    AFArray containing the image in native format"
   [filename]
   (let [out (jvm/native-af-array-pointer)
-        c-filename (jvm/string->c-string filename)]
+        c-filename (bmem/string->c-string filename)]
     (check! (imageio2/af-load-image-native out c-filename)
                 "af-load-image-native")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -220,7 +221,7 @@
    Returns:
    nil"
   [filename ^AFArray in]
-  (let [c-filename (jvm/string->c-string filename)]
+  (let [c-filename (bmem/string->c-string filename)]
     (check! (imageio2/af-save-image-native c-filename (jvm/af-handle in))
                 "af-save-image-native")
     nil))

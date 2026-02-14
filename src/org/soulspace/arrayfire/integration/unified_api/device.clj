@@ -5,6 +5,7 @@
             [org.soulspace.arrayfire.ffi.c-api.device :as device-ffi]
             [org.soulspace.arrayfire.ffi.c-api.memory :as memory-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
            (java.lang.foreign Arena MemorySegment)))
@@ -66,7 +67,7 @@
          ;; Read the char* pointer from the buffer
          (let [str-address (mem/read-long str-ptr-buf 0)
                str-segment (MemorySegment/ofAddress str-address)]
-           (jvm/c-string->string str-segment)))
+           (bmem/c-string->string str-segment)))
        (finally
          (.close arena))))))
 
@@ -152,10 +153,10 @@
              (check! (device-ffi/af-device-info name-buf platform-buf toolkit-buf compute-buf)
                          "af-device-info")
              {:device-id device-id
-              :name (jvm/c-string->string name-buf)
-              :platform (jvm/c-string->string platform-buf)
-              :toolkit (jvm/c-string->string toolkit-buf)
-              :compute (jvm/c-string->string compute-buf)})
+              :name (bmem/c-string->string name-buf)
+              :platform (bmem/c-string->string platform-buf)
+              :toolkit (bmem/c-string->string toolkit-buf)
+              :compute (bmem/c-string->string compute-buf)})
            (finally
              (.close arena))))
        (finally
@@ -287,7 +288,7 @@
    (let [arena (Arena/ofConfined)]
      (try
        (let [msg-segment (if msg
-                           (jvm/string->c-string msg arena)
+                           (bmem/string->c-string msg arena)
                            mem/null)]
          (check! (memory-ffi/af-print-mem-info msg-segment (int device-id))
                      "af-print-mem-info")
@@ -667,7 +668,7 @@
   ([path override-eval]
    (let [arena (Arena/ofConfined)]
      (try
-       (let [path-segment (jvm/string->c-string path arena)]
+       (let [path-segment (bmem/string->c-string path arena)]
          (check! (device-ffi/af-set-kernel-cache-directory
                       path-segment
                       (if override-eval 1 0))
@@ -698,6 +699,6 @@
         ;; Second call to get the actual string
         (check! (device-ffi/af-get-kernel-cache-directory len-buf str-buf)
                     "af-get-kernel-cache-directory (get string)")
-        (jvm/c-string->string str-buf))
+        (bmem/c-string->string str-buf))
       (finally
         (.close arena)))))

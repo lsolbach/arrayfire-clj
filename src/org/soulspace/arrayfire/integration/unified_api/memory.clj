@@ -38,6 +38,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.memory :as mem-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -311,8 +312,8 @@
    (print-mem-info msg -1))
   ([msg device-id]
    (let [msg-ptr (if msg
-                   (jvm/string->c-string msg)
-                   jvm/null-ptr)]
+                   (bmem/string->c-string msg)
+                   bmem/null-ptr)]
      (check! (mem-ffi/af-print-mem-info msg-ptr (int device-id))
                  "af-print-mem-info")
      nil)))

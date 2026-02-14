@@ -96,6 +96,7 @@
             [org.soulspace.arrayfire.ffi.c-api.surface :as surface-ffi]
             [org.soulspace.arrayfire.ffi.c-api.vector-field :as vector-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (java.lang.foreign MemorySegment)))
 
@@ -139,7 +140,7 @@
    - Requires ArrayFire built with Forge graphics support"
   [width height title]
   (let [window-ptr-buf (mem/alloc 8)
-        title-c-str (jvm/string->c-string title)]
+        title-c-str (bmem/string->c-string title)]
     (check! (window-ffi/af-create-window window-ptr-buf 
                                               (int width) 
                                               (int height) 
@@ -194,7 +195,7 @@
    ```"
   [window title]
   (let [window-segment (mem/as-segment window)
-        title-c-str (jvm/string->c-string title)]
+        title-c-str (bmem/string->c-string title)]
     (check! (window-ffi/af-set-title window-segment title-c-str)
                 "af-set-title"))
   nil)
@@ -459,7 +460,7 @@
    ```"
   [window xmin xmax ymin ymax exact props]
   (let [window-segment (mem/as-segment window)
-        props-ptr (or props jvm/null-ptr)]
+        props-ptr (or props bmem/null-ptr)]
     (check! (window-ffi/af-set-axes-limits-2d window-segment
                                                    (float xmin) (float xmax)
                                                    (float ymin) (float ymax)
@@ -529,9 +530,9 @@
    ```"
   [window xtitle ytitle ztitle props]
   (let [window-segment (mem/as-segment window)
-        x-c-str (if xtitle (jvm/string->c-string xtitle) MemorySegment/NULL)
-        y-c-str (if ytitle (jvm/string->c-string ytitle) MemorySegment/NULL)
-        z-c-str (if ztitle (jvm/string->c-string ztitle) MemorySegment/NULL)
+        x-c-str (if xtitle (bmem/string->c-string xtitle) MemorySegment/NULL)
+        y-c-str (if ytitle (bmem/string->c-string ytitle) MemorySegment/NULL)
+        z-c-str (if ztitle (bmem/string->c-string ztitle) MemorySegment/NULL)
         props-ptr (or props MemorySegment/NULL)]
     (check! (window-ffi/af-set-axes-titles window-segment
                                                 x-c-str y-c-str z-c-str
@@ -565,9 +566,9 @@
    ```"
   [window xformat yformat zformat props]
   (let [window-segment (mem/as-segment window)
-        x-c-str (if xformat (jvm/string->c-string xformat) MemorySegment/NULL)
-        y-c-str (if yformat (jvm/string->c-string yformat) MemorySegment/NULL)
-        z-c-str (if zformat (jvm/string->c-string zformat) MemorySegment/NULL)
+        x-c-str (if xformat (bmem/string->c-string xformat) MemorySegment/NULL)
+        y-c-str (if yformat (bmem/string->c-string yformat) MemorySegment/NULL)
+        z-c-str (if zformat (bmem/string->c-string zformat) MemorySegment/NULL)
         props-ptr (or props MemorySegment/NULL)]
     (check! (window-ffi/af-set-axes-label-format window-segment
                                                       x-c-str y-c-str z-c-str
@@ -630,7 +631,7 @@
   [window points props]
   (let [window-segment (mem/as-segment window)
         points-handle (jvm/af-handle points)
-        props-ptr (or props jvm/null-ptr)]
+        props-ptr (or props bmem/null-ptr)]
     (check! (plot-ffi/af-draw-plot-nd window-segment points-handle props-ptr)
                 "af-draw-plot-nd"))
   nil)
@@ -659,7 +660,7 @@
   (let [window-segment (mem/as-segment window)
         x-handle (jvm/af-handle x)
         y-handle (jvm/af-handle y)
-        props-ptr (or props jvm/null-ptr)]
+        props-ptr (or props bmem/null-ptr)]
     (check! (plot-ffi/af-draw-plot-2d window-segment x-handle y-handle props-ptr)
                 "af-draw-plot-2d"))
   nil)
@@ -693,7 +694,7 @@
         x-handle (jvm/af-handle x)
         y-handle (jvm/af-handle y)
         z-handle (jvm/af-handle z)
-        props-ptr (or props jvm/null-ptr)]
+        props-ptr (or props bmem/null-ptr)]
     (check! (plot-ffi/af-draw-plot-3d window-segment x-handle y-handle z-handle props-ptr)
                 "af-draw-plot-3d"))
   nil)

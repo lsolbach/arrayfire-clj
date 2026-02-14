@@ -4,6 +4,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.blas :as blas]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -108,8 +109,8 @@
      (check! (blas/af-dot-all real-buf imag-buf (jvm/af-handle lhs) (jvm/af-handle rhs)
                                   (int opt-lhs) (int opt-rhs))
                  "af-dot-all")
-     (let [real (jvm/read-double real-buf 0)
-           imag (jvm/read-double imag-buf 0)]
+     (let [real (bmem/read-double real-buf 0)
+           imag (bmem/read-double imag-buf 0)]
        (if (zero? imag)
          real
          [real imag])))))

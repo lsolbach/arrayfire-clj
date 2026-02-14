@@ -6,6 +6,7 @@
             [org.soulspace.arrayfire.ffi.c-api.array :as array-ffi]
             [org.soulspace.arrayfire.ffi.c-api.internal :as internal]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -105,16 +106,16 @@
   [data dims dtype]
   (let [out (jvm/native-af-array-pointer)
         data-seg (cond
-                   (floats? data) (jvm/float-array->segment data)
-                   (doubles? data) (jvm/double-array->segment data)
-                   (ints? data) (jvm/int-array->segment data)
-                   (longs? data) (jvm/long-array->segment data)
-                   (shorts? data) (jvm/short-array->segment data)
-                   (bytes? data) (jvm/byte-array->segment data)
-                   (complex-floats? data) (jvm/complex-float-array->segment data)
-                   (complex-doubles? data) (jvm/complex-double-array->segment data)
+                   (floats? data) (bmem/float-array->segment data)
+                   (doubles? data) (bmem/double-array->segment data)
+                   (ints? data) (bmem/int-array->segment data)
+                   (longs? data) (bmem/long-array->segment data)
+                   (shorts? data) (bmem/short-array->segment data)
+                   (bytes? data) (bmem/byte-array->segment data)
+                   (complex-floats? data) (bmem/complex-float-array->segment data)
+                   (complex-doubles? data) (bmem/complex-double-array->segment data)
                    :else data)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (array-ffi/af-create-array out data-seg (clojure.core/count dims) dims-seg (int dtype))
                 "af-create-array")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -139,7 +140,7 @@
   [dims dtype]
   (let [out (jvm/native-af-array-pointer)
         ndims (clojure.core/count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (array-ffi/af-create-handle out (int ndims) dims-seg (int dtype))
                 "af-create-handle")
     (jvm/af-array-new (jvm/deref-af-array out))))

@@ -39,6 +39,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.error :as error-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import [java.lang.foreign Arena MemorySegment]))
 
@@ -85,7 +86,7 @@
             ;; Read the char* pointer from the buffer
             (let [str-address (mem/read-long str-ptr-buf 0)
                   str-segment (MemorySegment/ofAddress str-address)]
-              (jvm/c-string->string str-segment)))))
+              (bmem/c-string->string str-segment)))))
       (finally
         (.close arena)))))
 
@@ -132,7 +133,7 @@
    to be freed by the caller."
   [err-code]
   (let [str-ptr (error-ffi/af-err-to-string (int err-code))]
-    (jvm/c-string->string str-ptr)))
+    (bmem/c-string->string str-ptr)))
 
 ;;;
 ;;; Stack Trace Control

@@ -97,6 +97,7 @@
             [org.soulspace.arrayfire.ffi.c-api.filters :as filters]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -979,15 +980,15 @@
   [^AFArray signal ^AFArray filter strides paddings dilations]
   (let [;; Convert strides to native array
         stride-count (count strides)
-        stride-buf (jvm/dims->segment strides)
+        stride-buf (bmem/dims->segment strides)
         
         ;; Convert paddings to native array
         padding-count (count paddings)
-        padding-buf (jvm/dims->segment paddings)
+        padding-buf (bmem/dims->segment paddings)
         
         ;; Convert dilations to native array
         dilation-count (count dilations)
-        dilation-buf (jvm/dims->segment dilations)
+        dilation-buf (bmem/dims->segment dilations)
         
         ;; Allocate output
         out (jvm/native-af-array-pointer)]

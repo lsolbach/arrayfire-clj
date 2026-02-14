@@ -23,6 +23,7 @@
             [org.soulspace.arrayfire.ffi.c-api.internal :as internal-ffi]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
            (java.lang.foreign ValueLayout)))
@@ -67,8 +68,8 @@
   ([data offset dims strides dtype location]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
-         dims-seg (jvm/dims->segment dims)
-         strides-seg (jvm/dims->segment strides)]
+         dims-seg (bmem/dims->segment dims)
+         strides-seg (bmem/dims->segment strides)]
      (check! (internal-ffi/af-create-strided-array 
                   out data (long offset) (int ndims) 
                   dims-seg strides-seg (int dtype) (int location))

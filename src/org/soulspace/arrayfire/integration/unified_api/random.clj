@@ -73,6 +73,7 @@
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.ffi.c-api.random :as random]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
 
 ;;;
@@ -443,7 +444,7 @@
   [dims dtype engine]
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-random-uniform out ndims dims-seg dtype (mem/as-segment engine))
                 "af-random-uniform")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -483,7 +484,7 @@
   [dims dtype engine]
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-random-normal out ndims dims-seg dtype (mem/as-segment engine))
                 "af-random-normal")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -530,7 +531,7 @@
   [dims dtype]
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-randu out ndims dims-seg dtype)
                 "af-randu")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -572,7 +573,7 @@
   [dims dtype]
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-randn out ndims dims-seg dtype)
                 "af-randn")
     (jvm/af-array-new (jvm/deref-af-array out))))

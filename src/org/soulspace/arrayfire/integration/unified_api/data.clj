@@ -6,6 +6,7 @@
             [org.soulspace.arrayfire.ffi.c-api.data :as data]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
   (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
 
@@ -28,7 +29,7 @@
   ([value dims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
-         dims-seg (jvm/dims->segment dims)]
+         dims-seg (bmem/dims->segment dims)]
      (check! (data/af-constant out (double value) ndims dims-seg (int dtype))
                  "af-constant")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -49,7 +50,7 @@
   ([real imag dims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
-         dims-seg (jvm/dims->segment dims)]
+         dims-seg (bmem/dims->segment dims)]
      (check! (data/af-constant-complex out (double real) (double imag) ndims dims-seg (int dtype))
                  "af-constant-complex")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -66,7 +67,7 @@
   [value dims]
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (data/af-constant-long out (long value) ndims dims-seg)
                 "af-constant-long")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -83,7 +84,7 @@
   [value dims]
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (data/af-constant-ulong out (long value) ndims dims-seg)
                 "af-constant-ulong")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -102,7 +103,7 @@
   ([dims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
-         dims-seg (jvm/dims->segment dims)]
+         dims-seg (bmem/dims->segment dims)]
      (check! (data/af-identity out ndims dims-seg (int dtype))
                  "af-identity")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -122,7 +123,7 @@
   ([dims seq-dim dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
-         dims-seg (jvm/dims->segment dims)]
+         dims-seg (bmem/dims->segment dims)]
      (check! (data/af-range out ndims dims-seg (int seq-dim) (int dtype))
                  "af-range")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -142,9 +143,9 @@
   ([dims tdims dtype]
    (let [out (jvm/native-af-array-pointer)
          ndims (count dims)
-         dims-seg (jvm/dims->segment dims)
+         dims-seg (bmem/dims->segment dims)
          tndims (count tdims)
-         tdims-seg (jvm/dims->segment tdims)]
+         tdims-seg (bmem/dims->segment tdims)]
      (check! (data/af-iota out ndims dims-seg tndims tdims-seg (int dtype))
                  "af-iota")
      (jvm/af-array-new (jvm/deref-af-array out)))))
@@ -315,7 +316,7 @@
   [^AFArray in dims]
   (let [out (jvm/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (data/af-moddims out (jvm/af-handle in) ndims dims-seg)
                 "af-moddims")
     (jvm/af-array-new (jvm/deref-af-array out))))
@@ -486,9 +487,9 @@
   ([^AFArray in begin-dims end-dims border-type]
    (let [out (jvm/native-af-array-pointer)
          b-ndims (count begin-dims)
-         b-dims-seg (jvm/dims->segment begin-dims)
+         b-dims-seg (bmem/dims->segment begin-dims)
          e-ndims (count end-dims)
-         e-dims-seg (jvm/dims->segment end-dims)]
+         e-dims-seg (bmem/dims->segment end-dims)]
      (check! (data/af-pad out (jvm/af-handle in) b-ndims b-dims-seg e-ndims e-dims-seg (int border-type))
                  "af-pad")
      (jvm/af-array-new (jvm/deref-af-array out)))))

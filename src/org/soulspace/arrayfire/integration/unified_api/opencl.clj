@@ -64,7 +64,7 @@
   (:require [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.c-api.opencl :as opencl]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]))
 
 ;;;
 ;;; Device Type and Platform Constants
@@ -331,7 +331,7 @@
         ctx-seg (mem/as-segment (long ctx))
         queue-seg (if queue
                     (mem/as-segment (long queue))
-                    jvm/null-ptr)]
+                    bmem/null-ptr)]
     (check! (opencl/afcl-add-device-context dev-seg ctx-seg queue-seg)
                 "afcl-add-device-context")
     nil))
