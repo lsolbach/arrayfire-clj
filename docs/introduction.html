@@ -55,6 +55,7 @@
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
+            [org.soulspace.arrayfire.integration.unified-api.lapack :as lapack]
             [org.soulspace.arrayfire.integration.unified-api.random :as random]
             [org.soulspace.arrayfire.integration.unified-api.util :as util]
             [coffi.mem :as mem]))</code></pre></div></div><div style="margin:15px;"><div><h1 id="introduction-to-arrayfire-clj">Introduction to ArrayFire-CLJ</h1><p>This notebook provides an introduction to using the <a href="https://github.com/lsolbach/arrayfire-clj">ArrayFire-CLJ</a> library, a Clojure wrapper for the <a href="https://github.com/arrayfire/arrayfire">ArrayFire</a> tensor math library. We will cover the basics of initializing the library, creating and manipulating arrays, and managing resources.</p><h2 id="arrayfire">ArrayFire</h2><p><a href="https://github.com/arrayfire/arrayfire">ArrayFire</a> is a general-purpose tensor library that simplifies the software development process for the parallel architectures found in CPUs, GPUs, and other hardware acceleration devices.</p><p>ArrayFire provides:</p><ul><li>Hundreds of functions in the following categories<ul><li>Array handling</li><li>Computer vision</li><li>Image processing</li><li>Linear algebra</li><li>Machine learning</li><li>Standard math</li><li>Signal Processing</li><li>Statistics</li><li>Vector algorithms</li></ul></li><li>Cross-platform compatibility with support for CUDA, oneAPI, OpenCL, and native CPU on Windows, Mac, and Linux</li></ul><h2 id="arrayfire-clj">ArrayFire-CLJ</h2><p><a href="https://github.com/lsolbach/arrayfire-clj">ArrayFire-CLJ</a> is a Clojure wrapper around the ArrayFire library, providing a more idiomatic Clojure interface for working with ArrayFire. It abstracts away the complexities of the underlying C API and allows you to work with ArrayFire arrays using familiar Clojure data structures and functions.</p><p>The library also includes integration tests to ensure that the core functionality works correctly across different platforms and configurations.</p><p>In this notebook, we will explore the core features of ArrayFire-CLJ and how to use it effectively in your Clojure projects. We will cover device initialization, array creation and manipulation, memory management, and error handling. By the end of this notebook, you should have a solid understanding of how to use ArrayFire-CLJ to perform high-performance computations in Clojure.</p><h2 id="initialization">Initialization</h2><p>Before using ArrayFire, we need to initialize the library and select a device. The <code>device</code> namespace provides functions for this purpose.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(device/init!)</code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">true
@@ -77,7 +78,7 @@ Device Info:
 
 Double Precision Support: true
 Half Precision Support: true
-Memory Info: {:alloc-bytes 4096, :alloc-buffers 3, :lock-bytes 0, :lock-buffers 0}
+Memory Info: {:alloc-bytes 10240, :alloc-buffers 9, :lock-bytes 0, :lock-buffers 0}
 </code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
 </code></pre></div></div><div style="margin:15px;"><div><h2 id="array-creation-and-properties">Array Creation and Properties</h2><p>The <code>array</code> namespace provides functions for creating ArrayFire arrays. We can create arrays from Clojure data structures or directly from memory. We can also create arrays filled with random or constant values, using the <code>random</code> and <code>data</code> namespaces.</p><p>Let's create a random 3x3 array of complex numbers and explore its properties. Note that we use <code>with-open</code> to ensure that the array is properly closed and resources are released when we're done with it.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(with-open [array (random/randu [6 6] defs/AF_DTYPE_C64)]
 
@@ -120,12 +121,12 @@ Memory Info: {:alloc-bytes 4096, :alloc-buffers 3, :lock-bytes 0, :lock-buffers 
   (println &quot;Array Shorts?&quot; (array/shorts? array))
   (println &quot;Array Single?&quot; (array/single? array)))</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Array
 [6 6 1 1]
-       (0.21,0.11)        (0.36,0.06)        (0.20,0.93)        (0.75,0.10)        (0.01,0.01)        (0.42,0.70) 
-       (0.06,0.51)        (0.67,0.94)        (0.09,0.29)        (0.63,0.33)        (0.73,0.80)        (0.37,0.16) 
-       (0.61,0.64)        (0.59,0.87)        (0.37,0.11)        (0.91,0.14)        (0.03,0.45)        (0.46,0.11) 
-       (0.63,0.14)        (0.42,0.79)        (0.22,0.53)        (0.36,0.70)        (0.42,0.79)        (0.39,0.34) 
-       (0.85,0.60)        (0.40,0.22)        (0.31,0.39)        (0.79,0.51)        (0.12,0.99)        (0.08,0.85) 
-       (0.96,0.40)        (0.51,0.87)        (0.95,0.44)        (0.56,0.08)        (0.85,0.24)        (0.66,0.52) 
+       (0.58,0.46)        (0.04,0.61)        (0.74,0.35)        (0.02,0.58)        (0.26,0.11)        (0.13,0.77) 
+       (0.33,0.45)        (0.98,0.29)        (0.86,0.75)        (0.25,0.37)        (0.31,0.58)        (0.81,0.06) 
+       (0.90,0.31)        (0.67,0.69)        (0.11,0.52)        (0.14,0.96)        (0.65,0.27)        (0.37,0.36) 
+       (0.20,0.35)        (0.09,0.36)        (0.52,0.90)        (0.05,0.23)        (0.91,0.30)        (0.05,0.84) 
+       (0.06,0.85)        (0.05,0.40)        (0.99,0.97)        (0.71,0.31)        (0.53,0.06)        (0.87,0.05) 
+       (0.34,0.97)        (0.25,0.05)        (0.06,0.56)        (0.96,0.95)        (0.38,0.37)        (0.96,0.00) 
 
 
 Array Allocated Bytes: 1024
@@ -237,49 +238,90 @@ Array Short? false
 Array Shorts? false
 Array Single? false
 </code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
-</code></pre></div></div><div style="margin:15px;"><div><h2 id="array-operations">Array Operations</h2><p>ArrayFire provides a wide range of operations that can be performed on arrays, including element-wise operations, reductions, and linear algebra functions.</p><p>Let's perform some basic operations on arrays.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(with-open [array1 (data/constant 3.14 [2 2] defs/AF_DTYPE_F32)
-            array2 (data/constant 2.71 [2 2] defs/AF_DTYPE_F32)
+</code></pre></div></div><div style="margin:15px;"><div><h2 id="array-operations">Array Operations</h2><p>ArrayFire provides a wide range of operations that can be performed on arrays, including element-wise operations, reductions, and linear algebra functions.</p><p>Let's perform some basic operations on arrays.</p></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure source-clojure bg-light">(with-open [array1 (data/constant 3.14 [4 4] defs/AF_DTYPE_F32)
+            array2 (data/range [4 4 1 1] 0 defs/AF_DTYPE_F32)
             ;; Element-wise addition
             added (arith/add array1 array2)
             ;; Element-wise multiplication
             multiplied (arith/mul array1 array2)
             ;; Element-wise sine
-            sine (arith/sin array1)]
+            sine (arith/sin array2)]
 
   ;; Array representation
   (println (util/array-to-string &quot;Array1&quot; array1 2))
   (println (util/array-to-string &quot;Array2&quot; array2 2))
   (println (util/array-to-string &quot;Added&quot; added 2))
   (println (util/array-to-string &quot;Multiplied&quot; multiplied 2))
-  (println (util/array-to-string &quot;Sine&quot; sine 2)))</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Array1
-[2 2 1 1]
-    3.14     3.14 
-    3.14     3.14 
+  (println (util/array-to-string &quot;Sine&quot; sine 2))
+
+  
+  (let [v (lapack/lu array1)]
+    (with-open [l (first v)
+                u (second v)
+                p (nth v 2)]
+      (println (util/array-to-string &quot;L&quot; l 2))
+      (println (util/array-to-string &quot;U&quot; u 2))
+      (println (util/array-to-string &quot;P&quot; p 2))))
+  ;
+  )</code></pre></div></div><div style="margin:15px;"><div><strong>OUT</strong><pre><code>Array1
+[4 4 1 1]
+    3.14     3.14     3.14     3.14 
+    3.14     3.14     3.14     3.14 
+    3.14     3.14     3.14     3.14 
+    3.14     3.14     3.14     3.14 
 
 
 Array2
-[2 2 1 1]
-    2.71     2.71 
-    2.71     2.71 
+[4 4 1 1]
+    0.00     1.00     2.00     3.00 
+    0.00     1.00     2.00     3.00 
+    0.00     1.00     2.00     3.00 
+    0.00     1.00     2.00     3.00 
 
 
 Added
-[2 2 1 1]
-    5.85     5.85 
-    5.85     5.85 
+[4 4 1 1]
+    3.14     4.14     5.14     6.14 
+    3.14     4.14     5.14     6.14 
+    3.14     4.14     5.14     6.14 
+    3.14     4.14     5.14     6.14 
 
 
 Multiplied
-[2 2 1 1]
-    8.51     8.51 
-    8.51     8.51 
+[4 4 1 1]
+    0.00     3.14     6.28     9.42 
+    0.00     3.14     6.28     9.42 
+    0.00     3.14     6.28     9.42 
+    0.00     3.14     6.28     9.42 
 
 
 Sine
-[2 2 1 1]
-    0.00     0.00 
-    0.00     0.00 
+[4 4 1 1]
+    0.00     0.84     0.91     0.14 
+    0.00     0.84     0.91     0.14 
+    0.00     0.84     0.91     0.14 
+    0.00     0.84     0.91     0.14 
 
+
+L
+[4 4 1 1]
+    1.00     1.00     1.00     1.00 
+    0.00     1.00     1.00     1.00 
+    0.00     0.00     1.00     1.00 
+    0.00     0.00     0.00     1.00 
+
+
+U
+[4 4 1 1]
+    3.14     0.00     0.00     0.00 
+    3.14     0.00     0.00     0.00 
+    3.14     0.00    -0.00     0.00 
+    3.14     0.00     0.00    -0.00 
+
+
+P
+[4 1 1 1]
+       0        1        2        3 
 
 </code></pre></div></div><div style="margin:15px;"><div><pre><code class="sourceCode language-clojure printed-clojure">nil
 </code></pre></div></div><div style="margin:15px;"><div style="background-color:grey;height:2px;width:100%;"></div></div><div style="margin:15px;"><div></div></div></div></div></div></div></div><script type="text/javascript">/*!
