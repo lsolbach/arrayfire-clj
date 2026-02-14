@@ -532,7 +532,7 @@
    Example:
    ```clojure
    ;; Basic SUSAN corners
-   (let [img (array/load-image "noisy-scene.jpg")
+   (let [img (array/load-image \"noisy-scene.jpg\")
          gray (colorspace/rgb-to-gray img)
          corners (susan gray 3 20.0 14.0 0.15 3)]
      corners)
