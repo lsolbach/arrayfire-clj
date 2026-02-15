@@ -373,23 +373,22 @@
   (testing "solve-lu solves using pre-computed LU decomposition"
     (device/init!)
     (let [a (array/create-array (float-array [1.0 2.0
-                                               3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
+                                              3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           b (array/create-array (float-array [5.0 11.0]) [2] defs/AF_DTYPE_F32)
-          [l u p] (lapack/lu a)
-          x (lapack/solve-lu l p b)  ; Use l (lower) not u (upper)
+          ;; lu! performs in-place LU, leaving a as packed LU and returning pivot
+          pivot (lapack/lu! a true)
+          x (lapack/solve-lu a pivot b)
           buf (mem/alloc 8)]
       (try
         (is (instance? AFArray x))
         (array/get-data-ptr x buf)
-        ;; Solution should be approximately [1.0 2.0]
-        (is (approx= 1.0 (mem/read-float buf 0) 0.01))
-        (is (approx= 2.0 (mem/read-float buf 4) 0.01))
+        ;; Solution for column-major layout: [6.5 -0.5]
+        (is (approx= 6.5 (mem/read-float buf 0) 0.01))
+        (is (approx= -0.5 (mem/read-float buf 4) 0.01))
         (finally
           (.close a)
           (.close b)
-          (.close l)
-          (.close u)
-          (.close p)
+          (.close pivot)
           (.close x))))))
 
 ;;;
@@ -475,7 +474,7 @@
   (run-test test-solve)
   (run-test test-solve-identity)
   (run-test test-solve-with-options)
-  (run-test test-solve-lu)
+  (run-test test-solve-lu) ; 2 failures
   (run-test test-lapack-available)
   (run-test test-lapack-available-status)
   (run-test test-cholesky-determinant-consistency)
