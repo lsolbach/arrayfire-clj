@@ -193,7 +193,7 @@
 (def AF_CANNY_THRESHOLD_AUTO_OTSU 1)
 
 ;; AF sparse matrix storage type constants (af/defines.h - enum af_storage)
-(def AF_STORAGE_DENSE 0) ; ; Storage type is dense
+(def AF_STORAGE_DENSE 0) ; Storage type is dense
 (def AF_STORAGE_CSR 1)   ; Storage type is CSR
 (def AF_STORAGE_CSC 2)   ; Storage type is CSC
 (def AF_STORAGE_COO 3)   ; Storage type is COO
