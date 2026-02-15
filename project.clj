@@ -4,9 +4,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.suskalo/coffi "1.0.615"]
-                 [cnuernber/dtype-next "11.004"]
-                 ;[techascent/tech.resource "5.09"] ; generalized resource management
-                 ]
+                 [techascent/tech.resource "5.09"] ; generalized resource management
+                 [cnuernber/dtype-next "11.004"]]
   :source-paths ["src"]
   :jvm-opts [; Adjust library path as needed
              "-Djava.library.path=/opt/arrayfire/lib64"
