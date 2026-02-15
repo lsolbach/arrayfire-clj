@@ -559,7 +559,7 @@
         x-c-str (if xtitle (bmem/string->c-string xtitle) MemorySegment/NULL)
         y-c-str (if ytitle (bmem/string->c-string ytitle) MemorySegment/NULL)
         z-c-str (if ztitle (bmem/string->c-string ztitle) MemorySegment/NULL)
-        props-ptr (or props MemorySegment/NULL)]
+        props-ptr (props-or-default props)]
     (check! (window-ffi/af-set-axes-titles window-segment
                                                 x-c-str y-c-str z-c-str
                                                 props-ptr)
@@ -595,7 +595,7 @@
         x-c-str (if xformat (bmem/string->c-string xformat) MemorySegment/NULL)
         y-c-str (if yformat (bmem/string->c-string yformat) MemorySegment/NULL)
         z-c-str (if zformat (bmem/string->c-string zformat) MemorySegment/NULL)
-        props-ptr (or props MemorySegment/NULL)]
+        props-ptr (props-or-default props)]
     (check! (window-ffi/af-set-axes-label-format window-segment
                                                       x-c-str y-c-str z-c-str
                                                       props-ptr)
