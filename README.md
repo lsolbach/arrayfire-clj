@@ -1,6 +1,6 @@
 # ArrayFire-CLJ
 Arrayfire-clj provides a Clojure wrapper around the
-[ArrayFire](https://github.com/arrayfire/arrayfire) C API using Java 22+
+[ArrayFire](https://github.com/arrayfire/arrayfire) Unified API using Java 22+
 Foreign Function & Memory API via the [Coffi](https://github.com/IGJoshua/coffi)
 library. It brings ArrayFire to the JVM, with some unique features not 
 available otherwise on the JVM, like GPU enabled linear algebra over the field
@@ -107,6 +107,14 @@ The JVM and Clojure are lacking a fast, GPU enabled tensor library supporting
 tensors over the field of complex numbers. By adapting ArrayFire to Clojure
 on the JVM, this gap is closed.
 
+## Development
+
+### Running Tests
+
+```bash
+lein test
+```
+
 ## Implementation Status
 *Alpha* but usable
 
@@ -120,14 +128,25 @@ Planned:
 * Idiomatic Clojure API
 * dtype-next integration
 
+## ArrayFire Backends
+As ArrayFire-CLJ is wrapping the ArrayFire library, the support of the
+different backends (CUDA, oneAPI, OpenCL and CPU) directly depends on their
+implementation status in ArrayFire itself. The CUDA and CPU backends are the
+most mature backends, the OpenCL backend is mature in its functional
+implementation but maybe not as optimized. The oneAPI backend is lacking in
+the implementation of these areas:
 
-## Development
+* image processing
+* computer vision
+* drawing operations via Forge
 
-### Running Tests
+### ArrayFire Backend Selection
+The order of the automatic backend selection by the Unified API is
+CUDA -> oneAPI -> OpenCL -> CPU.
 
-```bash
-lein test
-```
+This might be a problem on systems with an Intel GPU when you need
+functionality not yet implemented on the oneAPI. You can use the functions
+of the device namespace to select the backend, e.g. OpenCL or CPU.
 
 ## Copyright
 © 2026 Ludger Solbach
