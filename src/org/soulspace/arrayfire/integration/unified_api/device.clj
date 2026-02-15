@@ -401,14 +401,6 @@
 ;;; Backend Management
 ;;;
 
-;; Backend constants
-; TODO use constants from ffi.base.definitions
-(def AF_BACKEND_DEFAULT 0)
-(def AF_BACKEND_CPU 1)
-(def AF_BACKEND_CUDA 2)
-(def AF_BACKEND_OPENCL 4)
-(def AF_BACKEND_ONEAPI 8)
-
 (defn set-backend!
   "Set the active backend for ArrayFire operations.
    
