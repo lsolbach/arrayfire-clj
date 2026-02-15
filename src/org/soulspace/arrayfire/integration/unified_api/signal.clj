@@ -88,8 +88,7 @@
    See also:
    - integration.arith for element-wise operations
    - integration.algorithm for reduction and sorting"
-  (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.c-api.approx :as approx]
+  (:require [org.soulspace.arrayfire.ffi.c-api.approx :as approx]
             [org.soulspace.arrayfire.ffi.c-api.fft :as fft]
             [org.soulspace.arrayfire.ffi.c-api.convolve :as convolve]
             [org.soulspace.arrayfire.ffi.c-api.fftconvolve :as fftconvolve]
