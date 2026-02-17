@@ -1,5 +1,6 @@
 (ns introduction
-  (:require [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+  (:require [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
@@ -8,8 +9,7 @@
             [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
             [org.soulspace.arrayfire.integration.unified-api.lapack :as lapack]
             [org.soulspace.arrayfire.integration.unified-api.random :as random]
-            [org.soulspace.arrayfire.integration.unified-api.util :as util]
-            [coffi.mem :as mem]))
+            [org.soulspace.arrayfire.integration.unified-api.util :as util]))
 
 ;; # Introduction to ArrayFire-CLJ
 ;; This notebook provides an introduction to using the [ArrayFire-CLJ](https://github.com/lsolbach/arrayfire-clj) library,
@@ -205,3 +205,25 @@
       (println (util/array-to-string "P" p 2))))
   ;
   )
+
+;; Let's perform a matrix multiplication of two random 512x512 arrays.
+(with-open [array1 (random/randu [512 512] defs/AF_DTYPE_F32)
+            array2 (random/randu [512 512] defs/AF_DTYPE_F32)
+            ;; Matrix multiplication
+            multiplied (arith/mul array1 array2)]
+
+  ;; Array representation
+  (println "Array Type:" (array/get-type array1))
+  (println "Array Num Dims:" (array/get-numdims array1))
+  (println "Array Dims:" (array/get-dims array1))
+  (println "Array Elements:" (array/get-elements array1))
+  (println (util/array-to-string "Array1" array1 2))
+  (println (util/array-to-string "Array2" array2 2))
+
+  (println "Array Type:" (array/get-type multiplied))
+  (println "Array Num Dims:" (array/get-numdims multiplied))
+  (println "Array Dims:" (array/get-dims multiplied))
+  (println "Array Elements:" (array/get-elements multiplied))
+  (util/print-array multiplied)
+  (println (util/array-to-string "Multiplied" multiplied 2)))
+
