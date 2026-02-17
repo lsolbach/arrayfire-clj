@@ -229,6 +229,7 @@
    (util/print-array multiplied)
    (println (util/array-to-string "Multiplied" multiplied 2))))
 
+;; Using pipeline syntax for more complex operations.
 (releasing!
  (-> (data/constant 1.0 [10 10] defs/AF_DTYPE_F32)
      (arith/sin)
