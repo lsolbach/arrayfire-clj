@@ -4,7 +4,8 @@
             [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.features :as features]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
+            [tech.v3.resource :refer [releasing!]])
   (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
@@ -108,10 +109,11 @@
     (device/init!)
     (let [feat (features/create-features 10)]
       (try
-        (let [x (features/get-features-xpos feat)]
-          (is (instance? AFArray x))
-          (is (= [10 1 1 1] (array/get-dims x)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type x))))
+        (releasing!
+          (let [x (features/get-features-xpos feat)]
+            (is (instance? AFArray x))
+            (is (= [10 1 1 1] (array/get-dims x)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type x)))))
         (finally
           (features/release-features! feat))))))
 
@@ -120,10 +122,11 @@
     (device/init!)
     (let [feat (features/create-features 10)]
       (try
-        (let [y (features/get-features-ypos feat)]
-          (is (instance? AFArray y))
-          (is (= [10 1 1 1] (array/get-dims y)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type y))))
+        (releasing!
+          (let [y (features/get-features-ypos feat)]
+            (is (instance? AFArray y))
+            (is (= [10 1 1 1] (array/get-dims y)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type y)))))
         (finally
           (features/release-features! feat))))))
 
@@ -132,10 +135,11 @@
     (device/init!)
     (let [feat (features/create-features 10)]
       (try
-        (let [score (features/get-features-score feat)]
-          (is (instance? AFArray score))
-          (is (= [10 1 1 1] (array/get-dims score)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type score))))
+        (releasing!
+          (let [score (features/get-features-score feat)]
+            (is (instance? AFArray score))
+            (is (= [10 1 1 1] (array/get-dims score)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type score)))))
         (finally
           (features/release-features! feat))))))
 
@@ -144,10 +148,11 @@
     (device/init!)
     (let [feat (features/create-features 10)]
       (try
-        (let [ori (features/get-features-orientation feat)]
-          (is (instance? AFArray ori))
-          (is (= [10 1 1 1] (array/get-dims ori)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type ori))))
+        (releasing!
+          (let [ori (features/get-features-orientation feat)]
+            (is (instance? AFArray ori))
+            (is (= [10 1 1 1] (array/get-dims ori)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type ori)))))
         (finally
           (features/release-features! feat))))))
 
@@ -156,10 +161,11 @@
     (device/init!)
     (let [feat (features/create-features 10)]
       (try
-        (let [size (features/get-features-size feat)]
-          (is (instance? AFArray size))
-          (is (= [10 1 1 1] (array/get-dims size)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type size))))
+        (releasing!
+          (let [size (features/get-features-size feat)]
+            (is (instance? AFArray size))
+            (is (= [10 1 1 1] (array/get-dims size)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type size)))))
         (finally
           (features/release-features! feat))))))
 
@@ -172,18 +178,19 @@
     (device/init!)
     (let [feat (features/create-features 15)]
       (try
-        (let [n (features/get-features-num feat)
-              x (features/get-features-xpos feat)
-              y (features/get-features-ypos feat)
-              score (features/get-features-score feat)
-              ori (features/get-features-orientation feat)
-              size (features/get-features-size feat)]
-          (is (= n 15))
-          (is (= [n 1 1 1] (array/get-dims x)))
-          (is (= [n 1 1 1] (array/get-dims y)))
-          (is (= [n 1 1 1] (array/get-dims score)))
-          (is (= [n 1 1 1] (array/get-dims ori)))
-          (is (= [n 1 1 1] (array/get-dims size))))
+        (releasing!
+          (let [n (features/get-features-num feat)
+                x (features/get-features-xpos feat)
+                y (features/get-features-ypos feat)
+                score (features/get-features-score feat)
+                ori (features/get-features-orientation feat)
+                size (features/get-features-size feat)]
+            (is (= n 15))
+            (is (= [n 1 1 1] (array/get-dims x)))
+            (is (= [n 1 1 1] (array/get-dims y)))
+            (is (= [n 1 1 1] (array/get-dims score)))
+            (is (= [n 1 1 1] (array/get-dims ori)))
+            (is (= [n 1 1 1] (array/get-dims size)))))
         (finally
           (features/release-features! feat))))))
 
@@ -192,16 +199,17 @@
     (device/init!)
     (let [feat (features/create-features 5)]
       (try
-        (let [x (features/get-features-xpos feat)
-              y (features/get-features-ypos feat)
-              score (features/get-features-score feat)
-              ori (features/get-features-orientation feat)
-              size (features/get-features-size feat)]
-          (is (= defs/AF_DTYPE_F32 (array/get-type x)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type y)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type score)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type ori)))
-          (is (= defs/AF_DTYPE_F32 (array/get-type size))))
+        (releasing!
+          (let [x (features/get-features-xpos feat)
+                y (features/get-features-ypos feat)
+                score (features/get-features-score feat)
+                ori (features/get-features-orientation feat)
+                size (features/get-features-size feat)]
+            (is (= defs/AF_DTYPE_F32 (array/get-type x)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type y)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type score)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type ori)))
+            (is (= defs/AF_DTYPE_F32 (array/get-type size)))))
         (finally
           (features/release-features! feat))))))
 
@@ -226,12 +234,13 @@
     (device/init!)
     (let [feat (features/create-features 7)]
       (try
-        (let [n (features/get-features-num feat)
-              x (features/get-features-xpos feat)
-              y (features/get-features-ypos feat)]
-          (is (= 7 n))
-          (is (instance? AFArray x))
-          (is (instance? AFArray y)))
+        (releasing!
+          (let [n (features/get-features-num feat)
+                x (features/get-features-xpos feat)
+                y (features/get-features-ypos feat)]
+            (is (= 7 n))
+            (is (instance? AFArray x))
+            (is (instance? AFArray y))))
         (finally
           (features/release-features! feat))))))
 

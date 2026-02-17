@@ -4,7 +4,8 @@
             [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.graphic :as graphic]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
+            [tech.v3.resource :refer [releasing!]]))
 
 ;;;
 ;;; Note: Graphics tests require ArrayFire built with Forge support.
@@ -38,8 +39,8 @@
    and restores the original backend afterward."
   [& body]
   `(let [original-backend# (device/get-active-backend)]
-     (when (= device/AF_BACKEND_ONEAPI original-backend#)
-       (device/set-backend! device/AF_BACKEND_CPU))
+     (when (= defs/AF_BACKEND_ONEAPI original-backend#)
+       (device/set-backend! defs/AF_BACKEND_CPU))
      (try
        ~@body
        (finally
@@ -183,13 +184,13 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Image Test")
-              img (data/constant 0.5 [100 100] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Image Test")]
           (try
-            (is (nil? (graphic/draw-image! window img nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [img (data/constant 0.5 [100 100] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-image! window img nil)))
+                (graphic/show! window)))
             (finally
-              (.close img)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-plot-2d
@@ -197,15 +198,14 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Plot 2D Test")
-              x (data/range [100] 0 defs/AF_DTYPE_F32)
-              y (data/constant 1.0 [100] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Plot 2D Test")]
           (try
-            (is (nil? (graphic/draw-plot-2d! window x y nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [x (data/range [100] 0 defs/AF_DTYPE_F32)
+                    y (data/constant 1.0 [100] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-plot-2d! window x y nil)))
+                (graphic/show! window)))
             (finally
-              (.close x)
-              (.close y)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-plot-3d
@@ -213,17 +213,15 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Plot 3D Test")
-              x (data/range [50] 0 defs/AF_DTYPE_F32)
-              y (data/range [50] 0 defs/AF_DTYPE_F32)
-              z (data/range [50] 0 defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Plot 3D Test")]
           (try
-            (is (nil? (graphic/draw-plot-3d! window x y z nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [x (data/range [50] 0 defs/AF_DTYPE_F32)
+                    y (data/range [50] 0 defs/AF_DTYPE_F32)
+                    z (data/range [50] 0 defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-plot-3d! window x y z nil)))
+                (graphic/show! window)))
             (finally
-              (.close x)
-              (.close y)
-              (.close z)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-plot-nd
@@ -231,13 +229,13 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Plot ND Test")
-              points (data/constant 1.0 [50 2] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Plot ND Test")]
           (try
-            (is (nil? (graphic/draw-plot-nd! window points nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [points (data/constant 1.0 [50 2] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-plot-nd! window points nil)))
+                (graphic/show! window)))
             (finally
-              (.close points)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-scatter-2d
@@ -246,15 +244,14 @@
       (device/init!)
       (with-graphics-backend
         (let [window (graphic/create-window 640 480 "Scatter 2D Test")
-              x (data/range [50] 0 defs/AF_DTYPE_F32)
-              y (data/range [50] 0 defs/AF_DTYPE_F32)
               marker 0] ; Marker type constant
           (try
-            (is (nil? (graphic/draw-scatter-2d! window x y marker nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [x (data/range [50] 0 defs/AF_DTYPE_F32)
+                    y (data/range [50] 0 defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-scatter-2d! window x y marker nil)))
+                (graphic/show! window)))
             (finally
-              (.close x)
-              (.close y)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-scatter-3d
@@ -263,17 +260,15 @@
       (device/init!)
       (with-graphics-backend
         (let [window (graphic/create-window 640 480 "Scatter 3D Test")
-              x (data/range [30] 0 defs/AF_DTYPE_F32)
-              y (data/range [30] 0 defs/AF_DTYPE_F32)
-              z (data/range [30] 0 defs/AF_DTYPE_F32)
               marker 0]
           (try
-            (is (nil? (graphic/draw-scatter-3d! window x y z marker nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [x (data/range [30] 0 defs/AF_DTYPE_F32)
+                    y (data/range [30] 0 defs/AF_DTYPE_F32)
+                    z (data/range [30] 0 defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-scatter-3d! window x y z marker nil)))
+                (graphic/show! window)))
             (finally
-              (.close x)
-              (.close y)
-              (.close z)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-scatter-nd
@@ -282,13 +277,13 @@
       (device/init!)
       (with-graphics-backend
         (let [window (graphic/create-window 640 480 "Scatter ND Test")
-              points (data/constant 1.0 [30 2] defs/AF_DTYPE_F32)
               marker 0]
           (try
-            (is (nil? (graphic/draw-scatter-nd! window points marker nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [points (data/constant 1.0 [30 2] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-scatter-nd! window points marker nil)))
+                (graphic/show! window)))
             (finally
-              (.close points)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-hist
@@ -296,13 +291,13 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Histogram Test")
-              hist-data (data/constant 10.0 [256] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Histogram Test")]
           (try
-            (is (nil? (graphic/draw-hist! window hist-data 0.0 255.0 nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [hist-data (data/constant 10.0 [256] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-hist! window hist-data 0.0 255.0 nil)))
+                (graphic/show! window)))
             (finally
-              (.close hist-data)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-surface
@@ -310,17 +305,15 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Surface Test")
-              x (data/range [20 20] 0 defs/AF_DTYPE_F32)
-              y (data/range [20 20] 1 defs/AF_DTYPE_F32)
-              z (data/constant 0.5 [20 20] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Surface Test")]
           (try
-            (is (nil? (graphic/draw-surface! window x y z nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [x (data/range [20 20] 0 defs/AF_DTYPE_F32)
+                    y (data/range [20 20] 1 defs/AF_DTYPE_F32)
+                    z (data/constant 0.5 [20 20] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-surface! window x y z nil)))
+                (graphic/show! window)))
             (finally
-              (.close x)
-              (.close y)
-              (.close z)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-vector-field-2d
@@ -328,19 +321,16 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Vector Field 2D Test")
-              x-points (data/range [100] 0 defs/AF_DTYPE_F32)
-              y-points (data/range [100] 0 defs/AF_DTYPE_F32)
-              x-dirs (data/constant 0.1 [100] defs/AF_DTYPE_F32)
-              y-dirs (data/constant 0.1 [100] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Vector Field 2D Test")]
           (try
-            (is (nil? (graphic/draw-vector-field-2d! window x-points y-points x-dirs y-dirs nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [x-points (data/range [100] 0 defs/AF_DTYPE_F32)
+                    y-points (data/range [100] 0 defs/AF_DTYPE_F32)
+                    x-dirs (data/constant 0.1 [100] defs/AF_DTYPE_F32)
+                    y-dirs (data/constant 0.1 [100] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-vector-field-2d! window x-points y-points x-dirs y-dirs nil)))
+                (graphic/show! window)))
             (finally
-              (.close x-points)
-              (.close y-points)
-              (.close x-dirs)
-              (.close y-dirs)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-vector-field-3d
@@ -348,25 +338,20 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Vector Field 3D Test")
-              x-points (data/range [50] 0 defs/AF_DTYPE_F32)
-              y-points (data/range [50] 0 defs/AF_DTYPE_F32)
-              z-points (data/range [50] 0 defs/AF_DTYPE_F32)
-              x-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)
-              y-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)
-              z-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Vector Field 3D Test")]
           (try
-            (is (nil? (graphic/draw-vector-field-3d! window 
-                                                     x-points y-points z-points 
-                                                     x-dirs y-dirs z-dirs nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [x-points (data/range [50] 0 defs/AF_DTYPE_F32)
+                    y-points (data/range [50] 0 defs/AF_DTYPE_F32)
+                    z-points (data/range [50] 0 defs/AF_DTYPE_F32)
+                    x-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)
+                    y-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)
+                    z-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-vector-field-3d! window 
+                                                         x-points y-points z-points 
+                                                         x-dirs y-dirs z-dirs nil)))
+                (graphic/show! window)))
             (finally
-              (.close x-points)
-              (.close y-points)
-              (.close z-points)
-              (.close x-dirs)
-              (.close y-dirs)
-              (.close z-dirs)
               (graphic/destroy-window! window))))))))
 
 (deftest test-draw-vector-field-nd
@@ -374,15 +359,14 @@
     (when (has-forge-support?)
       (device/init!)
       (with-graphics-backend
-        (let [window (graphic/create-window 640 480 "Vector Field ND Test")
-              points (data/constant 1.0 [20 2] defs/AF_DTYPE_F32)
-              directions (data/constant 0.1 [20 2] defs/AF_DTYPE_F32)]
+        (let [window (graphic/create-window 640 480 "Vector Field ND Test")]
           (try
-            (is (nil? (graphic/draw-vector-field-nd! window points directions nil)))
-            (graphic/show! window)
+            (releasing!
+              (let [points (data/constant 1.0 [20 2] defs/AF_DTYPE_F32)
+                    directions (data/constant 0.1 [20 2] defs/AF_DTYPE_F32)]
+                (is (nil? (graphic/draw-vector-field-nd! window points directions nil)))
+                (graphic/show! window)))
             (finally
-              (.close points)
-              (.close directions)
               (graphic/destroy-window! window))))))))
 
 ;;;
@@ -399,12 +383,10 @@
             (graphic/set-position! window 100 100)
             (graphic/set-title! window "Updated")
             (graphic/grid! window 2 2)
-            (let [data (data/constant 1.0 [50] defs/AF_DTYPE_F32)]
-              (try
+            (releasing!
+              (let [data (data/constant 1.0 [50] defs/AF_DTYPE_F32)]
                 (graphic/draw-plot-2d! window data data nil)
-                (graphic/show! window)
-                (finally
-                  (.close data))))
+                (graphic/show! window)))
             (finally
               (graphic/destroy-window! window))))))))
 

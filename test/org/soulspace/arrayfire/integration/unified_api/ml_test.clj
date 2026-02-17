@@ -5,7 +5,8 @@
             [org.soulspace.arrayfire.integration.unified-api.ml :as ml]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.signal :as signal]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
+            [tech.v3.resource :refer [releasing!]])
   (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
@@ -46,161 +47,125 @@
 (deftest test-convolve2-gradient-nn-filter
   (testing "convolve2-gradient-nn computes filter gradient"
     (device/init!)
-    (let [;; Create original input
-          original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          ;; Create original filter
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          ;; Create incoming gradient with output dimensions
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/convolve2-gradient-nn incoming-grad original-input 
-                                           original-filter output [1 1] [1 1] [1 1]
-                                           :filter)] ; AF_CONV_GRADIENT_FILTER
-      (try
+    (releasing!
+      (let [;; Create original input
+            original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            ;; Create original filter
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            ;; Create incoming gradient with output dimensions
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/convolve2-gradient-nn incoming-grad original-input 
+                                             original-filter output [1 1] [1 1] [1 1]
+                                             :filter)] ; AF_CONV_GRADIENT_FILTER
         (is (instance? AFArray result))
-        (is (= [2 2] (take 2 (array/get-dims result))))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+        (is (= [2 2] (take 2 (array/get-dims result))))))))
 
 (deftest test-convolve2-gradient-nn-data
   (testing "convolve2-gradient-nn computes data gradient"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/convolve2-gradient-nn incoming-grad original-input 
-                                           original-filter output [1 1] [1 1] [1 1]
-                                           :data)] ; AF_CONV_GRADIENT_DATA
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/convolve2-gradient-nn incoming-grad original-input 
+                                             original-filter output [1 1] [1 1] [1 1]
+                                             :data)] ; AF_CONV_GRADIENT_DATA
+        (is (instance? AFArray result))))))
 
 (deftest test-convolve2-gradient-nn-bias
   (testing "convolve2-gradient-nn computes bias gradient"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0 
-                                                            1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 2] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/convolve2-gradient-nn incoming-grad original-input 
-                                           original-filter output [1 1] [1 1] [1 1]
-                                           :bias)] ; AF_CONV_GRADIENT_BIAS
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0 
+                                                              1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 2] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/convolve2-gradient-nn incoming-grad original-input 
+                                             original-filter output [1 1] [1 1] [1 1]
+                                             :bias)] ; AF_CONV_GRADIENT_BIAS
+        (is (instance? AFArray result))))))
 
 (deftest test-convolve2-gradient-nn-with-stride
   (testing "convolve2-gradient-nn respects stride parameters"
     (device/init!)
-    (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
-                                            [4 4 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 1.0 
-                                                            1.0 1.0]) 
-                                             [2 2 1 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [2 2] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/convolve2-gradient-nn incoming-grad original-input 
-                                           original-filter output [2 2] [1 1] [1 1]
-                                           :filter)]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
+                                              [4 4 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 1.0 
+                                                              1.0 1.0]) 
+                                               [2 2 1 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [2 2] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/convolve2-gradient-nn incoming-grad original-input 
+                                             original-filter output [2 2] [1 1] [1 1]
+                                             :filter)]
+        (is (instance? AFArray result))))))
 
 (deftest test-convolve2-gradient-nn-with-padding
   (testing "convolve2-gradient-nn handles padding"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0]) 
-                                            [2 2 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 
-                                                            0.0 1.0]) 
-                                             [2 2 1 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [2 2] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/convolve2-gradient-nn incoming-grad original-input 
-                                           original-filter output [1 1] [2 2] [1 1]
-                                           :filter)]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0]) 
+                                              [2 2 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 
+                                                              0.0 1.0]) 
+                                               [2 2 1 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [2 2] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/convolve2-gradient-nn incoming-grad original-input 
+                                             original-filter output [1 1] [2 2] [1 1]
+                                             :filter)]
+        (is (instance? AFArray result))))))
 
 (deftest test-convolve2-gradient-nn-with-dilation
   (testing "convolve2-gradient-nn supports dilation"
     (device/init!)
-    (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
-                                            [4 4 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 
-                                                            0.0 1.0]) 
-                                             [2 2 1 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [2 2] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/convolve2-gradient-nn incoming-grad original-input 
-                                           original-filter output [1 1] [2 2] [1 1]
-                                           :filter)]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
+                                              [4 4 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 
+                                                              0.0 1.0]) 
+                                               [2 2 1 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [2 2] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/convolve2-gradient-nn incoming-grad original-input 
+                                             original-filter output [1 1] [2 2] [1 1]
+                                             :filter)]
+        (is (instance? AFArray result))))))
 
 ;;;
 ;;; Convenience Wrapper Tests
@@ -209,211 +174,159 @@
 (deftest test-filter-gradient
   (testing "filter-gradient computes filter gradient"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/filter-gradient incoming-grad original-input original-filter output
-                                     [1 1] [1 1] [1 1])]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/filter-gradient incoming-grad original-input original-filter output
+                                       [1 1] [1 1] [1 1])]
+        (is (instance? AFArray result))))))
 
 (deftest test-filter-gradient-with-params
   (testing "filter-gradient with custom stride, dilation, padding"
     (device/init!)
-    (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
-                                            [4 4 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 1.0 
-                                                            1.0 1.0]) 
-                                             [2 2 1 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [2 2] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/filter-gradient incoming-grad original-input original-filter output
-                                    [2 2] [1 1] [1 1])]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
+                                              [4 4 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 1.0 
+                                                              1.0 1.0]) 
+                                               [2 2 1 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [2 2] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/filter-gradient incoming-grad original-input original-filter output
+                                      [2 2] [1 1] [1 1])]
+        (is (instance? AFArray result))))))
 
 (deftest test-data-gradient
   (testing "data-gradient computes data gradient"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/data-gradient incoming-grad original-input original-filter output
-                                   [1 1] [1 1] [1 1])]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/data-gradient incoming-grad original-input original-filter output
+                                     [1 1] [1 1] [1 1])]
+        (is (instance? AFArray result))))))
 
 (deftest test-data-gradient-with-params
   (testing "data-gradient with custom stride, dilation, padding"
     (device/init!)
-    (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
-                                            [4 4 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 1.0 
-                                                            1.0 1.0]) 
-                                             [2 2 1 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/data-gradient incoming-grad original-input original-filter output
-                                  [1 1] [1 1] [1 1])]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
+                                              [4 4 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 1.0 
+                                                              1.0 1.0]) 
+                                               [2 2 1 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/data-gradient incoming-grad original-input original-filter output
+                                    [1 1] [1 1] [1 1])]
+        (is (instance? AFArray result))))))
 
 (deftest test-bias-gradient
   (testing "bias-gradient computes bias gradient"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0 
-                                                            1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 2] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/bias-gradient incoming-grad original-input original-filter output
-                                   [1 1] [1 1] [1 1])]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0 
+                                                              1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 2] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/bias-gradient incoming-grad original-input original-filter output
+                                     [1 1] [1 1] [1 1])]
+        (is (instance? AFArray result))))))
 
 (deftest test-bias-gradient-with-params
   (testing "bias-gradient with custom stride, dilation, padding"
     (device/init!)
-    (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
-                                            [4 4 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array (repeat 8 1.0)) 
-                                             [2 2 1 2] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          result (ml/bias-gradient incoming-grad original-input original-filter output
-                                  [1 1] [1 1] [1 1])]
-      (try
-        (is (instance? AFArray result))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close result))))))
+    (releasing!
+      (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
+                                              [4 4 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array (repeat 8 1.0)) 
+                                               [2 2 1 2] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            result (ml/bias-gradient incoming-grad original-input original-filter output
+                                    [1 1] [1 1] [1 1])]
+        (is (instance? AFArray result))))))
 
 (deftest test-all-gradients
   (testing "all-gradients computes filter, data, and bias gradients together"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0 
-                                                            1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 2] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          {:keys [filter data bias]} 
-          (ml/all-gradients incoming-grad original-input original-filter output
-                           [1 1] [1 1] [1 1])]
-      (try
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0 
+                                                              1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 2] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            {:keys [filter data bias]} 
+            (ml/all-gradients incoming-grad original-input original-filter output
+                             [1 1] [1 1] [1 1])]
         (is (instance? AFArray filter))
         (is (instance? AFArray data))
-        (is (instance? AFArray bias))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close filter)
-          (.close data)
-          (.close bias))))))
+        (is (instance? AFArray bias))))))
 
 (deftest test-all-gradients-with-params
   (testing "all-gradients with custom stride, dilation, padding"
     (device/init!)
-    (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
-                                            [4 4 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 1.0 
-                                                            1.0 1.0]) 
-                                             [2 2 1 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [2 2] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          {:keys [filter data bias]} 
-          (ml/all-gradients incoming-grad original-input original-filter output
-                           [2 2] [1 1] [1 1])]
-      (try
+    (releasing!
+      (let [original-input (array/create-array (float-array (repeat 16 1.0)) 
+                                              [4 4 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 1.0 
+                                                              1.0 1.0]) 
+                                               [2 2 1 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [2 2] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            {:keys [filter data bias]} 
+            (ml/all-gradients incoming-grad original-input original-filter output
+                             [2 2] [1 1] [1 1])]
         (is (instance? AFArray filter))
         (is (instance? AFArray data))
-        (is (instance? AFArray bias))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close filter)
-          (.close data)
-          (.close bias))))))
+        (is (instance? AFArray bias))))))
 
 ;;;
 ;;; Integration Tests
@@ -422,29 +335,29 @@
 (deftest test-gradient-consistency
   (testing "all-gradients produces same results as individual gradient functions"
     (device/init!)
-    (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                           0.0 1.0 1.0 0.0]) 
-                                            [2 2 2 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0 
-                                                            1.0 0.0 0.0 1.0 
-                                                            0.0 1.0 1.0 0.0]) 
-                                             [2 2 2 2] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          filter-grad-single (ml/filter-gradient incoming-grad original-input original-filter output
-                                                 [1 1] [1 1] [1 1])
-          data-grad-single (ml/data-gradient incoming-grad original-input original-filter output
-                                             [1 1] [1 1] [1 1])
-          bias-grad-single (ml/bias-gradient incoming-grad original-input original-filter output
-                                             [1 1] [1 1] [1 1])
-          {:keys [filter data bias]} 
-          (ml/all-gradients incoming-grad original-input original-filter output
-                           [1 1] [1 1] [1 1])]
-      (try
+    (releasing!
+      (let [original-input (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                             0.0 1.0 1.0 0.0]) 
+                                              [2 2 2 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0 
+                                                              1.0 0.0 0.0 1.0 
+                                                              0.0 1.0 1.0 0.0]) 
+                                               [2 2 2 2] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * output-dims) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            filter-grad-single (ml/filter-gradient incoming-grad original-input original-filter output
+                                                   [1 1] [1 1] [1 1])
+            data-grad-single (ml/data-gradient incoming-grad original-input original-filter output
+                                               [1 1] [1 1] [1 1])
+            bias-grad-single (ml/bias-gradient incoming-grad original-input original-filter output
+                                               [1 1] [1 1] [1 1])
+            {:keys [filter data bias]} 
+            (ml/all-gradients incoming-grad original-input original-filter output
+                             [1 1] [1 1] [1 1])]
         ;; Verify all gradients are AFArray instances
         (is (instance? AFArray filter-grad-single))
         (is (instance? AFArray data-grad-single))
@@ -455,54 +368,35 @@
         ;; Verify dimensions match
         (is (= (array/get-dims filter-grad-single) (array/get-dims filter)))
         (is (= (array/get-dims data-grad-single) (array/get-dims data)))
-        (is (= (array/get-dims bias-grad-single) (array/get-dims bias)))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close filter-grad-single)
-          (.close data-grad-single)
-          (.close bias-grad-single)
-          (.close filter)
-          (.close data)
-          (.close bias))))))
+        (is (= (array/get-dims bias-grad-single) (array/get-dims bias)))))))
 
 (deftest test-gradient-shapes
   (testing "Gradients have expected shapes relative to inputs"
     (device/init!)
-    (let [;; 3x3 input, 2x2 filter
-          original-input (array/create-array (float-array (repeat 9 1.0)) 
-                                            [3 3 1 1] defs/AF_DTYPE_F32)
-          original-filter (array/create-array (float-array [1.0 1.0 
-                                                            1.0 1.0]) 
-                                             [2 2 1 1] defs/AF_DTYPE_F32)
-          ;; Perform forward pass to get output
-          output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
-          output-dims (array/get-dims output)
-          incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
-                                           output-dims defs/AF_DTYPE_F32)
-          filter-grad (ml/filter-gradient incoming-grad original-input original-filter output
-                                          [1 1] [1 1] [1 1])
-          data-grad (ml/data-gradient incoming-grad original-input original-filter output
-                                      [1 1] [1 1] [1 1])
-          bias-grad (ml/bias-gradient incoming-grad original-input original-filter output
-                                      [1 1] [1 1] [1 1])]
-      (try
+    (releasing!
+      (let [;; 3x3 input, 2x2 filter
+            original-input (array/create-array (float-array (repeat 9 1.0)) 
+                                              [3 3 1 1] defs/AF_DTYPE_F32)
+            original-filter (array/create-array (float-array [1.0 1.0 
+                                                              1.0 1.0]) 
+                                               [2 2 1 1] defs/AF_DTYPE_F32)
+            ;; Perform forward pass to get output
+            output (signal/convolve2-nn original-input original-filter [1 1] [1 1] [1 1])
+            output-dims (array/get-dims output)
+            incoming-grad (array/create-array (float-array (repeat (reduce * (take 2 output-dims)) 1.0)) 
+                                             output-dims defs/AF_DTYPE_F32)
+            filter-grad (ml/filter-gradient incoming-grad original-input original-filter output
+                                            [1 1] [1 1] [1 1])
+            data-grad (ml/data-gradient incoming-grad original-input original-filter output
+                                        [1 1] [1 1] [1 1])
+            bias-grad (ml/bias-gradient incoming-grad original-input original-filter output
+                                        [1 1] [1 1] [1 1])]
         ;; Filter gradient should match filter shape
         (is (= [2 2 1 1] (array/get-dims filter-grad)))
         ;; Data gradient should match input shape
         (is (= [3 3 1 1] (array/get-dims data-grad)))
         ;; Bias gradient has specific shape
-        (is (vector? (array/get-dims bias-grad)))
-        (finally
-          (.close incoming-grad)
-          (.close original-input)
-          (.close original-filter)
-          (.close output)
-          (.close filter-grad)
-          (.close data-grad)
-          (.close bias-grad))))))
+        (is (vector? (array/get-dims bias-grad)))))))
 
 (comment
   ;; run all tests from REPL

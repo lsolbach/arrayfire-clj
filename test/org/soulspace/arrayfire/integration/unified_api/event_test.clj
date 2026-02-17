@@ -1,5 +1,6 @@
 (ns org.soulspace.arrayfire.integration.unified-api.event-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [tech.v3.resource :refer [releasing!]]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.event :as event]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
@@ -110,14 +111,14 @@
     (device/init!)
     (let [evt (event/create-event!)]
       (try
-        ;; Create some GPU work
-        (let [arr (array/create-array (float-array [1.0 2.0 3.0 4.0]) 
-                                       [4] defs/AF_DTYPE_F32)]
-          ;; Mark event after GPU work
-          (event/mark-event! evt)
-          ;; CPU waits for GPU
-          (event/block-event! evt)
-          (.close arr))
+        (releasing!
+          ;; Create some GPU work
+          (let [arr (array/create-array (float-array [1.0 2.0 3.0 4.0]) 
+                                         [4] defs/AF_DTYPE_F32)]
+            ;; Mark event after GPU work
+            (event/mark-event! evt)
+            ;; CPU waits for GPU
+            (event/block-event! evt)))
         (finally
           (event/delete-event! evt))))))
 
@@ -126,12 +127,12 @@
     (device/init!)
     (let [evt (event/create-event!)]
       (try
-        ;; Some GPU operations
-        (let [arr (array/create-array (float-array [1.0 2.0]) 
-                                       [2] defs/AF_DTYPE_F32)]
-          (event/mark-event! evt)
-          (event/enqueue-wait-event! evt)
-          (.close arr))
+        (releasing!
+          ;; Some GPU operations
+          (let [arr (array/create-array (float-array [1.0 2.0]) 
+                                         [2] defs/AF_DTYPE_F32)]
+            (event/mark-event! evt)
+            (event/enqueue-wait-event! evt)))
         (finally
           (event/delete-event! evt))))))
 
@@ -141,17 +142,17 @@
     (let [evt1 (event/create-event!)
           evt2 (event/create-event!)]
       (try
-        ;; Create work for first event
-        (let [arr1 (array/create-array (float-array [1.0 2.0]) 
-                                        [2] defs/AF_DTYPE_F32)]
-          (event/mark-event! evt1)
-          (.close arr1))
+        (releasing!
+          ;; Create work for first event
+          (let [arr1 (array/create-array (float-array [1.0 2.0]) 
+                                          [2] defs/AF_DTYPE_F32)]
+            (event/mark-event! evt1)))
         
-        ;; Create work for second event
-        (let [arr2 (array/create-array (float-array [3.0 4.0]) 
-                                        [2] defs/AF_DTYPE_F32)]
-          (event/mark-event! evt2)
-          (.close arr2))
+        (releasing!
+          ;; Create work for second event
+          (let [arr2 (array/create-array (float-array [3.0 4.0]) 
+                                          [2] defs/AF_DTYPE_F32)]
+            (event/mark-event! evt2)))
         
         ;; Wait for both events
         (event/block-event! evt1)
@@ -165,17 +166,15 @@
     (device/init!)
     (let [evt (event/create-event!)]
       (try
-        ;; Create multiple operations
-        (let [arr1 (array/create-array (float-array [1.0]) [1] defs/AF_DTYPE_F32)
-              arr2 (array/create-array (float-array [2.0]) [1] defs/AF_DTYPE_F32)
-              arr3 (array/create-array (float-array [3.0]) [1] defs/AF_DTYPE_F32)]
-          ;; Mark after all operations
-          (event/mark-event! evt)
-          ;; Block ensures all complete
-          (event/block-event! evt)
-          (.close arr1)
-          (.close arr2)
-          (.close arr3))
+        (releasing!
+          ;; Create multiple operations
+          (let [arr1 (array/create-array (float-array [1.0]) [1] defs/AF_DTYPE_F32)
+                arr2 (array/create-array (float-array [2.0]) [1] defs/AF_DTYPE_F32)
+                arr3 (array/create-array (float-array [3.0]) [1] defs/AF_DTYPE_F32)]
+            ;; Mark after all operations
+            (event/mark-event! evt)
+            ;; Block ensures all complete
+            (event/block-event! evt)))
         (finally
           (event/delete-event! evt))))))
 

@@ -4,7 +4,8 @@
             [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.sparse :as sparse]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
+            [tech.v3.resource :refer [releasing!]])
   (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
@@ -14,51 +15,36 @@
 (deftest test-create-coo
   (testing "create sparse matrix in COO format"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)]
         (is (instance? AFArray sparse-mat))
         (is (= 3 (sparse/nnz sparse-mat)))
-        (is (= defs/AF_STORAGE_COO (sparse/storage-format sparse-mat)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat))))))
+        (is (= defs/AF_STORAGE_COO (sparse/storage-format sparse-mat)))))))
 
 (deftest test-create-csr
   (testing "create sparse matrix in CSR format"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2 3]) [4] defs/AF_DTYPE_S32) ; rowPtr has nRows+1 elements
-          cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_CSR)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2 3]) [4] defs/AF_DTYPE_S32) ; rowPtr has nRows+1 elements
+            cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_CSR)]
         (is (instance? AFArray sparse-mat))
-        (is (= defs/AF_STORAGE_CSR (sparse/storage-format sparse-mat)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat))))))
+        (is (= defs/AF_STORAGE_CSR (sparse/storage-format sparse-mat)))))))
 
 (deftest test-create-csc
   (testing "create sparse matrix in CSC format"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0 1 2 3]) [4] defs/AF_DTYPE_S32) ; colPtr has nCols+1 elements
-          sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_CSC)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0 1 2 3]) [4] defs/AF_DTYPE_S32) ; colPtr has nCols+1 elements
+            sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_CSC)]
         (is (instance? AFArray sparse-mat))
-        (is (= defs/AF_STORAGE_CSC (sparse/storage-format sparse-mat)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat))))))
+        (is (= defs/AF_STORAGE_CSC (sparse/storage-format sparse-mat)))))))
 
 ;;;
 ;;; Dense to Sparse Conversion Tests
@@ -67,31 +53,25 @@
 (deftest test-from-dense-coo
   (testing "convert dense matrix to COO sparse"
     (device/init!)
-    (let [dense (array/create-array (float-array [1.0 0.0 0.0
-                                                   0.0 2.0 0.0
-                                                   0.0 0.0 3.0]) [3 3] defs/AF_DTYPE_F32)
-          sparse-mat (sparse/from-dense dense defs/AF_STORAGE_COO)]
-      (try
+    (releasing!
+      (let [dense (array/create-array (float-array [1.0 0.0 0.0
+                                                     0.0 2.0 0.0
+                                                     0.0 0.0 3.0]) [3 3] defs/AF_DTYPE_F32)
+            sparse-mat (sparse/from-dense dense defs/AF_STORAGE_COO)]
         (is (instance? AFArray sparse-mat))
         (is (= 3 (sparse/nnz sparse-mat)))
-        (is (= defs/AF_STORAGE_COO (sparse/storage-format sparse-mat)))
-        (finally
-          (.close dense)
-          (.close sparse-mat))))))
+        (is (= defs/AF_STORAGE_COO (sparse/storage-format sparse-mat)))))))
 
 (deftest test-from-dense-csr
   (testing "convert dense matrix to CSR sparse"
     (device/init!)
-    (let [dense (array/create-array (float-array [1.0 2.0 0.0
-                                                   0.0 3.0 0.0]) [2 3] defs/AF_DTYPE_F32)
-          sparse-mat (sparse/from-dense dense defs/AF_STORAGE_CSR)]
-      (try
+    (releasing!
+      (let [dense (array/create-array (float-array [1.0 2.0 0.0
+                                                     0.0 3.0 0.0]) [2 3] defs/AF_DTYPE_F32)
+            sparse-mat (sparse/from-dense dense defs/AF_STORAGE_CSR)]
         (is (instance? AFArray sparse-mat))
         (is (= 3 (sparse/nnz sparse-mat)))
-        (is (= defs/AF_STORAGE_CSR (sparse/storage-format sparse-mat)))
-        (finally
-          (.close dense)
-          (.close sparse-mat))))))
+        (is (= defs/AF_STORAGE_CSR (sparse/storage-format sparse-mat)))))))
 
 ;;;
 ;;; Format Conversion Tests
@@ -100,36 +80,26 @@
 (deftest test-convert-to-csr
   (testing "convert COO to CSR format"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          coo-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
-          csr-mat (sparse/convert-to coo-mat defs/AF_STORAGE_CSR)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            coo-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
+            csr-mat (sparse/convert-to coo-mat defs/AF_STORAGE_CSR)]
         (is (instance? AFArray csr-mat))
         (is (= defs/AF_STORAGE_CSR (sparse/storage-format csr-mat)))
-        (is (= 3 (sparse/nnz csr-mat)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close coo-mat)
-          (.close csr-mat))))))
+        (is (= 3 (sparse/nnz csr-mat)))))))
 
 (deftest test-convert-to-coo
   (testing "convert CSR to COO format"
     (device/init!)
-    (let [dense (array/create-array (float-array [1.0 0.0
-                                                   0.0 2.0]) [2 2] defs/AF_DTYPE_F32)
-          csr-mat (sparse/from-dense dense defs/AF_STORAGE_CSR)
-          coo-mat (sparse/convert-to csr-mat defs/AF_STORAGE_COO)]
-      (try
+    (releasing!
+      (let [dense (array/create-array (float-array [1.0 0.0
+                                                     0.0 2.0]) [2 2] defs/AF_DTYPE_F32)
+            csr-mat (sparse/from-dense dense defs/AF_STORAGE_CSR)
+            coo-mat (sparse/convert-to csr-mat defs/AF_STORAGE_COO)]
         (is (instance? AFArray coo-mat))
-        (is (= defs/AF_STORAGE_COO (sparse/storage-format coo-mat)))
-        (finally
-          (.close dense)
-          (.close csr-mat)
-          (.close coo-mat))))))
+        (is (= defs/AF_STORAGE_COO (sparse/storage-format coo-mat)))))))
 
 ;;;
 ;;; Sparse to Dense Conversion Tests
@@ -138,17 +108,13 @@
 (deftest test-to-dense
   (testing "convert sparse matrix back to dense"
     (device/init!)
-    (let [dense-orig (array/create-array (float-array [1.0 0.0
-                                                        0.0 2.0]) [2 2] defs/AF_DTYPE_F32)
-          sparse-mat (sparse/from-dense dense-orig defs/AF_STORAGE_COO)
-          dense-result (sparse/to-dense sparse-mat)]
-      (try
+    (releasing!
+      (let [dense-orig (array/create-array (float-array [1.0 0.0
+                                                          0.0 2.0]) [2 2] defs/AF_DTYPE_F32)
+            sparse-mat (sparse/from-dense dense-orig defs/AF_STORAGE_COO)
+            dense-result (sparse/to-dense sparse-mat)]
         (is (instance? AFArray dense-result))
-        (is (= [2 2] (take 2 (array/get-dims dense-result))))
-        (finally
-          (.close dense-orig)
-          (.close sparse-mat)
-          (.close dense-result))))))
+        (is (= [2 2] (take 2 (array/get-dims dense-result))))))))
 
 ;;;
 ;;; Sparse Matrix Information Tests
@@ -157,12 +123,12 @@
 (deftest test-info
   (testing "get sparse matrix information"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
-          info (sparse/info sparse-mat)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
+            info (sparse/info sparse-mat)]
         (is (map? info))
         (is (contains? info :nrows))
         (is (contains? info :ncols))
@@ -171,12 +137,7 @@
         (is (= 3 (:nrows info)))
         (is (= 3 (:ncols info)))
         (is (= 3 (:nnz info)))
-        (is (= defs/AF_STORAGE_COO (:storage info)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat))))))
+        (is (= defs/AF_STORAGE_COO (:storage info)))))))
 
 ;;;
 ;;; Component Extraction Tests
@@ -185,56 +146,38 @@
 (deftest test-values
   (testing "extract values array from sparse matrix"
     (device/init!)
-    (let [vals (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 3 3 vals rows cols defs/AF_STORAGE_COO)
-          extracted-vals (sparse/values sparse-mat)]
-      (try
+    (releasing!
+      (let [vals (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 3 3 vals rows cols defs/AF_STORAGE_COO)
+            extracted-vals (sparse/values sparse-mat)]
         (is (instance? AFArray extracted-vals))
-        (is (= 3 (array/get-elements extracted-vals)))
-        (finally
-          (.close vals)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat)
-          (.close extracted-vals))))))
+        (is (= 3 (array/get-elements extracted-vals)))))))
 
 (deftest test-row-indices
   (testing "extract row indices from sparse matrix"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
-          extracted-rows (sparse/row-indices sparse-mat)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
+            extracted-rows (sparse/row-indices sparse-mat)]
         (is (instance? AFArray extracted-rows))
-        (is (= 3 (array/get-elements extracted-rows)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat)
-          (.close extracted-rows))))))
+        (is (= 3 (array/get-elements extracted-rows)))))))
 
 (deftest test-col-indices
   (testing "extract column indices from sparse matrix"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
-          extracted-cols (sparse/col-indices sparse-mat)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0 1 2]) [3] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 3 3 values rows cols defs/AF_STORAGE_COO)
+            extracted-cols (sparse/col-indices sparse-mat)]
         (is (instance? AFArray extracted-cols))
-        (is (= 3 (array/get-elements extracted-cols)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat)
-          (.close extracted-cols))))))
+        (is (= 3 (array/get-elements extracted-cols)))))))
 
 ;;;
 ;;; Non-Zero Count Tests
@@ -243,25 +186,19 @@
 (deftest test-nnz
   (testing "count non-zero elements in sparse matrix"
     (device/init!)
-    (let [dense (array/create-array (float-array [1.0 0.0 2.0
-                                                   0.0 0.0 3.0]) [2 3] defs/AF_DTYPE_F32)
-          sparse-mat (sparse/from-dense dense defs/AF_STORAGE_COO)]
-      (try
-        (is (= 3 (sparse/nnz sparse-mat)))
-        (finally
-          (.close dense)
-          (.close sparse-mat))))))
+    (releasing!
+      (let [dense (array/create-array (float-array [1.0 0.0 2.0
+                                                     0.0 0.0 3.0]) [2 3] defs/AF_DTYPE_F32)
+            sparse-mat (sparse/from-dense dense defs/AF_STORAGE_COO)]
+        (is (= 3 (sparse/nnz sparse-mat)))))))
 
 (deftest test-nnz-empty
   (testing "nnz returns 0 for matrix with all zeros"
     (device/init!)
-    (let [dense (array/create-array (float-array [0.0 0.0 0.0 0.0]) [2 2] defs/AF_DTYPE_F32)
-          sparse-mat (sparse/from-dense dense defs/AF_STORAGE_COO)]
-      (try
-        (is (= 0 (sparse/nnz sparse-mat)))
-        (finally
-          (.close dense)
-          (.close sparse-mat))))))
+    (releasing!
+      (let [dense (array/create-array (float-array [0.0 0.0 0.0 0.0]) [2 2] defs/AF_DTYPE_F32)
+            sparse-mat (sparse/from-dense dense defs/AF_STORAGE_COO)]
+        (is (= 0 (sparse/nnz sparse-mat)))))))
 
 ;;;
 ;;; Storage Format Tests
@@ -270,28 +207,20 @@
 (deftest test-storage-format-coo
   (testing "storage-format returns COO"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0]) [1] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0]) [1] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [0]) [1] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 1 1 values rows cols defs/AF_STORAGE_COO)]
-      (try
-        (is (= defs/AF_STORAGE_COO (sparse/storage-format sparse-mat)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat))))))
+    (releasing!
+      (let [values (array/create-array (float-array [1.0]) [1] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0]) [1] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [0]) [1] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 1 1 values rows cols defs/AF_STORAGE_COO)]
+        (is (= defs/AF_STORAGE_COO (sparse/storage-format sparse-mat)))))))
 
 (deftest test-storage-format-csr
   (testing "storage-format returns CSR"
     (device/init!)
-    (let [dense (array/create-array (float-array [1.0]) [1 1] defs/AF_DTYPE_F32)
-          sparse-mat (sparse/from-dense dense defs/AF_STORAGE_CSR)]
-      (try
-        (is (= defs/AF_STORAGE_CSR (sparse/storage-format sparse-mat)))
-        (finally
-          (.close dense)
-          (.close sparse-mat))))))
+    (releasing!
+      (let [dense (array/create-array (float-array [1.0]) [1 1] defs/AF_DTYPE_F32)
+            sparse-mat (sparse/from-dense dense defs/AF_STORAGE_CSR)]
+        (is (= defs/AF_STORAGE_CSR (sparse/storage-format sparse-mat)))))))
 
 ;;;
 ;;; Integration Tests
@@ -300,48 +229,35 @@
 (deftest test-dense-sparse-dense-roundtrip
   (testing "dense -> sparse -> dense roundtrip preserves data"
     (device/init!)
-    (let [original (array/create-array (float-array [1.0 0.0
-                                                      0.0 2.0]) [2 2] defs/AF_DTYPE_F32)
-          sparse-mat (sparse/from-dense original defs/AF_STORAGE_COO)
-          reconstructed (sparse/to-dense sparse-mat)]
-      (try
-        (is (= (array/get-dims original) (array/get-dims reconstructed)))
-        (finally
-          (.close original)
-          (.close sparse-mat)
-          (.close reconstructed))))))
+    (releasing!
+      (let [original (array/create-array (float-array [1.0 0.0
+                                                        0.0 2.0]) [2 2] defs/AF_DTYPE_F32)
+            sparse-mat (sparse/from-dense original defs/AF_STORAGE_COO)
+            reconstructed (sparse/to-dense sparse-mat)]
+        (is (= (array/get-dims original) (array/get-dims reconstructed)))))))
 
 (deftest test-format-conversion-preserves-data
   (testing "converting between formats preserves non-zero count"
     (device/init!)
-    (let [dense (array/create-array (float-array [1.0 2.0 0.0
-                                                   0.0 3.0 0.0]) [2 3] defs/AF_DTYPE_F32)
-          coo-mat (sparse/from-dense dense defs/AF_STORAGE_COO)
-          csr-mat (sparse/convert-to coo-mat defs/AF_STORAGE_CSR)]
-      (try
-        (is (= (sparse/nnz coo-mat) (sparse/nnz csr-mat)))
-        (finally
-          (.close dense)
-          (.close coo-mat)
-          (.close csr-mat))))))
+    (releasing!
+      (let [dense (array/create-array (float-array [1.0 2.0 0.0
+                                                     0.0 3.0 0.0]) [2 3] defs/AF_DTYPE_F32)
+            coo-mat (sparse/from-dense dense defs/AF_STORAGE_COO)
+            csr-mat (sparse/convert-to coo-mat defs/AF_STORAGE_CSR)]
+        (is (= (sparse/nnz coo-mat) (sparse/nnz csr-mat)))))))
 
 (deftest test-sparse-matrix-dimensions
   (testing "sparse matrix maintains correct dimensions"
     (device/init!)
-    (let [values (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
-          rows (array/create-array (int-array [0 2]) [2] defs/AF_DTYPE_S32)
-          cols (array/create-array (int-array [1 3]) [2] defs/AF_DTYPE_S32)
-          sparse-mat (sparse/create 5 5 values rows cols defs/AF_STORAGE_COO)
-          info (sparse/info sparse-mat)]
-      (try
+    (releasing!
+      (let [values (array/create-array (float-array [1.0 2.0]) [2] defs/AF_DTYPE_F32)
+            rows (array/create-array (int-array [0 2]) [2] defs/AF_DTYPE_S32)
+            cols (array/create-array (int-array [1 3]) [2] defs/AF_DTYPE_S32)
+            sparse-mat (sparse/create 5 5 values rows cols defs/AF_STORAGE_COO)
+            info (sparse/info sparse-mat)]
         (is (= 5 (:nrows info)))
         (is (= 5 (:ncols info)))
-        (is (= 2 (:nnz info)))
-        (finally
-          (.close values)
-          (.close rows)
-          (.close cols)
-          (.close sparse-mat))))))
+        (is (= 2 (:nnz info)))))))
 
 (comment
   ;; run all tests from REPL

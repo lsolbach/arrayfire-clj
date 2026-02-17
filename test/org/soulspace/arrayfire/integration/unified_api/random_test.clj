@@ -1,6 +1,7 @@
 (ns org.soulspace.arrayfire.integration.unified-api.random-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
             [coffi.mem :as mem]
+            [tech.v3.resource :refer [releasing!]]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.random :as rand]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
@@ -88,53 +89,52 @@
   (testing "randu generates uniform random array"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randu [10] defs/AF_DTYPE_F32)
-          buf (mem/alloc (* 10 4))]
-      (array/get-data-ptr a buf)
-      ;; Check that values are in [0, 1) range
-      (dotimes [i 10]
-        (let [val (mem/read-float buf (* i 4))]
-          (is (>= val 0.0))
-          (is (< val 1.0))))
-      (.close a))))
+    (releasing!
+      (let [a (rand/randu [10] defs/AF_DTYPE_F32)
+            buf (mem/alloc (* 10 4))]
+        (array/get-data-ptr a buf)
+        ;; Check that values are in [0, 1) range
+        (dotimes [i 10]
+          (let [val (mem/read-float buf (* i 4))]
+            (is (>= val 0.0))
+            (is (< val 1.0))))))))
 
 (deftest test-randu-2d
   (testing "randu with 2D dimensions"
     (device/init!)
     (rand/set-seed! 100)
-    (let [a (rand/randu [5 5] defs/AF_DTYPE_F32)]
-      (is (instance? AFArray a))
-      (is (= [5 5 1 1] (vec (array/get-dims a))))
-      (.close a))))
+    (releasing!
+      (let [a (rand/randu [5 5] defs/AF_DTYPE_F32)]
+        (is (instance? AFArray a))
+        (is (= [5 5 1 1] (vec (array/get-dims a))))))))
 
 (deftest test-randn
   (testing "randn generates normal random array"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randn [100] defs/AF_DTYPE_F32)
-          buf (mem/alloc (* 100 4))]
-      (array/get-data-ptr a buf)
-      ;; Check that values exist (normal distribution can be any value)
-      (let [val (mem/read-float buf 0)]
-        (is (not (nil? val))))
-      (.close a))))
+    (releasing!
+      (let [a (rand/randn [100] defs/AF_DTYPE_F32)
+            buf (mem/alloc (* 100 4))]
+        (array/get-data-ptr a buf)
+        ;; Check that values exist (normal distribution can be any value)
+        (let [val (mem/read-float buf 0)]
+          (is (not (nil? val))))))))
 
 (deftest test-randn-reproducibility
   (testing "same seed produces same random sequence"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a1 (rand/randu [5] defs/AF_DTYPE_F32)
-          buf1 (mem/alloc (* 5 4))]
-      (array/get-data-ptr a1 buf1)
-      (let [val1 (mem/read-float buf1 0)]
-        (rand/set-seed! 42)
-        (let [a2 (rand/randu [5] defs/AF_DTYPE_F32)
-              buf2 (mem/alloc (* 5 4))]
-          (array/get-data-ptr a2 buf2)
-          (let [val2 (mem/read-float buf2 0)]
-            (is (= val1 val2)))
-          (.close a2)))
-      (.close a1))))
+    (releasing!
+      (let [a1 (rand/randu [5] defs/AF_DTYPE_F32)
+            buf1 (mem/alloc (* 5 4))]
+        (array/get-data-ptr a1 buf1)
+        (let [val1 (mem/read-float buf1 0)]
+          (rand/set-seed! 42)
+          (let [a2 (rand/randu [5] defs/AF_DTYPE_F32)
+                buf2 (mem/alloc (* 5 4))]
+            (array/get-data-ptr a2 buf2)
+            (let [val2 (mem/read-float buf2 0)]
+              (is (= val1 val2)))))))))
 
 ;;;
 ;;; Random Generation with Custom Engine Tests
@@ -143,65 +143,71 @@
 (deftest test-random-uniform-with-engine
   (testing "random-uniform with custom engine"
     (device/init!)
-    (let [engine (rand/create-engine :philox 42)
-          a (rand/random-uniform [10] defs/AF_DTYPE_F32 engine)
-          buf (mem/alloc (* 10 4))]
-      (array/get-data-ptr a buf)
-      ;; Check that values are in [0, 1) range
-      (let [val (mem/read-float buf 0)]
-        (is (>= val 0.0))
-        (is (< val 1.0)))
-      (.close a)
-      (rand/release-engine! engine))))
+    (let [engine (rand/create-engine :philox 42)]
+      (try
+        (releasing!
+          (let [a (rand/random-uniform [10] defs/AF_DTYPE_F32 engine)
+                buf (mem/alloc (* 10 4))]
+            (array/get-data-ptr a buf)
+            ;; Check that values are in [0, 1) range
+            (let [val (mem/read-float buf 0)]
+              (is (>= val 0.0))
+              (is (< val 1.0)))))
+        (finally
+          (rand/release-engine! engine))))))
 
 (deftest test-random-normal-with-engine
   (testing "random-normal with custom engine"
     (device/init!)
-    (let [engine (rand/create-engine :threefry 123)
-          a (rand/random-normal [20] defs/AF_DTYPE_F64 engine)
-          buf (mem/alloc (* 20 8))]
-      (array/get-data-ptr a buf)
-      ;; Check that values exist
-      (let [val (mem/read-double buf 0)]
-        (is (not (nil? val))))
-      (.close a)
-      (rand/release-engine! engine))))
+    (let [engine (rand/create-engine :threefry 123)]
+      (try
+        (releasing!
+          (let [a (rand/random-normal [20] defs/AF_DTYPE_F64 engine)
+                buf (mem/alloc (* 20 8))]
+            (array/get-data-ptr a buf)
+            ;; Check that values exist
+            (let [val (mem/read-double buf 0)]
+              (is (not (nil? val))))))
+        (finally
+          (rand/release-engine! engine))))))
 
 (deftest test-multiple-engines
   (testing "multiple independent engines"
     (device/init!)
     (let [engine1 (rand/create-engine :philox 42)
-          engine2 (rand/create-engine :philox 42)
-          a1 (rand/random-uniform [5] defs/AF_DTYPE_F32 engine1)
-          a2 (rand/random-uniform [5] defs/AF_DTYPE_F32 engine2)
-          buf1 (mem/alloc (* 5 4))
-          buf2 (mem/alloc (* 5 4))]
-      (array/get-data-ptr a1 buf1)
-      (array/get-data-ptr a2 buf2)
-      ;; Same seed should produce same values
-      (is (= (mem/read-float buf1 0) (mem/read-float buf2 0)))
-      (.close a1)
-      (.close a2)
-      (rand/release-engine! engine1)
-      (rand/release-engine! engine2))))
+          engine2 (rand/create-engine :philox 42)]
+      (try
+        (releasing!
+          (let [a1 (rand/random-uniform [5] defs/AF_DTYPE_F32 engine1)
+                a2 (rand/random-uniform [5] defs/AF_DTYPE_F32 engine2)
+                buf1 (mem/alloc (* 5 4))
+                buf2 (mem/alloc (* 5 4))]
+            (array/get-data-ptr a1 buf1)
+            (array/get-data-ptr a2 buf2)
+            ;; Same seed should produce same values
+            (is (= (mem/read-float buf1 0) (mem/read-float buf2 0)))))
+        (finally
+          (rand/release-engine! engine1)
+          (rand/release-engine! engine2))))))
 
 (deftest test-engine-types
   (testing "different engine types produce different sequences"
     (device/init!)
     (let [engine-philox (rand/create-engine :philox 42)
-          engine-threefry (rand/create-engine :threefry 42)
-          a-philox (rand/random-uniform [5] defs/AF_DTYPE_F32 engine-philox)
-          a-threefry (rand/random-uniform [5] defs/AF_DTYPE_F32 engine-threefry)
-          buf-philox (mem/alloc (* 5 4))
-          buf-threefry (mem/alloc (* 5 4))]
-      (array/get-data-ptr a-philox buf-philox)
-      (array/get-data-ptr a-threefry buf-threefry)
-      ;; Different engines should produce different values
-      (is (not= (mem/read-float buf-philox 0) (mem/read-float buf-threefry 0)))
-      (.close a-philox)
-      (.close a-threefry)
-      (rand/release-engine! engine-philox)
-      (rand/release-engine! engine-threefry))))
+          engine-threefry (rand/create-engine :threefry 42)]
+      (try
+        (releasing!
+          (let [a-philox (rand/random-uniform [5] defs/AF_DTYPE_F32 engine-philox)
+                a-threefry (rand/random-uniform [5] defs/AF_DTYPE_F32 engine-threefry)
+                buf-philox (mem/alloc (* 5 4))
+                buf-threefry (mem/alloc (* 5 4))]
+            (array/get-data-ptr a-philox buf-philox)
+            (array/get-data-ptr a-threefry buf-threefry)
+            ;; Different engines should produce different values
+            (is (not= (mem/read-float buf-philox 0) (mem/read-float buf-threefry 0)))))
+        (finally
+          (rand/release-engine! engine-philox)
+          (rand/release-engine! engine-threefry))))))
 
 ;;;
 ;;; Data Type Tests
@@ -211,22 +217,22 @@
   (testing "randu with integer types"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randu [10] defs/AF_DTYPE_S32)
-          buf (mem/alloc (* 10 4))]
-      (array/get-data-ptr a buf)
-      ;; Integer uniform should span full range
-      (is (not (nil? (mem/read-int buf 0))))
-      (.close a))))
+    (releasing!
+      (let [a (rand/randu [10] defs/AF_DTYPE_S32)
+            buf (mem/alloc (* 10 4))]
+        (array/get-data-ptr a buf)
+        ;; Integer uniform should span full range
+        (is (not (nil? (mem/read-int buf 0))))))))
 
 (deftest test-randn-double
   (testing "randn with double precision"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randn [10] defs/AF_DTYPE_F64)
-          buf (mem/alloc (* 10 8))]
-      (array/get-data-ptr a buf)
-      (is (not (nil? (mem/read-double buf 0))))
-      (.close a))))
+    (releasing!
+      (let [a (rand/randn [10] defs/AF_DTYPE_F64)
+            buf (mem/alloc (* 10 8))]
+        (array/get-data-ptr a buf)
+        (is (not (nil? (mem/read-double buf 0))))))))
 
 (comment
   ;; run tests from REPL

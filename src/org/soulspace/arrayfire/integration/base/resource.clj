@@ -17,13 +17,13 @@
    that resources are released when the AFArray instance is garbage collected,
    preventing memory leaks."
   (:require [coffi.mem :as mem]
+            [tech.v3.resource :as resource]
             [org.soulspace.arrayfire.ffi.c-api.array :refer [af-release-array af-retain-array]]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]])
   (:import [java.lang AutoCloseable]
            [java.lang.ref Cleaner Cleaner$Cleanable]
            [java.util.concurrent.atomic AtomicBoolean]
-           [java.lang.foreign Arena MemorySegment ValueLayout]
-           [java.nio.charset StandardCharsets]))
+           [java.lang.foreign Arena MemorySegment ValueLayout]))
 
 ;;;
 ;;; AFArray resource management
@@ -135,8 +135,10 @@
   (let [released (AtomicBoolean. false)
         cleanup  (AFArrayCleanup. handle released)
         cleanup-key (Object.)
-        cleanable (.register cleaner cleanup-key cleanup)]
-    (AFArray. handle released cleanable cleanup-key)))
+        cleanable (.register cleaner cleanup-key cleanup)
+        array (AFArray. handle released cleanable cleanup-key)]
+    (resource/track array {:track-type :stack})
+    array))
 
 (defn af-array-retained
   "Wrap an existing af_array; retains before wrapping.

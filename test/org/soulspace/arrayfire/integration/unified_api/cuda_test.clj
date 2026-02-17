@@ -1,5 +1,6 @@
 (ns org.soulspace.arrayfire.integration.unified-api.cuda-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.cuda :as cuda]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
@@ -12,7 +13,7 @@
   []
   (try
     (device/init!)
-    (= device/AF_BACKEND_CUDA (device/get-active-backend))
+    (= defs/AF_BACKEND_CUDA (device/get-active-backend))
     (catch Exception _e
       false)))
 
