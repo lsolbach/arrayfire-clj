@@ -73,7 +73,8 @@
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.ffi.c-api.random :as random]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]))
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
+            [org.soulspace.arrayfire.integration.base.resource :as res]))
 
 ;;;
 ;;; Random Engine Type Constants
@@ -441,12 +442,12 @@
    - randu: Use default engine
    - random-normal: Normal distribution"
   [dims dtype engine]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-random-uniform out ndims dims-seg dtype (mem/as-segment engine))
                 "af-random-uniform")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn random-normal
   "Generate normally distributed random numbers using a custom engine.
@@ -481,12 +482,12 @@
    - randn: Use default engine
    - random-uniform: Uniform distribution"
   [dims dtype engine]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-random-normal out ndims dims-seg dtype (mem/as-segment engine))
                 "af-random-normal")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Random Number Generation with Default Engine
@@ -528,12 +529,12 @@
    - set-seed!: Set seed for reproducibility
    - randn: Normal distribution"
   [dims dtype]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-randu out ndims dims-seg dtype)
                 "af-randu")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn randn
   "Generate normally distributed random numbers using default engine.
@@ -570,12 +571,12 @@
    - set-seed!: Set seed for reproducibility
    - randu: Uniform distribution"
   [dims dtype]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         ndims (count dims)
-        dims-seg (jvm/dims->segment dims)]
+        dims-seg (bmem/dims->segment dims)]
     (check! (random/af-randn out ndims dims-seg dtype)
                 "af-randn")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Default Engine Seed Management

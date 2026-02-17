@@ -1,11 +1,10 @@
 (ns org.soulspace.arrayfire.integration.unified-api.memory-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
-            [coffi.mem :as mem])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
 ;;;
 ;;; Pinned Memory Tests
@@ -89,7 +88,7 @@
 (deftest test-lock-unlock-array
   (testing "lock-array! and unlock-array! work correctly"
     (device/init!)
-    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)]
+    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
       (try
         ;; Lock the array
         (is (nil? (memory/lock-array! arr)))
@@ -105,7 +104,7 @@
   (testing "Can access array data through locked pointer"
     (device/init!)
     (let [data (float-array [1.0 2.0 3.0])
-          arr (array/create-array data [3] jvm/AF_DTYPE_F32)]
+          arr (array/create-array data [3] defs/AF_DTYPE_F32)]
       (try
         (let [ptr (memory/get-device-ptr arr)]
           (is (instance? java.lang.foreign.MemorySegment ptr))
@@ -148,7 +147,7 @@
 (deftest test-get-device-ptr
   (testing "get-device-ptr returns device pointer for array"
     (device/init!)
-    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)]
+    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
       (try
         (let [ptr (memory/get-device-ptr arr)]
           (is (not (nil? ptr)))
@@ -185,7 +184,7 @@
 (deftest test-array-locking-lifecycle
   (testing "Arrays can be locked and unlocked multiple times"
     (device/init!)
-    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)]
+    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
       (try
         (dotimes [_ 5]
           (let [_ptr (memory/lock-array! arr)]

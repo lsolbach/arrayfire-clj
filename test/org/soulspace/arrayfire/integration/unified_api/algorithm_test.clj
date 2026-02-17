@@ -1,17 +1,13 @@
 (ns org.soulspace.arrayfire.integration.unified-api.algorithm-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.util.test :refer [approx=]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.algorithm :as algo]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.base.resource :as jvm]
             [coffi.mem :as mem])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
-
-(defn- approx=
-  "Compare expected/actual values within a tolerance."
-  [expected actual tolerance]
-  (<= (Math/abs (- (double expected) (double actual)))
-      (double tolerance)))
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Reduction Operations Tests
@@ -20,7 +16,7 @@
 (deftest test-sum
   (testing "sum reduces array elements"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [4] defs/AF_DTYPE_F32)
           result (algo/sum a 0)
           buf (mem/alloc 4)]
       (array/get-data-ptr result buf)
@@ -31,7 +27,7 @@
 (deftest test-sum-dim
   (testing "sum along specific dimension"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0]) [2 2] defs/AF_DTYPE_F32)
           result (algo/sum a 0)
           buf (mem/alloc (* 2 4))]
       (array/get-data-ptr result buf)
@@ -43,7 +39,7 @@
 (deftest test-product
   (testing "product multiplies array elements"
     (device/init!)
-    (let [a (array/create-array (float-array [2.0 3.0 4.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [2.0 3.0 4.0]) [3] defs/AF_DTYPE_F32)
           result (algo/product a 0)
           buf (mem/alloc 4)]
       (array/get-data-ptr result buf)
@@ -54,7 +50,7 @@
 (deftest test-min-max
   (testing "min and max find extreme values"
     (device/init!)
-    (let [a (array/create-array (float-array [3.0 1.0 4.0 1.0 5.0]) [5] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [3.0 1.0 4.0 1.0 5.0]) [5] defs/AF_DTYPE_F32)
           min-result (algo/min a 0)
           max-result (algo/max a 0)
           min-buf (mem/alloc 4)
@@ -70,8 +66,8 @@
 (deftest test-all-true
   (testing "all-true checks if all elements are non-zero"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] jvm/AF_DTYPE_F32)
-          b (array/create-array (float-array [1.0 0.0 3.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+          b (array/create-array (float-array [1.0 0.0 3.0]) [3] defs/AF_DTYPE_F32)
           result-a (algo/all-true a 0)
           result-b (algo/all-true b 0)
           buf-a (mem/alloc 1)
@@ -88,8 +84,8 @@
 (deftest test-any-true
   (testing "any-true checks if any element is non-zero"
     (device/init!)
-    (let [a (array/create-array (float-array [0.0 0.0 0.0]) [3] jvm/AF_DTYPE_F32)
-          b (array/create-array (float-array [0.0 1.0 0.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [0.0 0.0 0.0]) [3] defs/AF_DTYPE_F32)
+          b (array/create-array (float-array [0.0 1.0 0.0]) [3] defs/AF_DTYPE_F32)
           result-a (algo/any-true a 0)
           result-b (algo/any-true b 0)
           buf-a (mem/alloc 1)
@@ -106,7 +102,7 @@
 (deftest test-count
   (testing "count counts non-zero elements"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 0.0 3.0 0.0 5.0]) [5] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 0.0 3.0 0.0 5.0]) [5] defs/AF_DTYPE_F32)
           result (algo/count a 0)
           buf (mem/alloc 4)]
       (array/get-data-ptr result buf)
@@ -121,7 +117,7 @@
 (deftest test-sort
   (testing "sort orders array elements"
     (device/init!)
-    (let [a (array/create-array (float-array [3.0 1.0 4.0 1.0 5.0]) [5] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [3.0 1.0 4.0 1.0 5.0]) [5] defs/AF_DTYPE_F32)
           result (algo/sort a)
           buf (mem/alloc (* 5 4))]
       (array/get-data-ptr result buf)
@@ -134,7 +130,7 @@
 (deftest test-sort-descending
   (testing "sort in descending order"
     (device/init!)
-    (let [a (array/create-array (float-array [3.0 1.0 4.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [3.0 1.0 4.0]) [3] defs/AF_DTYPE_F32)
           result (algo/sort a 0 false)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr result buf)
@@ -147,7 +143,7 @@
 (deftest test-sort-index
   (testing "sort-index returns sorted values and indices"
     (device/init!)
-    (let [a (array/create-array (float-array [3.0 1.0 4.0]) [3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [3.0 1.0 4.0]) [3] defs/AF_DTYPE_F32)
           [sorted indices] (algo/sort-index a)
           sorted-buf (mem/alloc (* 3 4))
           indices-buf (mem/alloc (* 3 4))]
@@ -166,7 +162,7 @@
 (deftest test-set-unique
   (testing "set-unique finds unique elements"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 2.0 3.0 3.0 3.0]) [6] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 2.0 3.0 3.0 3.0]) [6] defs/AF_DTYPE_F32)
           result (algo/set-unique a)
           buf (mem/alloc (* 3 4))]
       (array/get-data-ptr result buf)
@@ -178,7 +174,7 @@
 (deftest test-where
   (testing "where finds indices of non-zero elements"
     (device/init!)
-    (let [a (array/create-array (float-array [0.0 1.0 0.0 2.0 0.0]) [5] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [0.0 1.0 0.0 2.0 0.0]) [5] defs/AF_DTYPE_F32)
           result (algo/where a)]
       ;; Should return indices [1, 3] for non-zero elements
       (is (instance? AFArray result))
@@ -192,8 +188,8 @@
 (deftest test-sum-by-key
   (testing "sum-by-key sums values grouped by keys"
     (device/init!)
-    (let [keys (array/create-array (int-array [1 1 1 2 2 3]) [6] jvm/AF_DTYPE_S32)
-          vals (array/create-array (float-array [10.0 20.0 30.0 40.0 50.0 60.0]) [6] jvm/AF_DTYPE_F32)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 3]) [6] defs/AF_DTYPE_S32)
+          vals (array/create-array (float-array [10.0 20.0 30.0 40.0 50.0 60.0]) [6] defs/AF_DTYPE_F32)
           [keys-out vals-out] (algo/sum-by-key keys vals)
           keys-buf (mem/alloc (* 3 4))
           vals-buf (mem/alloc (* 3 4))]
@@ -210,8 +206,8 @@
 (deftest test-product-by-key
   (testing "product-by-key multiplies values grouped by keys"
     (device/init!)
-    (let [keys (array/create-array (int-array [1 1 2 2 3]) [5] jvm/AF_DTYPE_S32)
-          vals (array/create-array (float-array [2.0 3.0 4.0 5.0 6.0]) [5] jvm/AF_DTYPE_F32)
+    (let [keys (array/create-array (int-array [1 1 2 2 3]) [5] defs/AF_DTYPE_S32)
+          vals (array/create-array (float-array [2.0 3.0 4.0 5.0 6.0]) [5] defs/AF_DTYPE_F32)
           [keys-out vals-out] (algo/product-by-key keys vals)
           vals-buf (mem/alloc (* 3 4))]
       (is (instance? AFArray keys-out))
@@ -227,8 +223,8 @@
 (deftest test-min-by-key
   (testing "min-by-key finds minimum value per key group"
     (device/init!)
-    (let [keys (array/create-array (int-array [1 1 1 2 2]) [5] jvm/AF_DTYPE_S32)
-          vals (array/create-array (float-array [5.0 2.0 8.0 3.0 7.0]) [5] jvm/AF_DTYPE_F32)
+    (let [keys (array/create-array (int-array [1 1 1 2 2]) [5] defs/AF_DTYPE_S32)
+          vals (array/create-array (float-array [5.0 2.0 8.0 3.0 7.0]) [5] defs/AF_DTYPE_F32)
           [keys-out vals-out] (algo/min-by-key keys vals)
           vals-buf (mem/alloc (* 2 4))]
       (is (instance? AFArray keys-out))
@@ -244,8 +240,8 @@
 (deftest test-max-by-key
   (testing "max-by-key finds maximum value per key group"
     (device/init!)
-    (let [keys (array/create-array (int-array [1 1 1 2 2]) [5] jvm/AF_DTYPE_S32)
-          vals (array/create-array (float-array [5.0 2.0 8.0 3.0 7.0]) [5] jvm/AF_DTYPE_F32)
+    (let [keys (array/create-array (int-array [1 1 1 2 2]) [5] defs/AF_DTYPE_S32)
+          vals (array/create-array (float-array [5.0 2.0 8.0 3.0 7.0]) [5] defs/AF_DTYPE_F32)
           [keys-out vals-out] (algo/max-by-key keys vals)
           vals-buf (mem/alloc (* 2 4))]
       (is (instance? AFArray keys-out))
@@ -265,7 +261,7 @@
 (deftest test-diff1
   (testing "diff1 computes first-order difference"
     (device/init!)
-    (let [a (array/create-array (float-array [0.0 1.0 4.0 9.0 16.0]) [5] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [0.0 1.0 4.0 9.0 16.0]) [5] defs/AF_DTYPE_F32)
           result (algo/diff1 a 0)
           buf (mem/alloc (* 4 4))]
       (is (instance? AFArray result))
@@ -282,7 +278,7 @@
 (deftest test-diff2
   (testing "diff2 computes second-order difference"
     (device/init!)
-    (let [a (array/create-array (float-array [0.0 1.0 4.0 9.0 16.0]) [5] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [0.0 1.0 4.0 9.0 16.0]) [5] defs/AF_DTYPE_F32)
           result (algo/diff2 a 0)
           buf (mem/alloc (* 3 4))]
       (is (instance? AFArray result))
@@ -297,7 +293,7 @@
 (deftest test-diff1-2d
   (testing "diff1 along different dimensions"
     (device/init!)
-    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
+    (let [a (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] defs/AF_DTYPE_F32)
           result-dim0 (algo/diff1 a 0)
           result-dim1 (algo/diff1 a 1)]
       (is (instance? AFArray result-dim0))
@@ -313,8 +309,8 @@
 (deftest test-all-true-by-key
   (testing "all-true-by-key checks if all values are non-zero per group"
     (device/init!)
-    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] jvm/AF_DTYPE_S32)
-          vals (array/create-array (int-array [1 1 1 0 1 1]) [6] jvm/AF_DTYPE_S32)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] defs/AF_DTYPE_S32)
+          vals (array/create-array (int-array [1 1 1 0 1 1]) [6] defs/AF_DTYPE_S32)
           [keys-out vals-out] (algo/all-true-by-key keys vals)]
       (is (= 1 (array/get-numdims keys-out)))
       (is (= 1 (array/get-numdims vals-out)))
@@ -327,8 +323,8 @@
 (deftest test-any-true-by-key
   (testing "any-true-by-key checks if any value is non-zero per group"
     (device/init!)
-    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] jvm/AF_DTYPE_S32)
-          vals (array/create-array (int-array [0 0 1 0 0 0]) [6] jvm/AF_DTYPE_S32)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] defs/AF_DTYPE_S32)
+          vals (array/create-array (int-array [0 0 1 0 0 0]) [6] defs/AF_DTYPE_S32)
           [keys-out vals-out] (algo/any-true-by-key keys vals)]
       (is (= 1 (array/get-numdims keys-out)))
       (is (= 1 (array/get-numdims vals-out)))
@@ -341,8 +337,8 @@
 (deftest test-count-by-key
   (testing "count-by-key counts non-zero values per group"
     (device/init!)
-    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] jvm/AF_DTYPE_S32)
-          vals (array/create-array (int-array [1 0 1 1 1 0]) [6] jvm/AF_DTYPE_S32)
+    (let [keys (array/create-array (int-array [1 1 1 2 2 2]) [6] defs/AF_DTYPE_S32)
+          vals (array/create-array (int-array [1 0 1 1 1 0]) [6] defs/AF_DTYPE_S32)
           [keys-out vals-out] (algo/count-by-key keys vals)]
       (is (= 1 (array/get-numdims keys-out)))
       (is (= 1 (array/get-numdims vals-out)))
@@ -355,7 +351,7 @@
 (deftest test-accum
   (testing "accum computes cumulative sum"
     (device/init!)
-    (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0]) [5] jvm/AF_DTYPE_F32)
+    (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0]) [5] defs/AF_DTYPE_F32)
           result (algo/accum data)]
       (is (= 1 (array/get-numdims result)))
       (is (= [5] (take 1 (array/get-dims result))))
@@ -366,7 +362,7 @@
 (deftest test-accum-2d
   (testing "accum on 2D array along dimension"
     (device/init!)
-    (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] jvm/AF_DTYPE_F32)
+    (let [data (array/create-array (float-array [1.0 2.0 3.0 4.0 5.0 6.0]) [2 3] defs/AF_DTYPE_F32)
           result-dim0 (algo/accum data 0)
           result-dim1 (algo/accum data 1)]
       (is (= 2 (array/get-numdims result-dim0)))

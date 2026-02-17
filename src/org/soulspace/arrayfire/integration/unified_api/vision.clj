@@ -295,8 +295,8 @@
             [org.soulspace.arrayfire.ffi.c-api.dog :as dog]
             [org.soulspace.arrayfire.ffi.c-api.homography :as homography-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Feature Detection (Corners)
@@ -387,11 +387,11 @@
   ([^AFArray in thr arc-length non-max feature-ratio]
    (fast in thr arc-length non-max feature-ratio 3))
   ([^AFArray in thr arc-length non-max feature-ratio edge]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (fast/af-fast out (jvm/af-handle in) (float thr) (int arc-length)
+   (let [out (res/native-af-array-pointer)]
+     (check! (fast/af-fast out (res/af-handle in) (float thr) (int arc-length)
                                (if non-max 1 0) (float feature-ratio) (int edge))
                  "af-fast")
-     (jvm/deref-af-array out))))
+     (res/deref-af-array out))))
 
 (defn harris
   "Detect Harris corners.
@@ -473,12 +473,12 @@
   ([^AFArray in max-corners min-response sigma block-size]
    (harris in max-corners min-response sigma block-size 0.04))
   ([^AFArray in max-corners min-response sigma block-size k-thr]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (harris/af-harris out (jvm/af-handle in) (int max-corners)
+   (let [out (res/native-af-array-pointer)]
+     (check! (harris/af-harris out (res/af-handle in) (int max-corners)
                                    (float min-response) (float sigma)
                                    (int block-size) (float k-thr))
                  "af-harris")
-     (jvm/deref-af-array out))))
+     (res/deref-af-array out))))
 
 (defn susan
   "Detect SUSAN (Smallest Univalue Segment Assimilating Nucleus) corners.
@@ -532,7 +532,7 @@
    Example:
    ```clojure
    ;; Basic SUSAN corners
-   (let [img (array/load-image "noisy-scene.jpg")
+   (let [img (array/load-image \"noisy-scene.jpg\")
          gray (colorspace/rgb-to-gray img)
          corners (susan gray 3 20.0 14.0 0.15 3)]
      corners)
@@ -579,12 +579,12 @@
   ([^AFArray in radius diff-thr geom-thr feature-ratio]
    (susan in radius diff-thr geom-thr feature-ratio radius))
   ([^AFArray in radius diff-thr geom-thr feature-ratio edge]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (susan/af-susan out (jvm/af-handle in) (int radius)
+   (let [out (res/native-af-array-pointer)]
+     (check! (susan/af-susan out (res/af-handle in) (int radius)
                                  (float diff-thr) (float geom-thr)
                                  (float feature-ratio) (int edge))
                  "af-susan")
-     (jvm/deref-af-array out))))
+     (res/deref-af-array out))))
 
 ;;;
 ;;; Feature Descriptors
@@ -695,14 +695,14 @@
   ([^AFArray in fast-thr max-feat scl-fctr levels]
    (orb in fast-thr max-feat scl-fctr levels true))
   ([^AFArray in fast-thr max-feat scl-fctr levels blur-img]
-   (let [feat-ptr (jvm/native-af-array-pointer)
-         desc-ptr (jvm/native-af-array-pointer)]
-     (check! (orb/af-orb feat-ptr desc-ptr (jvm/af-handle in)
+   (let [feat-ptr (res/native-af-array-pointer)
+         desc-ptr (res/native-af-array-pointer)]
+     (check! (orb/af-orb feat-ptr desc-ptr (res/af-handle in)
                              (float fast-thr) (int max-feat) (float scl-fctr)
                              (int levels) (if blur-img 1 0))
                  "af-orb")
-     [(jvm/deref-af-array feat-ptr)
-      (jvm/af-array-new (jvm/deref-af-array desc-ptr))])))
+     [(res/deref-af-array feat-ptr)
+      (res/af-array-new (res/deref-af-array desc-ptr))])))
 
 (defn sift
   "Extract SIFT (Scale-Invariant Feature Transform) features and descriptors.
@@ -815,15 +815,15 @@
   ([^AFArray in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale]
    (sift in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale 0.05))
   ([^AFArray in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale feature-ratio]
-   (let [feat-ptr (jvm/native-af-array-pointer)
-         desc-ptr (jvm/native-af-array-pointer)]
-     (check! (sift/af-sift feat-ptr desc-ptr (jvm/af-handle in)
+   (let [feat-ptr (res/native-af-array-pointer)
+         desc-ptr (res/native-af-array-pointer)]
+     (check! (sift/af-sift feat-ptr desc-ptr (res/af-handle in)
                                (int n-layers) (float contrast-thr) (float edge-thr)
                                (float init-sigma) (if double-input 1 0)
                                (float intensity-scale) (float feature-ratio))
                  "af-sift")
-     [(jvm/deref-af-array feat-ptr)
-      (jvm/af-array-new (jvm/deref-af-array desc-ptr))])))
+     [(res/deref-af-array feat-ptr)
+      (res/af-array-new (res/deref-af-array desc-ptr))])))
 
 (defn gloh
   "Extract GLOH (Gradient Location and Orientation Histogram) descriptors.
@@ -897,15 +897,15 @@
   ([^AFArray in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale]
    (gloh in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale 0.05))
   ([^AFArray in n-layers contrast-thr edge-thr init-sigma double-input intensity-scale feature-ratio]
-   (let [feat-ptr (jvm/native-af-array-pointer)
-         desc-ptr (jvm/native-af-array-pointer)]
-     (check! (sift/af-gloh feat-ptr desc-ptr (jvm/af-handle in)
+   (let [feat-ptr (res/native-af-array-pointer)
+         desc-ptr (res/native-af-array-pointer)]
+     (check! (sift/af-gloh feat-ptr desc-ptr (res/af-handle in)
                                (int n-layers) (float contrast-thr) (float edge-thr)
                                (float init-sigma) (if double-input 1 0)
                                (float intensity-scale) (float feature-ratio))
                  "af-gloh")
-     [(jvm/deref-af-array feat-ptr)
-      (jvm/af-array-new (jvm/deref-af-array desc-ptr))])))
+     [(res/deref-af-array feat-ptr)
+      (res/af-array-new (res/deref-af-array desc-ptr))])))
 
 ;;;
 ;;; Feature Matching
@@ -1005,14 +1005,14 @@
   ([^AFArray query ^AFArray train dist-dim]
    (hamming-matcher query train dist-dim 1))
   ([^AFArray query ^AFArray train dist-dim n-dist]
-   (let [idx-ptr (jvm/native-af-array-pointer)
-         dist-ptr (jvm/native-af-array-pointer)]
+   (let [idx-ptr (res/native-af-array-pointer)
+         dist-ptr (res/native-af-array-pointer)]
      (check! (hamming/af-hamming-matcher idx-ptr dist-ptr
-                                             (jvm/af-handle query) (jvm/af-handle train)
+                                             (res/af-handle query) (res/af-handle train)
                                              (long dist-dim) (int n-dist))
                  "af-hamming-matcher")
-     [(jvm/af-array-new (jvm/deref-af-array idx-ptr))
-      (jvm/af-array-new (jvm/deref-af-array dist-ptr))])))
+     [(res/af-array-new (res/deref-af-array idx-ptr))
+      (res/af-array-new (res/deref-af-array dist-ptr))])))
 
 (defn nearest-neighbour
   "Match floating-point descriptors using nearest neighbor search.
@@ -1088,18 +1088,18 @@
   ([^AFArray query ^AFArray train dist-dim n-dist]
    (nearest-neighbour query train dist-dim n-dist :ssd))
   ([^AFArray query ^AFArray train dist-dim n-dist dist-type]
-   (let [idx-ptr (jvm/native-af-array-pointer)
-         dist-ptr (jvm/native-af-array-pointer)
+   (let [idx-ptr (res/native-af-array-pointer)
+         dist-ptr (res/native-af-array-pointer)
          type-val (case dist-type
                     :ssd 0    ; AF_SSD
                     :sad 1    ; AF_SAD
                     0)]
      (check! (nn/af-nearest-neighbour idx-ptr dist-ptr
-                                          (jvm/af-handle query) (jvm/af-handle train)
+                                          (res/af-handle query) (res/af-handle train)
                                           (long dist-dim) (int n-dist) (int type-val))
                  "af-nearest-neighbour")
-     [(jvm/af-array-new (jvm/deref-af-array idx-ptr))
-      (jvm/af-array-new (jvm/deref-af-array dist-ptr))])))
+     [(res/af-array-new (res/deref-af-array idx-ptr))
+      (res/af-array-new (res/deref-af-array dist-ptr))])))
 
 ;;;
 ;;; Template Matching
@@ -1186,7 +1186,7 @@
   ([^AFArray search-img ^AFArray template-img]
    (match-template search-img template-img :sad))
   ([^AFArray search-img ^AFArray template-img match-type]
-   (let [out (jvm/native-af-array-pointer)
+   (let [out (res/native-af-array-pointer)
          type-val (if (keyword? match-type)
                     (case match-type
                       :sad defs/AF_SAD
@@ -1200,11 +1200,11 @@
                       defs/AF_SAD)
                     match-type)]
      (check! (match-template/af-match-template out
-                                                   (jvm/af-handle search-img)
-                                                   (jvm/af-handle template-img)
+                                                   (res/af-handle search-img)
+                                                   (res/af-handle template-img)
                                                    (int type-val))
                  "af-match-template")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Image Processing for Vision
@@ -1267,10 +1267,10 @@
   ([^AFArray in radius1]
    (dog in radius1 6))
   ([^AFArray in radius1 radius2]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (dog/af-dog out (jvm/af-handle in) (int radius1) (int radius2))
+   (let [out (res/native-af-array-pointer)]
+     (check! (dog/af-dog out (res/af-handle in) (int radius1) (int radius2))
                  "af-dog")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Geometric Transformations
@@ -1383,7 +1383,7 @@
   ([x-src y-src x-dst y-dst htype inlier-thr iterations]
    (homography x-src y-src x-dst y-dst htype inlier-thr iterations defs/AF_DTYPE_F32))
   ([x-src y-src x-dst y-dst htype inlier-thr iterations dtype]
-   (let [H-ptr (jvm/native-af-array-pointer)
+   (let [H-ptr (res/native-af-array-pointer)
          inliers-buf (mem/alloc-instance ::mem/int)
          type-val (if (keyword? htype)
                     (case htype
@@ -1392,11 +1392,11 @@
                       defs/AF_HOMOGRAPHY_RANSAC)
                     htype)]
      (check! (homography-ffi/af-homography H-ptr inliers-buf
-                                               (jvm/af-handle x-src) (jvm/af-handle y-src)
-                                               (jvm/af-handle x-dst) (jvm/af-handle y-dst)
+                                               (res/af-handle x-src) (res/af-handle y-src)
+                                               (res/af-handle x-dst) (res/af-handle y-dst)
                                                (int type-val) (float inlier-thr)
                                                (int iterations) (int dtype))
                  "af-homography")
-     [(jvm/af-array-new (jvm/deref-af-array H-ptr))
+     [(res/af-array-new (res/deref-af-array H-ptr))
       (mem/read-int inliers-buf 0)])))
 

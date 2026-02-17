@@ -1,11 +1,12 @@
 (ns org.soulspace.arrayfire.integration.unified-api.random-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
+            [coffi.mem :as mem]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.random :as rand]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
-            [coffi.mem :as mem])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Random Engine Management Tests
@@ -23,9 +24,9 @@
   (testing "get and set engine type"
     (device/init!)
     (let [engine (rand/create-engine :philox 42)]
-      (is (= rand/RANDOM-ENGINE-PHILOX (rand/get-engine-type engine)))
+      (is (= defs/AF_RANDOM_ENGINE_PHILOX (rand/get-engine-type engine)))
       (rand/set-engine-type! engine :threefry)
-      (is (= rand/RANDOM-ENGINE-THREEFRY (rand/get-engine-type engine)))
+      (is (= defs/AF_RANDOM_ENGINE_THREEFRY (rand/get-engine-type engine)))
       (rand/release-engine! engine))))
 
 (deftest test-engine-seed
@@ -49,9 +50,9 @@
 (deftest test-engine-type-name
   (testing "get engine type name"
     (device/init!)
-    (is (= "Philox" (rand/engine-type-name rand/RANDOM-ENGINE-PHILOX)))
-    (is (= "Threefry" (rand/engine-type-name rand/RANDOM-ENGINE-THREEFRY)))
-    (is (= "Mersenne" (rand/engine-type-name rand/RANDOM-ENGINE-MERSENNE)))))
+    (is (= "Philox" (rand/engine-type-name defs/AF_RANDOM_ENGINE_PHILOX)))
+    (is (= "Threefry" (rand/engine-type-name defs/AF_RANDOM_ENGINE_THREEFRY)))
+    (is (= "Mersenne" (rand/engine-type-name defs/AF_RANDOM_ENGINE_MERSENNE)))))
 
 ;;;
 ;;; Default Engine Tests
@@ -87,7 +88,7 @@
   (testing "randu generates uniform random array"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randu [10] jvm/AF_DTYPE_F32)
+    (let [a (rand/randu [10] defs/AF_DTYPE_F32)
           buf (mem/alloc (* 10 4))]
       (array/get-data-ptr a buf)
       ;; Check that values are in [0, 1) range
@@ -101,7 +102,7 @@
   (testing "randu with 2D dimensions"
     (device/init!)
     (rand/set-seed! 100)
-    (let [a (rand/randu [5 5] jvm/AF_DTYPE_F32)]
+    (let [a (rand/randu [5 5] defs/AF_DTYPE_F32)]
       (is (instance? AFArray a))
       (is (= [5 5 1 1] (vec (array/get-dims a))))
       (.close a))))
@@ -110,7 +111,7 @@
   (testing "randn generates normal random array"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randn [100] jvm/AF_DTYPE_F32)
+    (let [a (rand/randn [100] defs/AF_DTYPE_F32)
           buf (mem/alloc (* 100 4))]
       (array/get-data-ptr a buf)
       ;; Check that values exist (normal distribution can be any value)
@@ -122,12 +123,12 @@
   (testing "same seed produces same random sequence"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a1 (rand/randu [5] jvm/AF_DTYPE_F32)
+    (let [a1 (rand/randu [5] defs/AF_DTYPE_F32)
           buf1 (mem/alloc (* 5 4))]
       (array/get-data-ptr a1 buf1)
       (let [val1 (mem/read-float buf1 0)]
         (rand/set-seed! 42)
-        (let [a2 (rand/randu [5] jvm/AF_DTYPE_F32)
+        (let [a2 (rand/randu [5] defs/AF_DTYPE_F32)
               buf2 (mem/alloc (* 5 4))]
           (array/get-data-ptr a2 buf2)
           (let [val2 (mem/read-float buf2 0)]
@@ -143,7 +144,7 @@
   (testing "random-uniform with custom engine"
     (device/init!)
     (let [engine (rand/create-engine :philox 42)
-          a (rand/random-uniform [10] jvm/AF_DTYPE_F32 engine)
+          a (rand/random-uniform [10] defs/AF_DTYPE_F32 engine)
           buf (mem/alloc (* 10 4))]
       (array/get-data-ptr a buf)
       ;; Check that values are in [0, 1) range
@@ -157,7 +158,7 @@
   (testing "random-normal with custom engine"
     (device/init!)
     (let [engine (rand/create-engine :threefry 123)
-          a (rand/random-normal [20] jvm/AF_DTYPE_F64 engine)
+          a (rand/random-normal [20] defs/AF_DTYPE_F64 engine)
           buf (mem/alloc (* 20 8))]
       (array/get-data-ptr a buf)
       ;; Check that values exist
@@ -171,8 +172,8 @@
     (device/init!)
     (let [engine1 (rand/create-engine :philox 42)
           engine2 (rand/create-engine :philox 42)
-          a1 (rand/random-uniform [5] jvm/AF_DTYPE_F32 engine1)
-          a2 (rand/random-uniform [5] jvm/AF_DTYPE_F32 engine2)
+          a1 (rand/random-uniform [5] defs/AF_DTYPE_F32 engine1)
+          a2 (rand/random-uniform [5] defs/AF_DTYPE_F32 engine2)
           buf1 (mem/alloc (* 5 4))
           buf2 (mem/alloc (* 5 4))]
       (array/get-data-ptr a1 buf1)
@@ -189,8 +190,8 @@
     (device/init!)
     (let [engine-philox (rand/create-engine :philox 42)
           engine-threefry (rand/create-engine :threefry 42)
-          a-philox (rand/random-uniform [5] jvm/AF_DTYPE_F32 engine-philox)
-          a-threefry (rand/random-uniform [5] jvm/AF_DTYPE_F32 engine-threefry)
+          a-philox (rand/random-uniform [5] defs/AF_DTYPE_F32 engine-philox)
+          a-threefry (rand/random-uniform [5] defs/AF_DTYPE_F32 engine-threefry)
           buf-philox (mem/alloc (* 5 4))
           buf-threefry (mem/alloc (* 5 4))]
       (array/get-data-ptr a-philox buf-philox)
@@ -210,7 +211,7 @@
   (testing "randu with integer types"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randu [10] jvm/AF_DTYPE_S32)
+    (let [a (rand/randu [10] defs/AF_DTYPE_S32)
           buf (mem/alloc (* 10 4))]
       (array/get-data-ptr a buf)
       ;; Integer uniform should span full range
@@ -221,7 +222,7 @@
   (testing "randn with double precision"
     (device/init!)
     (rand/set-seed! 42)
-    (let [a (rand/randn [10] jvm/AF_DTYPE_F64)
+    (let [a (rand/randn [10] defs/AF_DTYPE_F64)
           buf (mem/alloc (* 10 8))]
       (array/get-data-ptr a buf)
       (is (not (nil? (mem/read-double buf 0))))

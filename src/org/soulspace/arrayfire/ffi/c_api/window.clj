@@ -69,6 +69,79 @@
             [coffi.mem :as mem]
             [org.soulspace.arrayfire.ffi.base.loader]))
 
+;;;
+;;; Struct Definitions
+;;;
+
+;; Define the af_cell structure for graphics cell properties
+;; typedef struct {
+;;     int row;              // Grid row position (-1 for default)
+;;     int col;              // Grid column position (-1 for default)
+;;     const char* title;    // Chart title (can be NULL)
+;;     int cmap;             // Color map (af_colormap enum)
+;; } af_cell;
+; TODO move to base definitions?
+(mem/defalias ::af-cell
+  [::mem/struct
+   [[:row ::mem/int]
+    [:col ::mem/int]
+    [:title ::mem/pointer]
+    [:cmap ::mem/int]]])
+
+(defn make-cell-props
+  "Create an af_cell structure with specified values.
+   
+   Parameters:
+   - row: Grid row position (integer, use -1 for single chart)
+   - col: Grid column position (integer, use -1 for single chart)
+   - title: Chart title string (optional, can be nil)
+   - cmap: Color map value (optional, defaults to 0 for AF_COLORMAP_DEFAULT)
+   
+   Returns:
+   MemorySegment containing the af_cell structure
+   
+   Example:
+   ```clojure
+   ;; Single chart (default)
+   (make-cell-props -1 -1)
+   
+   ;; With title
+   (make-cell-props -1 -1 \"My Plot\")
+   
+   ;; Grid position (row 0, col 1) with title
+   (make-cell-props 0 1 \"Upper Right\")
+   
+   ;; With custom colormap
+   (make-cell-props -1 -1 \"Heat Map\" 5)  ; AF_COLORMAP_HEAT
+   ```"
+  ([row col]
+   (make-cell-props row col nil 0))
+  ([row col title]
+   (make-cell-props row col title 0))
+  ([row col title cmap]
+   ; TODO check for arena and free segment after use
+   (mem/serialize {:row (int row)
+                   :col (int col)
+                   :title (if title
+                           (mem/serialize title ::mem/c-string)
+                           (mem/as-segment 0))
+                   :cmap (int cmap)}
+                  ::af-cell)))
+
+(defn default-cell-props
+  "Create default af_cell structure for single-chart rendering.
+   
+   Equivalent to make-cell-props(-1, -1, nil, 0).
+   
+   Returns:
+   MemorySegment containing the default af_cell structure"
+  []
+  (make-cell-props -1 -1))
+
+;;;
+;;; Window Management Functions
+;;;
+
 ;; Window creation and lifecycle
 
 ;; af_err af_create_window(af_window* out, const int width, const int height, const char* const title)

@@ -1,15 +1,24 @@
 (ns org.soulspace.arrayfire.integration.unified-api.graphic-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.graphic :as graphic]
-            [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
 ;;;
 ;;; Note: Graphics tests require ArrayFire built with Forge support.
 ;;; These tests may be skipped in headless environments.
+;;;
+;;; The oneAPI backend has OpenGL interop issues that cause chart-based
+;;; draw functions (plot, scatter, hist, surface, vector field) to hang.
+;;; The internal `fg_draw_chart` path performs ArrayFire compute operations
+;;; (copy_plot, reduce_all for axis limits) while the OpenGL context is
+;;; current, causing a deadlock on the oneAPI backend.
+;;; The `draw-image!` function uses a simpler `fg_draw_image` path that
+;;; does not trigger this issue.
+;;; The `with-graphics-backend` macro switches to the CPU backend for
+;;; chart-based draw tests when the oneAPI backend is active.
 ;;;
 
 (defn has-forge-support?
@@ -22,6 +31,20 @@
       true)
     (catch Exception e
       false)))
+
+(defmacro with-graphics-backend
+  "Execute body with a Forge-compatible backend for chart-based rendering.
+   Switches to CPU backend when oneAPI is active (due to OpenGL interop issues),
+   and restores the original backend afterward."
+  [& body]
+  `(let [original-backend# (device/get-active-backend)]
+     (when (= device/AF_BACKEND_ONEAPI original-backend#)
+       (device/set-backend! device/AF_BACKEND_CPU))
+     (try
+       ~@body
+       (finally
+         (when (not= original-backend# (device/get-active-backend))
+           (device/set-backend! original-backend#))))))
 
 ;;;
 ;;; Window Management Tests
@@ -61,6 +84,7 @@
       (device/init!)
       (let [window (graphic/create-window 640 480 "Initial Title")]
         (is (nil? (graphic/set-title! window "Updated Title")))
+        (graphic/show! window)
         (graphic/destroy-window! window)))))
 
 (deftest test-set-size
@@ -158,184 +182,208 @@
   (testing "draw-image! displays array as image"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Image Test")
-            img (data/constant 0.5 [100 100] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-image! window img nil)))
-          (finally
-            (.close img)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Image Test")
+              img (data/constant 0.5 [100 100] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-image! window img nil)))
+            (graphic/show! window)
+            (finally
+              (.close img)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-plot-2d
   (testing "draw-plot-2d! draws 2D line plot"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Plot 2D Test")
-            x (data/range [100] 0 jvm/AF_DTYPE_F32)
-            y (data/constant 1.0 [100] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-plot-2d! window x y nil)))
-          (finally
-            (.close x)
-            (.close y)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Plot 2D Test")
+              x (data/range [100] 0 defs/AF_DTYPE_F32)
+              y (data/constant 1.0 [100] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-plot-2d! window x y nil)))
+            (graphic/show! window)
+            (finally
+              (.close x)
+              (.close y)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-plot-3d
   (testing "draw-plot-3d! draws 3D line plot"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Plot 3D Test")
-            x (data/range [50] 0 jvm/AF_DTYPE_F32)
-            y (data/range [50] 0 jvm/AF_DTYPE_F32)
-            z (data/range [50] 0 jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-plot-3d! window x y z nil)))
-          (finally
-            (.close x)
-            (.close y)
-            (.close z)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Plot 3D Test")
+              x (data/range [50] 0 defs/AF_DTYPE_F32)
+              y (data/range [50] 0 defs/AF_DTYPE_F32)
+              z (data/range [50] 0 defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-plot-3d! window x y z nil)))
+            (graphic/show! window)
+            (finally
+              (.close x)
+              (.close y)
+              (.close z)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-plot-nd
   (testing "draw-plot-nd! draws N-dimensional line plot"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Plot ND Test")
-            points (data/constant 1.0 [50 2] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-plot-nd! window points nil)))
-          (finally
-            (.close points)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Plot ND Test")
+              points (data/constant 1.0 [50 2] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-plot-nd! window points nil)))
+            (graphic/show! window)
+            (finally
+              (.close points)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-scatter-2d
   (testing "draw-scatter-2d! draws 2D scatter plot"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Scatter 2D Test")
-            x (data/range [50] 0 jvm/AF_DTYPE_F32)
-            y (data/range [50] 0 jvm/AF_DTYPE_F32)
-            marker 0] ; Marker type constant
-        (try
-          (is (nil? (graphic/draw-scatter-2d! window x y marker nil)))
-          (finally
-            (.close x)
-            (.close y)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Scatter 2D Test")
+              x (data/range [50] 0 defs/AF_DTYPE_F32)
+              y (data/range [50] 0 defs/AF_DTYPE_F32)
+              marker 0] ; Marker type constant
+          (try
+            (is (nil? (graphic/draw-scatter-2d! window x y marker nil)))
+            (graphic/show! window)
+            (finally
+              (.close x)
+              (.close y)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-scatter-3d
   (testing "draw-scatter-3d! draws 3D scatter plot"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Scatter 3D Test")
-            x (data/range [30] 0 jvm/AF_DTYPE_F32)
-            y (data/range [30] 0 jvm/AF_DTYPE_F32)
-            z (data/range [30] 0 jvm/AF_DTYPE_F32)
-            marker 0]
-        (try
-          (is (nil? (graphic/draw-scatter-3d! window x y z marker nil)))
-          (finally
-            (.close x)
-            (.close y)
-            (.close z)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Scatter 3D Test")
+              x (data/range [30] 0 defs/AF_DTYPE_F32)
+              y (data/range [30] 0 defs/AF_DTYPE_F32)
+              z (data/range [30] 0 defs/AF_DTYPE_F32)
+              marker 0]
+          (try
+            (is (nil? (graphic/draw-scatter-3d! window x y z marker nil)))
+            (graphic/show! window)
+            (finally
+              (.close x)
+              (.close y)
+              (.close z)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-scatter-nd
   (testing "draw-scatter-nd! draws N-dimensional scatter plot"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Scatter ND Test")
-            points (data/constant 1.0 [30 2] jvm/AF_DTYPE_F32)
-            marker 0]
-        (try
-          (is (nil? (graphic/draw-scatter-nd! window points marker nil)))
-          (finally
-            (.close points)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Scatter ND Test")
+              points (data/constant 1.0 [30 2] defs/AF_DTYPE_F32)
+              marker 0]
+          (try
+            (is (nil? (graphic/draw-scatter-nd! window points marker nil)))
+            (graphic/show! window)
+            (finally
+              (.close points)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-hist
   (testing "draw-hist! draws histogram"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Histogram Test")
-            hist-data (data/constant 10.0 [256] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-hist! window hist-data 0.0 255.0 nil)))
-          (finally
-            (.close hist-data)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Histogram Test")
+              hist-data (data/constant 10.0 [256] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-hist! window hist-data 0.0 255.0 nil)))
+            (graphic/show! window)
+            (finally
+              (.close hist-data)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-surface
   (testing "draw-surface! draws 3D surface plot"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Surface Test")
-            x (data/range [20 20] 0 jvm/AF_DTYPE_F32)
-            y (data/range [20 20] 1 jvm/AF_DTYPE_F32)
-            z (data/constant 0.5 [20 20] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-surface! window x y z nil)))
-          (finally
-            (.close x)
-            (.close y)
-            (.close z)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Surface Test")
+              x (data/range [20 20] 0 defs/AF_DTYPE_F32)
+              y (data/range [20 20] 1 defs/AF_DTYPE_F32)
+              z (data/constant 0.5 [20 20] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-surface! window x y z nil)))
+            (graphic/show! window)
+            (finally
+              (.close x)
+              (.close y)
+              (.close z)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-vector-field-2d
   (testing "draw-vector-field-2d! draws 2D vector field"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Vector Field 2D Test")
-            x-points (data/range [10 10] 0 jvm/AF_DTYPE_F32)
-            y-points (data/range [10 10] 1 jvm/AF_DTYPE_F32)
-            x-dirs (data/constant 0.1 [10 10] jvm/AF_DTYPE_F32)
-            y-dirs (data/constant 0.1 [10 10] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-vector-field-2d! window x-points y-points x-dirs y-dirs nil)))
-          (finally
-            (.close x-points)
-            (.close y-points)
-            (.close x-dirs)
-            (.close y-dirs)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Vector Field 2D Test")
+              x-points (data/range [100] 0 defs/AF_DTYPE_F32)
+              y-points (data/range [100] 0 defs/AF_DTYPE_F32)
+              x-dirs (data/constant 0.1 [100] defs/AF_DTYPE_F32)
+              y-dirs (data/constant 0.1 [100] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-vector-field-2d! window x-points y-points x-dirs y-dirs nil)))
+            (graphic/show! window)
+            (finally
+              (.close x-points)
+              (.close y-points)
+              (.close x-dirs)
+              (.close y-dirs)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-vector-field-3d
   (testing "draw-vector-field-3d! draws 3D vector field"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Vector Field 3D Test")
-            x-points (data/constant 1.0 [5 5 5] jvm/AF_DTYPE_F32)
-            y-points (data/constant 1.0 [5 5 5] jvm/AF_DTYPE_F32)
-            z-points (data/constant 1.0 [5 5 5] jvm/AF_DTYPE_F32)
-            x-dirs (data/constant 0.1 [5 5 5] jvm/AF_DTYPE_F32)
-            y-dirs (data/constant 0.1 [5 5 5] jvm/AF_DTYPE_F32)
-            z-dirs (data/constant 0.1 [5 5 5] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-vector-field-3d! window 
-                                                   x-points y-points z-points 
-                                                   x-dirs y-dirs z-dirs nil)))
-          (finally
-            (.close x-points)
-            (.close y-points)
-            (.close z-points)
-            (.close x-dirs)
-            (.close y-dirs)
-            (.close z-dirs)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Vector Field 3D Test")
+              x-points (data/range [50] 0 defs/AF_DTYPE_F32)
+              y-points (data/range [50] 0 defs/AF_DTYPE_F32)
+              z-points (data/range [50] 0 defs/AF_DTYPE_F32)
+              x-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)
+              y-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)
+              z-dirs (data/constant 0.1 [50] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-vector-field-3d! window 
+                                                     x-points y-points z-points 
+                                                     x-dirs y-dirs z-dirs nil)))
+            (graphic/show! window)
+            (finally
+              (.close x-points)
+              (.close y-points)
+              (.close z-points)
+              (.close x-dirs)
+              (.close y-dirs)
+              (.close z-dirs)
+              (graphic/destroy-window! window))))))))
 
 (deftest test-draw-vector-field-nd
   (testing "draw-vector-field-nd! draws N-dimensional vector field"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 640 480 "Vector Field ND Test")
-            points (data/constant 1.0 [20 2] jvm/AF_DTYPE_F32)
-            directions (data/constant 0.1 [20 2] jvm/AF_DTYPE_F32)]
-        (try
-          (is (nil? (graphic/draw-vector-field-nd! window points directions nil)))
-          (finally
-            (.close points)
-            (.close directions)
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 640 480 "Vector Field ND Test")
+              points (data/constant 1.0 [20 2] defs/AF_DTYPE_F32)
+              directions (data/constant 0.1 [20 2] defs/AF_DTYPE_F32)]
+          (try
+            (is (nil? (graphic/draw-vector-field-nd! window points directions nil)))
+            (graphic/show! window)
+            (finally
+              (.close points)
+              (.close directions)
+              (graphic/destroy-window! window))))))))
 
 ;;;
 ;;; Window Lifecycle Tests
@@ -345,18 +393,20 @@
   (testing "complete window lifecycle: create, configure, draw, destroy"
     (when (has-forge-support?)
       (device/init!)
-      (let [window (graphic/create-window 800 600 "Lifecycle Test")]
-        (try
-          (graphic/set-position! window 100 100)
-          (graphic/set-title! window "Updated")
-          (graphic/grid! window 2 2)
-          (let [data (data/constant 1.0 [50] jvm/AF_DTYPE_F32)]
-            (try
-              (graphic/draw-plot-2d! window data data nil)
-              (finally
-                (.close data))))
-          (finally
-            (graphic/destroy-window! window)))))))
+      (with-graphics-backend
+        (let [window (graphic/create-window 800 600 "Lifecycle Test")]
+          (try
+            (graphic/set-position! window 100 100)
+            (graphic/set-title! window "Updated")
+            (graphic/grid! window 2 2)
+            (let [data (data/constant 1.0 [50] defs/AF_DTYPE_F32)]
+              (try
+                (graphic/draw-plot-2d! window data data nil)
+                (graphic/show! window)
+                (finally
+                  (.close data))))
+            (finally
+              (graphic/destroy-window! window))))))))
 
 (deftest test-multiple-windows
   (testing "multiple windows can coexist"
@@ -392,6 +442,8 @@
   (run-test test-set-axes-titles)
   (run-test test-set-axes-label-format)
   (run-test test-draw-image)
+  ;; Chart-based draw tests use with-graphics-backend macro
+  ;; to switch to CPU backend on oneAPI (due to OpenGL interop issues)
   (run-test test-draw-plot-2d)
   (run-test test-draw-plot-3d)
   (run-test test-draw-plot-nd)

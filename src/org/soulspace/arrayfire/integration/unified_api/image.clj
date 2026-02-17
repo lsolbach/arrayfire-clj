@@ -43,8 +43,9 @@
             [org.soulspace.arrayfire.ffi.c-api.deconvolution :as deconv]
             [org.soulspace.arrayfire.ffi.c-api.confidence-connected :as confidence]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.memory :as bmem]
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Gradient and Edge Detection
@@ -70,11 +71,11 @@
      (println \"Gradient computed\"))
    ```"
   [^AFArray in]
-  (let [dx (jvm/native-af-array-pointer)
-        dy (jvm/native-af-array-pointer)]
-    (check! (gradient/af-gradient dx dy (jvm/af-handle in)) "af-gradient")
-    [(jvm/af-array-new (jvm/deref-af-array dx))
-     (jvm/af-array-new (jvm/deref-af-array dy))]))
+  (let [dx (res/native-af-array-pointer)
+        dy (res/native-af-array-pointer)]
+    (check! (gradient/af-gradient dx dy (res/af-handle in)) "af-gradient")
+    [(res/af-array-new (res/deref-af-array dx))
+     (res/af-array-new (res/deref-af-array dy))]))
 
 (defn sobel
   "Compute Sobel edge detection gradients.
@@ -98,12 +99,12 @@
   ([^AFArray img]
    (sobel img 3))
   ([^AFArray img ker-size]
-   (let [dx (jvm/native-af-array-pointer)
-         dy (jvm/native-af-array-pointer)]
-     (check! (sobel/af-sobel-operator dx dy (jvm/af-handle img) (int ker-size))
+   (let [dx (res/native-af-array-pointer)
+         dy (res/native-af-array-pointer)]
+     (check! (sobel/af-sobel-operator dx dy (res/af-handle img) (int ker-size))
                  "af-sobel-operator")
-     [(jvm/af-array-new (jvm/deref-af-array dx))
-      (jvm/af-array-new (jvm/deref-af-array dy))])))
+     [(res/af-array-new (res/deref-af-array dx))
+      (res/af-array-new (res/deref-af-array dy))])))
 
 (defn canny
   "Canny edge detection.
@@ -135,12 +136,12 @@
   ([^AFArray in threshold-type low-threshold high-threshold]
    (canny in threshold-type low-threshold high-threshold 3 true))
   ([^AFArray in threshold-type low-threshold high-threshold sobel-window is-fast]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (canny/af-canny out (jvm/af-handle in) (int threshold-type)
+   (let [out (res/native-af-array-pointer)]
+     (check! (canny/af-canny out (res/af-handle in) (int threshold-type)
                                  (float low-threshold) (float high-threshold)
                                  (int sobel-window) (if is-fast 1 0))
                  "af-canny")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Image I/O
@@ -166,11 +167,11 @@
   ([filename]
    (load-image filename true))
   ([filename is-color]
-   (let [out (jvm/native-af-array-pointer)
-         c-filename (jvm/string->c-string filename)]
+   (let [out (res/native-af-array-pointer)
+         c-filename (bmem/string->c-string filename)]
      (check! (imageio/af-load-image out c-filename (if is-color 1 0))
                  "af-load-image")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn save-image
   "Save an image to file.
@@ -189,8 +190,8 @@
    (save-image \"output.png\" processed-img)
    ```"
   [filename ^AFArray in]
-  (let [c-filename (jvm/string->c-string filename)]
-    (check! (imageio/af-save-image c-filename (jvm/af-handle in))
+  (let [c-filename (bmem/string->c-string filename)]
+    (check! (imageio/af-save-image c-filename (res/af-handle in))
                 "af-save-image")
     nil))
 
@@ -203,11 +204,11 @@
    Returns:
    AFArray containing the image in native format"
   [filename]
-  (let [out (jvm/native-af-array-pointer)
-        c-filename (jvm/string->c-string filename)]
+  (let [out (res/native-af-array-pointer)
+        c-filename (bmem/string->c-string filename)]
     (check! (imageio2/af-load-image-native out c-filename)
                 "af-load-image-native")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn save-image-native
   "Save an image in its native format without conversion.
@@ -220,8 +221,8 @@
    Returns:
    nil"
   [filename ^AFArray in]
-  (let [c-filename (jvm/string->c-string filename)]
-    (check! (imageio2/af-save-image-native c-filename (jvm/af-handle in))
+  (let [c-filename (bmem/string->c-string filename)]
+    (check! (imageio2/af-save-image-native c-filename (res/af-handle in))
                 "af-save-image-native")
     nil))
 
@@ -260,10 +261,10 @@
    - IPC: Receive images from other processes
    - Cache: Load from in-memory cache"
   [ptr]
-  (let [out (jvm/native-af-array-pointer)]
+  (let [out (res/native-af-array-pointer)]
     (check! (imageio/af-load-image-memory out ptr)
                 "af-load-image-memory")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn save-image-memory
   "Save an image to a memory buffer.
@@ -317,7 +318,7 @@
    - IPC (inter-process communication)"
   [^AFArray in format]
   (let [ptr-ptr (mem/alloc 8)]  ; Allocate buffer for pointer
-    (check! (imageio/af-save-image-memory ptr-ptr (jvm/af-handle in) (int format))
+    (check! (imageio/af-save-image-memory ptr-ptr (res/af-handle in) (int format))
                 "af-save-image-memory")
     (mem/read-long ptr-ptr 0)))
 
@@ -379,10 +380,10 @@
   ([^AFArray in odim0 odim1]
    (resize in odim0 odim1 1))
   ([^AFArray in odim0 odim1 method]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (resize/af-resize out (jvm/af-handle in) (long odim0) (long odim1) (int method))
+   (let [out (res/native-af-array-pointer)]
+     (check! (resize/af-resize out (res/af-handle in) (long odim0) (long odim1) (int method))
                  "af-resize")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn rotate
   "Rotate an image by an angle.
@@ -406,11 +407,11 @@
   ([^AFArray in theta crop]
    (rotate in theta crop 1))
   ([^AFArray in theta crop method]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (rotate/af-rotate out (jvm/af-handle in) (float theta)
+   (let [out (res/native-af-array-pointer)]
+     (check! (rotate/af-rotate out (res/af-handle in) (float theta)
                                    (if crop 1 0) (int method))
                  "af-rotate")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn translate
   "Translate (shift) an image.
@@ -430,11 +431,11 @@
   ([^AFArray in trans0 trans1 odim0 odim1]
    (translate in trans0 trans1 odim0 odim1 1))
   ([^AFArray in trans0 trans1 odim0 odim1 method]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (transform/af-translate out (jvm/af-handle in) (float trans0) (float trans1)
+   (let [out (res/native-af-array-pointer)]
+     (check! (transform/af-translate out (res/af-handle in) (float trans0) (float trans1)
                                          (long odim0) (long odim1) (int method))
                  "af-translate")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn scale
   "Scale an image by factors.
@@ -454,11 +455,11 @@
   ([^AFArray in scale0 scale1 odim0 odim1]
    (scale in scale0 scale1 odim0 odim1 1))
   ([^AFArray in scale0 scale1 odim0 odim1 method]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (transform/af-scale out (jvm/af-handle in) (float scale0) (float scale1)
+   (let [out (res/native-af-array-pointer)]
+     (check! (transform/af-scale out (res/af-handle in) (float scale0) (float scale1)
                                      (long odim0) (long odim1) (int method))
                  "af-scale")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn skew
   "Skew an image.
@@ -479,11 +480,11 @@
   ([^AFArray in skew0 skew1 odim0 odim1]
    (skew in skew0 skew1 odim0 odim1 1 false))
   ([^AFArray in skew0 skew1 odim0 odim1 method inverse]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (transform/af-skew out (jvm/af-handle in) (float skew0) (float skew1)
+   (let [out (res/native-af-array-pointer)]
+     (check! (transform/af-skew out (res/af-handle in) (float skew0) (float skew1)
                                     (long odim0) (long odim1) (int method) (if inverse 1 0))
                  "af-skew")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn transform
   "Apply affine transformation to an image.
@@ -501,11 +502,11 @@
   ([^AFArray in ^AFArray transform-matrix odim0 odim1]
    (transform in transform-matrix odim0 odim1 1 true))
   ([^AFArray in ^AFArray transform-matrix odim0 odim1 method inverse]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (transform/af-transform out (jvm/af-handle in) (jvm/af-handle transform-matrix)
+   (let [out (res/native-af-array-pointer)]
+     (check! (transform/af-transform out (res/af-handle in) (res/af-handle transform-matrix)
                                          (long odim0) (long odim1) (int method) (if inverse 1 0))
                  "af-transform")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn transform-coordinates
   "Transform coordinates using a transformation matrix.
@@ -518,10 +519,10 @@
    Returns:
    Transformed coordinates (AFArray)"
   [^AFArray tf d0 d1]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (transform-coords/af-transform-coordinates out (jvm/af-handle tf) (float d0) (float d1))
+  (let [out (res/native-af-array-pointer)]
+    (check! (transform-coords/af-transform-coordinates out (res/af-handle tf) (float d0) (float d1))
                 "af-transform-coordinates")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Morphological Operations
@@ -546,10 +547,10 @@
      dilated)
    ```"
   [^AFArray in ^AFArray mask]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (morph/af-dilate out (jvm/af-handle in) (jvm/af-handle mask))
+  (let [out (res/native-af-array-pointer)]
+    (check! (morph/af-dilate out (res/af-handle in) (res/af-handle mask))
                 "af-dilate")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn dilate3
   "Morphological dilation (3D).
@@ -563,10 +564,10 @@
    Returns:
    Dilated volume (AFArray)"
   [^AFArray in ^AFArray mask]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (morph/af-dilate3 out (jvm/af-handle in) (jvm/af-handle mask))
+  (let [out (res/native-af-array-pointer)]
+    (check! (morph/af-dilate3 out (res/af-handle in) (res/af-handle mask))
                 "af-dilate3")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn erode
   "Morphological erosion (2D).
@@ -580,10 +581,10 @@
    Returns:
    Eroded image (AFArray)"
   [^AFArray in ^AFArray mask]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (morph/af-erode out (jvm/af-handle in) (jvm/af-handle mask))
+  (let [out (res/native-af-array-pointer)]
+    (check! (morph/af-erode out (res/af-handle in) (res/af-handle mask))
                 "af-erode")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn erode3
   "Morphological erosion (3D).
@@ -597,10 +598,10 @@
    Returns:
    Eroded volume (AFArray)"
   [^AFArray in ^AFArray mask]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (morph/af-erode3 out (jvm/af-handle in) (jvm/af-handle mask))
+  (let [out (res/native-af-array-pointer)]
+    (check! (morph/af-erode3 out (res/af-handle in) (res/af-handle mask))
                 "af-erode3")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Filtering
@@ -629,12 +630,12 @@
   ([^AFArray in spatial-sigma chromatic-sigma]
    (bilateral in spatial-sigma chromatic-sigma false))
   ([^AFArray in spatial-sigma chromatic-sigma is-color]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (bilateral/af-bilateral out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (bilateral/af-bilateral out (res/af-handle in)
                                          (float spatial-sigma) (float chromatic-sigma)
                                          (if is-color 1 0))
                  "af-bilateral")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn mean-shift
   "Mean shift filter for edge-preserving smoothing and segmentation.
@@ -651,12 +652,12 @@
   ([^AFArray in spatial-sigma chromatic-sigma]
    (mean-shift in spatial-sigma chromatic-sigma 10 false))
   ([^AFArray in spatial-sigma chromatic-sigma iter is-color]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (meanshift/af-mean-shift out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (meanshift/af-mean-shift out (res/af-handle in)
                                           (float spatial-sigma) (float chromatic-sigma)
                                           (int iter) (if is-color 1 0))
                  "af-mean-shift")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn minfilt
   "Minimum filter.
@@ -676,11 +677,11 @@
   ([^AFArray in wind-length wind-width]
    (minfilt in wind-length wind-width 0))
   ([^AFArray in wind-length wind-width edge-pad]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (filters/af-minfilt out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (filters/af-minfilt out (res/af-handle in)
                                      (long wind-length) (long wind-width) (int edge-pad))
                  "af-minfilt")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn maxfilt
   "Maximum filter.
@@ -700,11 +701,11 @@
   ([^AFArray in wind-length wind-width]
    (maxfilt in wind-length wind-width 0))
   ([^AFArray in wind-length wind-width edge-pad]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (filters/af-maxfilt out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (filters/af-maxfilt out (res/af-handle in)
                                      (long wind-length) (long wind-width) (int edge-pad))
                  "af-maxfilt")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn gaussian-kernel
   "Generate a Gaussian kernel.
@@ -728,11 +729,11 @@
   ([rows cols]
    (gaussian-kernel rows cols 0.0 0.0))
   ([rows cols sigma-r sigma-c]
-   (let [out (jvm/native-af-array-pointer)]
+   (let [out (res/native-af-array-pointer)]
      (check! (gaussian-kernel/af-gaussian-kernel out (int rows) (int cols)
                                                      (double sigma-r) (double sigma-c))
                  "af-gaussian-kernel")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Histogram Operations
@@ -756,11 +757,11 @@
      hist)
    ```"
   [^AFArray in nbins minval maxval]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (histogram/af-histogram out (jvm/af-handle in) (int nbins)
+  (let [out (res/native-af-array-pointer)]
+    (check! (histogram/af-histogram out (res/af-handle in) (int nbins)
                                         (double minval) (double maxval))
                 "af-histogram")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn hist-equal
   "Histogram equalization.
@@ -781,10 +782,10 @@
      eq)
    ```"
   [^AFArray in ^AFArray hist]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (histeq/af-hist-equal out (jvm/af-handle in) (jvm/af-handle hist))
+  (let [out (res/native-af-array-pointer)]
+    (check! (histeq/af-hist-equal out (res/af-handle in) (res/af-handle hist))
                 "af-hist-equal")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Color Space Conversions
@@ -810,11 +811,11 @@
   ([^AFArray in]
    (rgb->gray in 0.2126 0.7152 0.0722))
   ([^AFArray in r-percent g-percent b-percent]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (rgb-gray/af-rgb2gray out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (rgb-gray/af-rgb2gray out (res/af-handle in)
                                        (float r-percent) (float g-percent) (float b-percent))
                  "af-rgb2gray")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn gray->rgb
   "Convert grayscale image to RGB.
@@ -830,11 +831,11 @@
   ([^AFArray in]
    (gray->rgb in 1.0 1.0 1.0))
   ([^AFArray in r-factor g-factor b-factor]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (rgb-gray/af-gray2rgb out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (rgb-gray/af-gray2rgb out (res/af-handle in)
                                        (float r-factor) (float g-factor) (float b-factor))
                  "af-gray2rgb")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn rgb->hsv
   "Convert RGB to HSV color space.
@@ -845,10 +846,10 @@
    Returns:
    HSV image (AFArray)"
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (hsv-rgb/af-rgb2hsv out (jvm/af-handle in))
+  (let [out (res/native-af-array-pointer)]
+    (check! (hsv-rgb/af-rgb2hsv out (res/af-handle in))
                 "af-rgb2hsv")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn hsv->rgb
   "Convert HSV to RGB color space.
@@ -859,10 +860,10 @@
    Returns:
    RGB image (AFArray)"
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (hsv-rgb/af-hsv2rgb out (jvm/af-handle in))
+  (let [out (res/native-af-array-pointer)]
+    (check! (hsv-rgb/af-hsv2rgb out (res/af-handle in))
                 "af-hsv2rgb")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn rgb->ycbcr
   "Convert RGB to YCbCr color space.
@@ -876,10 +877,10 @@
   ([^AFArray in]
    (rgb->ycbcr in 0))
   ([^AFArray in standard]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (ycbcr-rgb/af-rgb2ycbcr out (jvm/af-handle in) (int standard))
+   (let [out (res/native-af-array-pointer)]
+     (check! (ycbcr-rgb/af-rgb2ycbcr out (res/af-handle in) (int standard))
                  "af-rgb2ycbcr")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn ycbcr->rgb
   "Convert YCbCr to RGB color space.
@@ -893,10 +894,10 @@
   ([^AFArray in]
    (ycbcr->rgb in 0))
   ([^AFArray in standard]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (ycbcr-rgb/af-ycbcr2rgb out (jvm/af-handle in) (int standard))
+   (let [out (res/native-af-array-pointer)]
+     (check! (ycbcr-rgb/af-ycbcr2rgb out (res/af-handle in) (int standard))
                  "af-ycbcr2rgb")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn color-space
   "Convert between arbitrary color spaces.
@@ -909,10 +910,10 @@
    Returns:
    Converted image (AFArray)"
   [^AFArray image to from]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (colorspace/af-color-space out (jvm/af-handle image) (int to) (int from))
+  (let [out (res/native-af-array-pointer)]
+    (check! (colorspace/af-color-space out (res/af-handle image) (int to) (int from))
                 "af-color-space")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Region and Segmentation
@@ -937,10 +938,10 @@
   ([^AFArray in]
    (regions in 4 5))
   ([^AFArray in connectivity dtype]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (regions/af-regions out (jvm/af-handle in) (int connectivity) (int dtype))
+   (let [out (res/native-af-array-pointer)]
+     (check! (regions/af-regions out (res/af-handle in) (int connectivity) (int dtype))
                  "af-regions")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn confidence-connected
   "Confidence connected region growing segmentation.
@@ -959,13 +960,13 @@
    Returns:
    Segmented image (AFArray)"
   [^AFArray in ^AFArray seedx ^AFArray seedy radius multiplier iter segmented-value]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (confidence/af-confidence-cc out (jvm/af-handle in)
-                                             (jvm/af-handle seedx) (jvm/af-handle seedy)
+  (let [out (res/native-af-array-pointer)]
+    (check! (confidence/af-confidence-cc out (res/af-handle in)
+                                             (res/af-handle seedx) (res/af-handle seedy)
                                              (int radius) (int multiplier) (int iter)
                                              (double segmented-value))
                 "af-confidence-cc")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Advanced Image Processing
@@ -991,12 +992,12 @@
   ([^AFArray in wx wy sx sy]
    (unwrap in wx wy sx sy 0 0 true))
   ([^AFArray in wx wy sx sy px py is-column]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (unwrap/af-unwrap out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (unwrap/af-unwrap out (res/af-handle in)
                                    (long wx) (long wy) (long sx) (long sy)
                                    (long px) (long py) (if is-column 1 0))
                  "af-unwrap")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn wrap
   "Image wrapping (inverse of unwrap).
@@ -1020,13 +1021,13 @@
   ([^AFArray in ox oy wx wy sx sy]
    (wrap in ox oy wx wy sx sy 0 0 true))
   ([^AFArray in ox oy wx wy sx sy px py is-column]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (wrap/af-wrap out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (wrap/af-wrap out (res/af-handle in)
                                (long ox) (long oy) (long wx) (long wy)
                                (long sx) (long sy) (long px) (long py)
                                (if is-column 1 0))
                  "af-wrap")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn sat
   "Summed Area Table (integral image).
@@ -1045,10 +1046,10 @@
      integral)
    ```"
   [^AFArray in]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (sat/af-sat out (jvm/af-handle in))
+  (let [out (res/native-af-array-pointer)]
+    (check! (sat/af-sat out (res/af-handle in))
                 "af-sat")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn anisotropic-diffusion
   "Anisotropic diffusion for edge-preserving denoising.
@@ -1076,12 +1077,12 @@
   ([^AFArray in dt K iterations]
    (anisotropic-diffusion in dt K iterations 1 0))
   ([^AFArray in dt K iterations fftype diffusion-eq]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (aniso/af-anisotropic-diffusion out (jvm/af-handle in)
+   (let [out (res/native-af-array-pointer)]
+     (check! (aniso/af-anisotropic-diffusion out (res/af-handle in)
                                                  (float dt) (float K) (int iterations)
                                                  (int fftype) (int diffusion-eq))
                  "af-anisotropic-diffusion")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn iterative-deconv
   "Iterative deconvolution for image restoration.
@@ -1098,11 +1099,11 @@
   ([^AFArray in ^AFArray ker iterations]
    (iterative-deconv in ker iterations 1.0 0))
   ([^AFArray in ^AFArray ker iterations relax-factor algo]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (deconv/af-iterative-deconv out (jvm/af-handle in) (jvm/af-handle ker)
+   (let [out (res/native-af-array-pointer)]
+     (check! (deconv/af-iterative-deconv out (res/af-handle in) (res/af-handle ker)
                                              (int iterations) (float relax-factor) (int algo))
                  "af-iterative-deconv")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 (defn inverse-deconv
   "Inverse filter deconvolution.
@@ -1118,8 +1119,8 @@
   ([^AFArray in ^AFArray psf]
    (inverse-deconv in psf 1.0 0))
   ([^AFArray in ^AFArray psf gamma algo]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (deconv/af-inverse-deconv out (jvm/af-handle in) (jvm/af-handle psf)
+   (let [out (res/native-af-array-pointer)]
+     (check! (deconv/af-inverse-deconv out (res/af-handle in) (res/af-handle psf)
                                            (float gamma) (int algo))
                  "af-inverse-deconv")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))

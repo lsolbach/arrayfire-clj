@@ -4,9 +4,9 @@
   (:refer-clojure :exclude [abs])
   (:require [org.soulspace.arrayfire.ffi.c-api.complex :as complex-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Complex Number Creation
@@ -36,9 +36,9 @@
    (def complex-arr (cplx real-arr))  ; => [1+0i, 2+0i, 3+0i]
    ```"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (complex-ffi/af-cplx out (jvm/af-handle a)) "af-cplx")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (complex-ffi/af-cplx out (res/af-handle a)) "af-cplx")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn cplx2
   "Create a complex array from two real arrays (real and imaginary parts).
@@ -69,10 +69,10 @@
   ([^AFArray real ^AFArray imag]
    (cplx2 real imag false))
   ([^AFArray real ^AFArray imag batch]
-   (let [out (jvm/native-af-array-pointer)
+   (let [out (res/native-af-array-pointer)
          batch-flag (if batch 1 0)]
-     (check! (complex-ffi/af-cplx2 out (jvm/af-handle real) (jvm/af-handle imag) batch-flag) "af-cplx2")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (check! (complex-ffi/af-cplx2 out (res/af-handle real) (res/af-handle imag) batch-flag) "af-cplx2")
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Complex Component Extraction
@@ -102,9 +102,9 @@
    (def real-part (real complex-arr))  ; => [1.0, 2.0]
    ```"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (complex-ffi/af-real out (jvm/af-handle a)) "af-real")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (complex-ffi/af-real out (res/af-handle a)) "af-real")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn imag
   "Extract the imaginary part of a complex array.
@@ -130,9 +130,9 @@
    (def imag-part (imag complex-arr))  ; => [3.0, 4.0]
    ```"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (complex-ffi/af-imag out (jvm/af-handle a)) "af-imag")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (complex-ffi/af-imag out (res/af-handle a)) "af-imag")
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Complex Operations
@@ -167,9 +167,9 @@
    (def z-conj (conjg z))  ; => 1-2i
    ```"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (complex-ffi/af-conjg out (jvm/af-handle a)) "af-conjg")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (complex-ffi/af-conjg out (res/af-handle a)) "af-conjg")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn abs
   "Calculate the absolute value (magnitude) of array elements.
@@ -199,9 +199,9 @@
    (def magnitude (abs z))  ; => 5.0  (sqrt(3^2 + 4^2))
    ```"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (complex-ffi/af-abs out (jvm/af-handle a)) "af-abs")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (complex-ffi/af-abs out (res/af-handle a)) "af-abs")
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn arg
   "Calculate the phase angle (argument) of complex numbers.
@@ -235,9 +235,9 @@
    (def phase (arg z))  ; => π/4  (45 degrees)
    ```"
   [^AFArray a]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (complex-ffi/af-arg out (jvm/af-handle a)) "af-arg")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+  (let [out (res/native-af-array-pointer)]
+    (check! (complex-ffi/af-arg out (res/af-handle a)) "af-arg")
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Complex Arithmetic Operators

@@ -1,7 +1,6 @@
 (ns introduction
-  (:require [coffi.mem :as mem]
-            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
+  (:require [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as jvm]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]

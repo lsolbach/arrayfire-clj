@@ -37,8 +37,8 @@
             [org.soulspace.arrayfire.ffi.c-api.index :as index-ffi]
             [org.soulspace.arrayfire.ffi.c-api.assign :as assign-ffi]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)
            (java.lang.foreign ValueLayout)))
 
 ;;;
@@ -106,16 +106,16 @@
      (index arr [s0 s1]))
    ```"
   [^AFArray in seqs]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         ndims (count seqs)
         ;; Create array of af_seq pointers
         seqs-array (mem/alloc (* ndims 8))] ; Assuming 8 bytes per pointer
     ;; Write sequence pointers to array
     (doseq [[i seq-ptr] (map-indexed vector seqs)]
       (mem/write-long seqs-array (* i 8) (.address seq-ptr)))
-    (check! (index-ffi/af-index out (jvm/af-handle in) (int ndims) seqs-array)
+    (check! (index-ffi/af-index out (res/af-handle in) (int ndims) seqs-array)
                 "af-index")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn lookup
   "Lookup values in an array by indexing with another array (fancy indexing).
@@ -143,10 +143,10 @@
   ([^AFArray in ^AFArray indices]
    (lookup in indices 0))
   ([^AFArray in ^AFArray indices dim]
-   (let [out (jvm/native-af-array-pointer)]
-     (check! (index-ffi/af-lookup out (jvm/af-handle in) (jvm/af-handle indices) (int dim))
+   (let [out (res/native-af-array-pointer)]
+     (check! (index-ffi/af-lookup out (res/af-handle in) (res/af-handle indices) (int dim))
                  "af-lookup")
-     (jvm/af-array-new (jvm/deref-af-array out)))))
+     (res/af-array-new (res/deref-af-array out)))))
 
 ;;;
 ;;; Generalized Indexing
@@ -177,10 +177,10 @@
        result))
    ```"
   [^AFArray in indexers ndims]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (index-ffi/af-index-gen out (jvm/af-handle in) (long ndims) indexers)
+  (let [out (res/native-af-array-pointer)]
+    (check! (index-ffi/af-index-gen out (res/af-handle in) (long ndims) indexers)
                 "af-index-gen")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Assignment Operations
@@ -209,15 +209,15 @@
      (assign-seq arr [s0 s1] zeros))
    ```"
   [^AFArray lhs seqs ^AFArray rhs]
-  (let [out (jvm/native-af-array-pointer)
+  (let [out (res/native-af-array-pointer)
         ndims (count seqs)
         seqs-array (mem/alloc (* ndims 8))]
     (doseq [[i seq-ptr] (map-indexed vector seqs)]
       (mem/write-long seqs-array (* i 8) (.address seq-ptr)))
-    (check! (assign-ffi/af-assign-seq out (jvm/af-handle lhs) (int ndims) 
-                                          seqs-array (jvm/af-handle rhs))
+    (check! (assign-ffi/af-assign-seq out (res/af-handle lhs) (int ndims) 
+                                          seqs-array (res/af-handle rhs))
                 "af-assign-seq")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn assign-gen
   "Generalized assignment using af_index_t indexers.
@@ -244,11 +244,11 @@
        result))
    ```"
   [^AFArray lhs indexers ndims ^AFArray rhs]
-  (let [out (jvm/native-af-array-pointer)]
-    (check! (assign-ffi/af-assign-gen out (jvm/af-handle lhs) (long ndims)
-                                          indexers (jvm/af-handle rhs))
+  (let [out (res/native-af-array-pointer)]
+    (check! (assign-ffi/af-assign-gen out (res/af-handle lhs) (long ndims)
+                                          indexers (res/af-handle rhs))
                 "af-assign-gen")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 ;;;
 ;;; Indexer Management
@@ -297,7 +297,7 @@
      (set-array-indexer! indexers indices 0))
    ```"
   [indexers ^AFArray idx dim]
-  (check! (index-ffi/af-set-array-indexer indexers (jvm/af-handle idx) (long dim))
+  (check! (index-ffi/af-set-array-indexer indexers (res/af-handle idx) (long dim))
               "af-set-array-indexer")
   nil)
 

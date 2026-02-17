@@ -50,8 +50,8 @@
             [org.soulspace.arrayfire.ffi.c-api.moments :as moments-ffi]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm])
-  (:import (org.soulspace.arrayfire.integration.base.jvm_integration AFArray)))
+            [org.soulspace.arrayfire.integration.base.resource :as res])
+  (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
 ;;; Moment Type Constants
@@ -219,10 +219,10 @@
    - area: Direct area calculation"
   [^AFArray in moment-type]
   (let [moment-int (moment-type->int moment-type)
-        out (jvm/native-af-array-pointer)]
-    (check! (moments-ffi/af-moments out (jvm/af-handle in) (int moment-int))
+        out (res/native-af-array-pointer)]
+    (check! (moments-ffi/af-moments out (res/af-handle in) (int moment-int))
                 "af-moments")
-    (jvm/af-array-new (jvm/deref-af-array out))))
+    (res/af-array-new (res/deref-af-array out))))
 
 (defn moments-all
   "Calculate image moments for a single 2D image (convenience).
@@ -309,7 +309,7 @@
          ;; Allocate buffer for up to 4 moments (doubles)
          num-moments (Integer/bitCount moment-int)
          out-buf (mem/alloc (* num-moments 8))]
-     (check! (moments-ffi/af-moments-all out-buf (jvm/af-handle in) (int moment-int))
+     (check! (moments-ffi/af-moments-all out-buf (res/af-handle in) (int moment-int))
                  "af-moments-all")
      ;; Read results and build map
      (let [result (transient {})]

@@ -1,12 +1,12 @@
 (ns org.soulspace.arrayfire.integration.unified-api.index-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
+            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.index :as idx]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.base.jvm-integration :as jvm]
-            [coffi.mem :as mem])
-  (:import [org.soulspace.arrayfire.integration.base.jvm_integration AFArray]))
+            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+  (:import [org.soulspace.arrayfire.integration.base.resource AFArray]))
 
 ;;;
 ;;; Sequence Utilities Tests
@@ -49,7 +49,7 @@
 (deftest test-index-single-dim
   (testing "index with single dimension sequence"
     (device/init!)
-    (let [arr (data/range [100] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [100] 0 defs/AF_DTYPE_F32)
           s0 (idx/make-seq 0 9 1)
           result (idx/index arr [s0])]
       (try
@@ -62,7 +62,7 @@
 (deftest test-index-two-dim
   (testing "index with two dimension sequences"
     (device/init!)
-    (let [arr (data/range [10 10] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [10 10] 0 defs/AF_DTYPE_F32)
           s0 (idx/make-seq 0 4 1)
           s1 (idx/make-seq 0 4 1)
           result (idx/index arr [s0 s1])]
@@ -76,7 +76,7 @@
 (deftest test-index-all-elements
   (testing "index selecting all elements in dimension"
     (device/init!)
-    (let [arr (data/range [20 30] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [20 30] 0 defs/AF_DTYPE_F32)
           s0 (idx/make-seq 0 -1 1)
           s1 (idx/make-seq 0 9 1)
           result (idx/index arr [s0 s1])]
@@ -90,7 +90,7 @@
 (deftest test-index-with-step
   (testing "index with step to select every nth element"
     (device/init!)
-    (let [arr (data/range [100] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [100] 0 defs/AF_DTYPE_F32)
           s0 (idx/make-seq 0 -1 2)
           result (idx/index arr [s0])]
       (try
@@ -103,8 +103,8 @@
 (deftest test-lookup-1d
   (testing "lookup extracts specific elements by index array"
     (device/init!)
-    (let [arr (data/range [100] 0 jvm/AF_DTYPE_F32)
-          indices (array/create-array (int-array [0 10 20 30]) [4] jvm/AF_DTYPE_S32)
+    (let [arr (data/range [100] 0 defs/AF_DTYPE_F32)
+          indices (array/create-array (int-array [0 10 20 30]) [4] defs/AF_DTYPE_S32)
           result (idx/lookup arr indices)]
       (try
         (is (instance? AFArray result))
@@ -117,8 +117,8 @@
 (deftest test-lookup-with-dim
   (testing "lookup along specific dimension"
     (device/init!)
-    (let [arr (data/range [10 20] 0 jvm/AF_DTYPE_F32)
-          indices (array/create-array (int-array [0 2 5]) [3] jvm/AF_DTYPE_S32)
+    (let [arr (data/range [10 20] 0 defs/AF_DTYPE_F32)
+          indices (array/create-array (int-array [0 2 5]) [3] defs/AF_DTYPE_S32)
           result-dim0 (idx/lookup arr indices 0)
           result-dim1 (idx/lookup arr indices 1)]
       (try
@@ -139,7 +139,7 @@
 (deftest test-index-gen-with-seq
   (testing "index-gen with sequence indexers"
     (device/init!)
-    (let [arr (data/range [20 20] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [20 20] 0 defs/AF_DTYPE_F32)
           indexers (idx/create-indexers)
           seq0 (idx/make-seq 0 9 1)]
       (try
@@ -156,9 +156,9 @@
 (deftest test-index-gen-with-array
   (testing "index-gen with array indexers"
     (device/init!)
-    (let [arr (data/range [50] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [50] 0 defs/AF_DTYPE_F32)
           indexers (idx/create-indexers)
-          idx-arr (array/create-array (int-array [5 15 25 35 45]) [5] jvm/AF_DTYPE_S32)]
+          idx-arr (array/create-array (int-array [5 15 25 35 45]) [5] defs/AF_DTYPE_S32)]
       (try
         (idx/set-array-indexer! indexers idx-arr 0)
         (let [result (idx/index-gen arr indexers 1)]
@@ -177,10 +177,10 @@
 (deftest test-assign-seq-simple
   (testing "assign-seq assigns values to subarray"
     (device/init!)
-    (let [arr (data/constant 1.0 [20 20] jvm/AF_DTYPE_F32)
+    (let [arr (data/constant 1.0 [20 20] defs/AF_DTYPE_F32)
           s0 (idx/make-seq 0 4 1)
           s1 (idx/make-seq 0 4 1)
-          vals (data/constant 99.0 [5 5] jvm/AF_DTYPE_F32)
+          vals (data/constant 99.0 [5 5] defs/AF_DTYPE_F32)
           result (idx/assign-seq arr [s0 s1] vals)]
       (try
         (is (instance? AFArray result))
@@ -193,9 +193,9 @@
 (deftest test-assign-seq-full-dimension
   (testing "assign-seq to full dimension"
     (device/init!)
-    (let [arr (data/constant 1.0 [100] jvm/AF_DTYPE_F32)
+    (let [arr (data/constant 1.0 [100] defs/AF_DTYPE_F32)
           s0 (idx/make-seq 10 19 1)
-          vals (data/constant 42.0 [10] jvm/AF_DTYPE_F32)
+          vals (data/constant 42.0 [10] defs/AF_DTYPE_F32)
           result (idx/assign-seq arr [s0] vals)]
       (try
         (is (instance? AFArray result))
@@ -208,10 +208,10 @@
 (deftest test-assign-gen-with-indexers
   (testing "assign-gen with generalized indexers"
     (device/init!)
-    (let [arr (data/constant 1.0 [30 30] jvm/AF_DTYPE_F32)
+    (let [arr (data/constant 1.0 [30 30] defs/AF_DTYPE_F32)
           indexers (idx/create-indexers)
-          idx-arr (array/create-array (int-array [5 10 15 20]) [4] jvm/AF_DTYPE_S32)
-          vals (data/constant 7.0 [4 30] jvm/AF_DTYPE_F32)]
+          idx-arr (array/create-array (int-array [5 10 15 20]) [4] defs/AF_DTYPE_S32)
+          vals (data/constant 7.0 [4 30] defs/AF_DTYPE_F32)]
       (try
         (idx/set-array-indexer! indexers idx-arr 0)
         (idx/set-seq-indexer! indexers (idx/make-seq 0 -1 1) 1 false)
@@ -240,7 +240,7 @@
   (testing "set-array-indexer! configures array-based indexing"
     (device/init!)
     (let [indexers (idx/create-indexers)
-          idx-arr (array/create-array (int-array [0 5 10]) [3] jvm/AF_DTYPE_S32)]
+          idx-arr (array/create-array (int-array [0 5 10]) [3] defs/AF_DTYPE_S32)]
       (try
         (is (nil? (idx/set-array-indexer! indexers idx-arr 0)))
         (finally
@@ -298,7 +298,7 @@
 (deftest test-slice-simple
   (testing "slice convenience function for simple slicing"
     (device/init!)
-    (let [arr (data/range [20 30] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [20 30] 0 defs/AF_DTYPE_F32)
           result (idx/slice arr [[0 9] nil])]
       (try
         (is (instance? AFArray result))
@@ -310,7 +310,7 @@
 (deftest test-slice-with-step
   (testing "slice with step parameter"
     (device/init!)
-    (let [arr (data/range [100] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [100] 0 defs/AF_DTYPE_F32)
           result (idx/slice arr [[0 -1 2]])]
       (try
         (is (instance? AFArray result))
@@ -322,7 +322,7 @@
 (deftest test-slice-two-dimensions
   (testing "slice with two dimension ranges"
     (device/init!)
-    (let [arr (data/range [50 60] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [50 60] 0 defs/AF_DTYPE_F32)
           result (idx/slice arr [[5 14] [10 19]])]
       (try
         (is (instance? AFArray result))
@@ -334,7 +334,7 @@
 (deftest test-slice-nil-dimension
   (testing "slice with nil for full dimension"
     (device/init!)
-    (let [arr (data/range [20 30 40] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [20 30 40] 0 defs/AF_DTYPE_F32)
           result (idx/slice arr [nil [5 14] nil])]
       (try
         (is (instance? AFArray result))
@@ -350,9 +350,9 @@
 (deftest test-mixed-indexing
   (testing "mixed sequence and array indexing"
     (device/init!)
-    (let [arr (data/range [100 100] 0 jvm/AF_DTYPE_F32)
+    (let [arr (data/range [100 100] 0 defs/AF_DTYPE_F32)
           indexers (idx/create-indexers)
-          idx-arr (array/create-array (int-array [10 20 30 40 50]) [5] jvm/AF_DTYPE_S32)]
+          idx-arr (array/create-array (int-array [10 20 30 40 50]) [5] defs/AF_DTYPE_S32)]
       (try
         (idx/set-array-indexer! indexers idx-arr 0)
         (idx/set-seq-param-indexer! indexers 0 49 1 1 false)
@@ -368,8 +368,8 @@
 (deftest test-indexer-reuse
   (testing "indexers can be reused for multiple operations"
     (device/init!)
-    (let [arr1 (data/range [50] 0 jvm/AF_DTYPE_F32)
-          arr2 (data/range [50] 0 jvm/AF_DTYPE_F32)
+    (let [arr1 (data/range [50] 0 defs/AF_DTYPE_F32)
+          arr2 (data/range [50] 0 defs/AF_DTYPE_F32)
           indexers (idx/create-indexers)]
       (try
         (idx/set-seq-param-indexer! indexers 0 9 1 0 false)
