@@ -38,8 +38,8 @@
    and restores the original backend afterward."
   [& body]
   `(let [original-backend# (device/get-active-backend)]
-     (when (= device/AF_BACKEND_ONEAPI original-backend#)
-       (device/set-backend! device/AF_BACKEND_CPU))
+     (when (= defs/AF_BACKEND_ONEAPI original-backend#)
+       (device/set-backend! defs/AF_BACKEND_CPU))
      (try
        ~@body
        (finally
