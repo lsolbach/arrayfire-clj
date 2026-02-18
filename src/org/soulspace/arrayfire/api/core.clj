@@ -1,11 +1,39 @@
 (ns org.soulspace.arrayfire.api.core
-  (:require [coffi.mem :as mem]
+  "Core API namespace for arrayfire-clj.
+  
+   This namespace is intended to be the main public API for users of arrayfire-clj.
+   It abstracts away low-level details and provides a clean, idiomatic Clojure
+   interface to ArrayFire functionality.
+   
+   The namespace provides:
+   - Backend/device management
+   - Array creation and host conversion utilities
+   - Basic array operations
+     - indexing, reduction, reshaping, etc.
+   - Arithmetic and algorithmic operations
+   - with-arrayfire execution region macro
+
+   The functions in this namespace use Clojure conventions with regards to
+   naming, keywords, argument order and return values.
+
+   The `with-arrayfire` macro establishes a deterministic execution region for GPU
+   compute, handling initialization, resource management, and optional
+   backend/device switching. All API functions are designed to be used within a
+   `with-arrayfire` region. AFArray values returned from API functions are
+   automatically converted to host data (e.g. dtype-next native buffers or
+   Clojure data structures) before they are returned from the region.
+   This ensures that AFArray instances do not escape the resource management scope,
+   preventing memory leaks and ensuring safe interoperability with Clojure code."
+  (:require [coffi.memory :as mem]
             [tech.v3.resource :refer [stack-resource-context]]
             [tech.v3.datatype :as dtype]
             [tech.v3.datatype.native-buffer :as native-buf]
             [tech.v3.datatype.protocols :as dtype-proto]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
-            [org.soulspace.arrayfire.integration.unified-api.array :as ua-array]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
+            [org.soulspace.arrayfire.integration.unified-api.arith :as arith]
+            [org.soulspace.arrayfire.integration.unified-api.algorithm :as algo]
+            [org.soulspace.arrayfire.integration.unified-api.memory :as imem]
             [org.soulspace.arrayfire.integration.unified-api.device :as device])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
@@ -156,7 +184,7 @@
    Example:
    (create-array [1.0 2.0 3.0 4.0] [2 2]) ; creates a 2x2 array"
   [values dims]
-  (ua-array/create-array (double-array values) dims defs/AF_DTYPE_F64))
+  (array/create-array (double-array values) dims defs/AF_DTYPE_F64))
 
 (defn to-host
   "Copy ArrayFire array data to host memory, returning a double array.
@@ -173,7 +201,7 @@
    (to-host my-array 100) ; copies 100 elements from the array"
   [^AFArray arr n]
   (let [buf (mem/alloc (* n 8)) ; 8 bytes per double
-        _   (ua-array/get-data-ptr arr buf)
+        _   (array/get-data-ptr arr buf)
         out (double-array n)]
     (doseq [i (range n)]
       (aset-double out i (mem/read-double buf (* i 8))))
@@ -234,7 +262,7 @@
         n-bytes  (* (dtype/ecount native-buffer) (get defs/dtype->size af-dtype))
         ;; Reinterpret the native address as a MemorySegment (zero-copy)
         host-seg (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress address) n-bytes)]
-    (ua-array/create-array host-seg dims af-dtype)))
+    (array/create-array host-seg dims af-dtype)))
 
 
 (defn to-native-buffer
@@ -257,7 +285,7 @@
   (let [type-size (get defs/dtype->size (dtype->af-dtype dtype-kw))
         n-bytes   (* n type-size)
         buf       (mem/alloc n-bytes)
-        _         (ua-array/get-data-ptr arr buf)
+        _         (array/get-data-ptr arr buf)
         address   (mem/address-of buf)
         nbuf      (native-buf/wrap-address
                     address
@@ -409,8 +437,8 @@
    Returns:
    dtype-next native buffer with the array data."
   [^AFArray arr]
-  (let [n        (ua-array/get-elements arr)
-        af-type  (ua-array/get-type arr)
+  (let [n        (array/get-elements arr)
+        af-type  (array/get-type arr)
         dtype-kw (get af-dtype->dtype-keyword af-type :float64)]
     (to-native-buffer arr dtype-kw n)))
 
@@ -427,10 +455,10 @@
    Clojure vector based structure with the array data.
    1D arrays return a flat vector, 2D a vector of column vectors, etc."
   [^AFArray arr]
-  (let [n    (ua-array/get-elements arr)
+  (let [n    (array/get-elements arr)
         ;; ArrayFire always returns 4 dims, padding unused dims with 1.
         ;; Strip trailing 1s to get the effective logical shape.
-        all-dims       (ua-array/get-dims arr)
+        all-dims       (array/get-dims arr)
         effective-dims (vec (reverse (drop-while #(= 1 %) (reverse all-dims))))
         data           (to-host arr n)]
     (loop [d  effective-dims
