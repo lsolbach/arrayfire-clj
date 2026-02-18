@@ -13,7 +13,6 @@
 ;;;
 ;;; resolve-backend tests
 ;;;
-
 (deftest resolve-backend-keyword-test
   (testing "Resolves backend keywords to constants"
     (is (= defs/AF_BACKEND_CPU (core/resolve-backend :cpu)))
@@ -35,7 +34,6 @@
 ;;;
 ;;; result-convert tests
 ;;;
-
 (deftest result-convert-passthrough-test
   (testing "Non-AFArray values pass through unchanged"
     (is (= 42 (core/result-convert identity 42)))
@@ -57,7 +55,6 @@
 ;;;
 ;;; with-arrayfire macro tests
 ;;;
-
 (deftest with-arrayfire-basic-test
   (testing "Basic with-arrayfire region with explicit host conversion"
     (let [result (core/with-arrayfire
