@@ -1,15 +1,13 @@
 (ns introduction
-  (:require [org.soulspace.arrayfire.ffi.base.definitions :as defs]
-            [org.soulspace.arrayfire.integration.base.resource :as jvm]
+  (:require [tech.v3.resource :refer [releasing!]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
-            [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
             [org.soulspace.arrayfire.integration.unified-api.lapack :as lapack]
             [org.soulspace.arrayfire.integration.unified-api.random :as random]
-            [org.soulspace.arrayfire.integration.unified-api.util :as util]
-            [coffi.mem :as mem]))
+            [org.soulspace.arrayfire.integration.unified-api.util :as util]))
 
 ;; # Introduction to ArrayFire-CLJ
 ;; This notebook provides an introduction to using the [ArrayFire-CLJ](https://github.com/lsolbach/arrayfire-clj) library,
@@ -91,117 +89,148 @@
 ;; Note that we use `with-open` to ensure that the array is properly closed and
 ;; resources are released when we're done with it.
 
-(with-open [array (random/randu [6 6] defs/AF_DTYPE_C64)]
+(releasing!
+ (let [array (random/randu [6 6] defs/AF_DTYPE_C64)]
 
-  ;; Array representation
-  (println (util/array-to-string "Array" array 2))
+   ;; Array representation
+   (println (util/array-to-string "Array" array 2))
 
-  ;; Array metadata
-  (println "Array Allocated Bytes:" (array/allocated-bytes array))
-  (println "Array Type:" (array/get-type array))
-  (println "Array Num Dims:" (array/get-numdims array))
-  (println "Array Dims:" (array/get-dims array))
-  (println "Array Elements:" (array/get-elements array))
+   ;; Array metadata
+   (println "Array Allocated Bytes:" (array/allocated-bytes array))
+   (println "Array Type:" (array/get-type array))
+   (println "Array Num Dims:" (array/get-numdims array))
+   (println "Array Dims:" (array/get-dims array))
+   (println "Array Elements:" (array/get-elements array))
 
-  ;; Array shape predicates
-  (println "Array Empty?" (array/empty? array))
-  (println "Array Column?" (array/column? array))
-  (println "Array Row?" (array/row? array))
-  (println "Array Scalar?" (array/scalar? array))
-  (println "Array Vector?" (array/vector? array))
-  (println "Array Sparse?" (array/sparse? array))
+   ;; Array shape predicates
+   (println "Array Empty?" (array/empty? array))
+   (println "Array Column?" (array/column? array))
+   (println "Array Row?" (array/row? array))
+   (println "Array Scalar?" (array/scalar? array))
+   (println "Array Vector?" (array/vector? array))
+   (println "Array Sparse?" (array/sparse? array))
 
-  ;; Array data type predicates
-  (println "Array Boolean?" (array/bool? array))
-  (println "Array Bytes?" (array/bytes? array))
-  (println "Array Complex?" (array/complex? array))
-  (println "Array Complex Floats?" (array/complex-floats? array))
-  (println "Array Complex Doubles?" (array/complex-doubles? array))
-  (println "Array Complex Pair?" (array/complex-pair? array))
-  (println "Array Double?" (array/double? array))
-  (println "Array Doubles?" (array/doubles? array))
-  (println "Array Floating?" (array/floating? array))
-  (println "Array Floats?" (array/floats? array))
-  (println "Array Half?" (array/half? array))
-  (println "Array Integer?" (array/integer? array))
-  (println "Array Ints?" (array/ints? array))
-  (println "Array Longs?" (array/longs? array))
-  (println "Array Real?" (array/real? array))
-  (println "Array Real Floating?" (array/realfloating? array))
-  (println "Array Short?" (array/short? array))
-  (println "Array Shorts?" (array/shorts? array))
-  (println "Array Single?" (array/single? array)))
+   ;; Array data type predicates
+   (println "Array Boolean?" (array/bool? array))
+   (println "Array Bytes?" (array/bytes? array))
+   (println "Array Complex?" (array/complex? array))
+   (println "Array Complex Floats?" (array/complex-floats? array))
+   (println "Array Complex Doubles?" (array/complex-doubles? array))
+   (println "Array Complex Pair?" (array/complex-pair? array))
+   (println "Array Double?" (array/double? array))
+   (println "Array Doubles?" (array/doubles? array))
+   (println "Array Floating?" (array/floating? array))
+   (println "Array Floats?" (array/floats? array))
+   (println "Array Half?" (array/half? array))
+   (println "Array Integer?" (array/integer? array))
+   (println "Array Ints?" (array/ints? array))
+   (println "Array Longs?" (array/longs? array))
+   (println "Array Real?" (array/real? array))
+   (println "Array Real Floating?" (array/realfloating? array))
+   (println "Array Short?" (array/short? array))
+   (println "Array Shorts?" (array/shorts? array))
+   (println "Array Single?" (array/single? array))))
 
 ;; Now let's create a 4x4 array of integers filled with the value 42 and explore its properties.
-(with-open [array (data/constant 42 [4 4] defs/AF_DTYPE_S32)]
+(releasing!
+ (let [array (data/constant 42 [4 4] defs/AF_DTYPE_S32)]
 
-  ;; Array representation
-  (println (util/array-to-string "Array" array 2))
+   ;; Array representation
+   (println (util/array-to-string "Array" array 2))
 
-  ;; Array metadata
-  (println "Array Allocated Bytes:" (array/allocated-bytes array))
-  (println "Array Type:" (array/get-type array))
-  (println "Array Num Dims:" (array/get-numdims array))
-  (println "Array Dims:" (array/get-dims array))
-  (println "Array Elements:" (array/get-elements array))
+   ;; Array metadata
+   (println "Array Allocated Bytes:" (array/allocated-bytes array))
+   (println "Array Type:" (array/get-type array))
+   (println "Array Num Dims:" (array/get-numdims array))
+   (println "Array Dims:" (array/get-dims array))
+   (println "Array Elements:" (array/get-elements array))
 
-  ;; Array shape predicates
-  (println "Array Empty?" (array/empty? array))
-  (println "Array Column?" (array/column? array))
-  (println "Array Row?" (array/row? array))
-  (println "Array Scalar?" (array/scalar? array))
-  (println "Array Vector?" (array/vector? array))
-  (println "Array Sparse?" (array/sparse? array))
+   ;; Array shape predicates
+   (println "Array Empty?" (array/empty? array))
+   (println "Array Column?" (array/column? array))
+   (println "Array Row?" (array/row? array))
+   (println "Array Scalar?" (array/scalar? array))
+   (println "Array Vector?" (array/vector? array))
+   (println "Array Sparse?" (array/sparse? array))
 
-  ;; Array data type predicates
-  (println "Array Boolean?" (array/bool? array))
-  (println "Array Bytes?" (array/bytes? array))
-  (println "Array Complex?" (array/complex? array))
-  (println "Array Complex Floats?" (array/complex-floats? array))
-  (println "Array Complex Doubles?" (array/complex-doubles? array))
-  (println "Array Complex Pair?" (array/complex-pair? array))
-  (println "Array Double?" (array/double? array))
-  (println "Array Doubles?" (array/doubles? array))
-  (println "Array Floating?" (array/floating? array))
-  (println "Array Floats?" (array/floats? array))
-  (println "Array Half?" (array/half? array))
-  (println "Array Integer?" (array/integer? array))
-  (println "Array Ints?" (array/ints? array))
-  (println "Array Longs?" (array/longs? array))
-  (println "Array Real?" (array/real? array))
-  (println "Array Real Floating?" (array/realfloating? array))
-  (println "Array Short?" (array/short? array))
-  (println "Array Shorts?" (array/shorts? array))
-  (println "Array Single?" (array/single? array)))
+   ;; Array data type predicates
+   (println "Array Boolean?" (array/bool? array))
+   (println "Array Bytes?" (array/bytes? array))
+   (println "Array Complex?" (array/complex? array))
+   (println "Array Complex Floats?" (array/complex-floats? array))
+   (println "Array Complex Doubles?" (array/complex-doubles? array))
+   (println "Array Complex Pair?" (array/complex-pair? array))
+   (println "Array Double?" (array/double? array))
+   (println "Array Doubles?" (array/doubles? array))
+   (println "Array Floating?" (array/floating? array))
+   (println "Array Floats?" (array/floats? array))
+   (println "Array Half?" (array/half? array))
+   (println "Array Integer?" (array/integer? array))
+   (println "Array Ints?" (array/ints? array))
+   (println "Array Longs?" (array/longs? array))
+   (println "Array Real?" (array/real? array))
+   (println "Array Real Floating?" (array/realfloating? array))
+   (println "Array Short?" (array/short? array))
+   (println "Array Shorts?" (array/shorts? array))
+   (println "Array Single?" (array/single? array))))
 
 ;; ## Array Operations
 ;; ArrayFire provides a wide range of operations that can be performed on arrays,
 ;; including element-wise operations, reductions, and linear algebra functions.
 
 ;; Let's perform some basic operations on arrays.
-(with-open [array1 (data/constant 3.14 [4 4] defs/AF_DTYPE_F32)
-            array2 (data/range [4 4 1 1] 0 defs/AF_DTYPE_F32)
-            ;; Element-wise addition
-            added (arith/add array1 array2)
-            ;; Element-wise multiplication
-            multiplied (arith/mul array1 array2)
-            ;; Element-wise sine
-            sine (arith/sin array2)]
+(releasing!
+ (let [array1 (data/constant 3.14 [4 4] defs/AF_DTYPE_F32)
+       array2 (data/range [4 4 1 1] 0 defs/AF_DTYPE_F32)
+       ;; Element-wise addition
+       added (arith/add array1 array2)
+       ;; Element-wise multiplication
+       multiplied (arith/mul array1 array2)
+       ;; Element-wise sine
+       sine (arith/sin array2)]
 
-  ;; Array representation
-  (println (util/array-to-string "Array1" array1 2))
-  (println (util/array-to-string "Array2" array2 2))
-  (println (util/array-to-string "Added" added 2))
-  (println (util/array-to-string "Multiplied" multiplied 2))
-  (println (util/array-to-string "Sine" sine 2))
+   ;; Array representation
+   (println (util/array-to-string "Array1" array1 2))
+   (println (util/array-to-string "Array2" array2 2))
+   (println (util/array-to-string "Added" added 2))
+   (println (util/array-to-string "Multiplied" multiplied 2))
+   (println (util/array-to-string "Sine" sine 2))
 
-  
-  (let [v (lapack/lu array1)]
-    (with-open [l (first v)
-                u (second v)
-                p (nth v 2)]
-      (println (util/array-to-string "L" l 2))
-      (println (util/array-to-string "U" u 2))
-      (println (util/array-to-string "P" p 2))))
-  ;
-  )
+
+   (let [v (lapack/lu array1)]
+     (with-open [l (first v)
+                 u (second v)
+                 p (nth v 2)]
+       (println (util/array-to-string "L" l 2))
+       (println (util/array-to-string "U" u 2))
+       (println (util/array-to-string "P" p 2))))
+   ;
+   ))
+
+;; Let's perform a matrix multiplication of two random 512x512 arrays.
+(releasing!
+ (let [array1 (random/randu [512 512] defs/AF_DTYPE_F32)
+       array2 (random/randu [512 512] defs/AF_DTYPE_F32)
+       ;; Matrix multiplication
+       multiplied (arith/mul array1 array2)]
+
+   ;; Array representation
+   (println "Array Type:" (array/get-type array1))
+   (println "Array Num Dims:" (array/get-numdims array1))
+   (println "Array Dims:" (array/get-dims array1))
+   (println "Array Elements:" (array/get-elements array1))
+   (println (util/array-to-string "Array1" array1 2))
+   (println (util/array-to-string "Array2" array2 2))
+
+   (println "Array Type:" (array/get-type multiplied))
+   (println "Array Num Dims:" (array/get-numdims multiplied))
+   (println "Array Dims:" (array/get-dims multiplied))
+   (println "Array Elements:" (array/get-elements multiplied))
+   (util/print-array multiplied)
+   (println (util/array-to-string "Multiplied" multiplied 2))))
+
+;; Using pipeline syntax for more complex operations.
+(releasing!
+ (-> (data/constant 1.0 [10 10] defs/AF_DTYPE_F32)
+     (arith/sin)
+     ((partial util/array-to-string "Sine of Constant Array") 2)))

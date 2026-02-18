@@ -1,6 +1,7 @@
 (ns org.soulspace.arrayfire.integration.unified-api.memory-test
   (:require [clojure.test :refer [deftest is testing run-tests]]
             [coffi.mem :as mem]
+            [tech.v3.resource :refer [releasing!]]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.memory :as memory]
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
@@ -88,34 +89,30 @@
 (deftest test-lock-unlock-array
   (testing "lock-array! and unlock-array! work correctly"
     (device/init!)
-    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
-      (try
+    (releasing!
+      (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
         ;; Lock the array
         (is (nil? (memory/lock-array! arr)))
         ;; Check if locked
         (is (memory/is-locked-array? arr))
         ;; Unlock the array
         (memory/unlock-array! arr)
-        (is (not (memory/is-locked-array? arr)))
-        (finally
-          (.close arr))))))
+        (is (not (memory/is-locked-array? arr)))))))
 
 (deftest test-lock-array-data-access
   (testing "Can access array data through locked pointer"
     (device/init!)
-    (let [data (float-array [1.0 2.0 3.0])
-          arr (array/create-array data [3] defs/AF_DTYPE_F32)]
-      (try
+    (releasing!
+      (let [data (float-array [1.0 2.0 3.0])
+            arr (array/create-array data [3] defs/AF_DTYPE_F32)]
         (let [ptr (memory/get-device-ptr arr)]
           (is (instance? java.lang.foreign.MemorySegment ptr))
-          (when (= device/AF_BACKEND_CPU (device/get-active-backend))
+          (when (= defs/AF_BACKEND_CPU (device/get-active-backend))
             (let [host-view (mem/reinterpret ptr 12)]
               (is (<= (Math/abs (- 1.0 (mem/read-float host-view 0))) 0.001))
               (is (<= (Math/abs (- 2.0 (mem/read-float host-view 4))) 0.001))
-              (is (<= (Math/abs (- 3.0 (mem/read-float host-view 8))) 0.001))))
-          (memory/unlock-array! arr))
-        (finally
-          (.close arr))))))
+              (is (<= (Math/abs (- 3.0 (mem/read-float host-view 8))) 0.001)))))
+        (memory/unlock-array! arr)))))
 
 ;;;
 ;;; Device Memory Info Tests
@@ -147,13 +144,11 @@
 (deftest test-get-device-ptr
   (testing "get-device-ptr returns device pointer for array"
     (device/init!)
-    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
-      (try
+    (releasing!
+      (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
         (let [ptr (memory/get-device-ptr arr)]
           (is (not (nil? ptr)))
-          (is (instance? java.lang.foreign.MemorySegment ptr)))
-        (finally
-          (.close arr))))))
+          (is (instance? java.lang.foreign.MemorySegment ptr)))))))
 
 ;;;
 ;;; Memory Manager Tests
@@ -184,15 +179,13 @@
 (deftest test-array-locking-lifecycle
   (testing "Arrays can be locked and unlocked multiple times"
     (device/init!)
-    (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
-      (try
+    (releasing!
+      (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)]
         (dotimes [_ 5]
           (let [_ptr (memory/lock-array! arr)]
             (is (memory/is-locked-array? arr))
             (memory/unlock-array! arr)
-            (is (not (memory/is-locked-array? arr)))))
-        (finally
-          (.close arr))))))
+            (is (not (memory/is-locked-array? arr)))))))))
 
 (comment
   ;; run tests from REPL

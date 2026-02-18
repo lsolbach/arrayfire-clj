@@ -1,5 +1,6 @@
 (ns org.soulspace.arrayfire.integration.unified-api.opencl-test
   (:require [clojure.test :refer [deftest is testing run-test run-tests]]
+            [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.unified-api.opencl :as opencl]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]))
 
@@ -9,8 +10,7 @@
   (try
     (device/init!)
     (let [backends (device/get-available-backends)]
-      ;; AF_BACKEND_OPENCL = 4
-      (not (zero? (bit-and backends 4))))
+      (not (zero? (bit-and backends defs/AF_BACKEND_OPENCL))))
     (catch Exception _
       false)))
 
@@ -29,7 +29,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [ctx (opencl/get-context)]
           (is (integer? ctx))
           (is (not (zero? ctx))))
@@ -43,7 +43,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [ctx (opencl/get-context false)
               ctx-retain (opencl/get-context true)]
           (is (integer? ctx))
@@ -57,7 +57,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [queue (opencl/get-queue)]
           (is (integer? queue))
           (is (not (zero? queue))))
@@ -69,7 +69,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [queue (opencl/get-queue false)
               queue-retain (opencl/get-queue true)]
           (is (integer? queue))
@@ -82,7 +82,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [dev-id (opencl/get-device-id)]
           (is (integer? dev-id))
           (is (not (zero? dev-id))))
@@ -98,7 +98,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [dtype (opencl/get-device-type)]
           (is (integer? dtype))
           ;; Valid types: CPU=2, GPU=4, ACC=8, UNKNOWN=-1
@@ -111,7 +111,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [platform (opencl/get-platform)]
           (is (integer? platform))
           ;; Valid platforms: AMD=0, APPLE=1, INTEL=2, NVIDIA=3, BEIGNET=4, POCL=5, UNKNOWN=-1
@@ -137,7 +137,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [name (opencl/device-type-name)]
           (is (string? name))
           (is (contains? #{"CPU" "GPU" "Accelerator" "Unknown"} name)))
@@ -161,7 +161,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [name (opencl/platform-name)]
           (is (string? name))
           (is (contains? #{"AMD" "Apple" "Intel" "NVIDIA" "Beignet" "POCL" "Unknown"} name)))
@@ -173,7 +173,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [info (opencl/device-info)]
           (is (map? info))
           (is (contains? info :device-type))
@@ -221,7 +221,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [ctx (opencl/get-context)
               queue (opencl/get-queue)
               dev-id (opencl/get-device-id)]
@@ -237,7 +237,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [dtype (opencl/get-device-type)
               platform (opencl/get-platform)]
           ;; Both should be valid values
@@ -251,7 +251,7 @@
     (device/init!)
     (when (opencl-backend-available?)
       (try
-        (device/set-backend! device/AF_BACKEND_OPENCL)
+        (device/set-backend! defs/AF_BACKEND_OPENCL)
         (let [info (opencl/device-info)
               dtype (opencl/get-device-type)
               platform (opencl/get-platform)
