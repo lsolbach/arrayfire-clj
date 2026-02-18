@@ -233,4 +233,4 @@
 (releasing!
  (-> (data/constant 1.0 [10 10] defs/AF_DTYPE_F32)
      (arith/sin)
-     (util/print-array)))
+     ((partial util/array-to-string "Sine of Constant Array") 2)))

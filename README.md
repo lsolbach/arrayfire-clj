@@ -9,6 +9,8 @@ of complex numbers.
 ArrayFire is a general-purpose tensor library that simplifies the software development process for the parallel architectures found in CPUs, GPUs, and other hardware acceleration devices.
 
 ArrayFire provides:
+* Cross-platform compatibility with support for CUDA, oneAPI, OpenCL,
+  and native CPU on Windows, Mac, and Linux
 * Hundreds of functions in the following categories
   * Array handling
   * Computer vision
@@ -19,8 +21,6 @@ ArrayFire provides:
   * Signal Processing
   * Statistics
   * Vector algorithms
-* Cross-platform compatibility with support for CUDA, oneAPI, OpenCL,
-  and native CPU on Windows, Mac, and Linux
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.soulspace/arrayfire-clj.svg)](https://clojars.org/org.soulspace/arrayfire-clj)
 [![cljdoc badge](https://cljdoc.org/badge/org.soulspace/arrayfire-clj)](https://cljdoc.org/d/org.soulspace/arrayfire-clj)
