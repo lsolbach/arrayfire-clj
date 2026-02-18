@@ -59,6 +59,7 @@
   (testing "Basic with-arrayfire region with explicit host conversion"
     (let [result (core/with-arrayfire
                    (let [a (core/create-array [1.0 2.0 3.0 4.0] [2 2])]
+                     ;; create-array returns AFArray; to-host accepts AFArray
                      (vec (core/to-host a 4))))]
       (is (= [1.0 2.0 3.0 4.0] result)))))
 
@@ -117,6 +118,7 @@
   (testing "Nested with-arrayfire regions work correctly"
     (let [result (core/with-arrayfire
                    (core/with-arrayfire
+                     ;; create-array returns AFArray; to-host accepts AFArray
                      (vec (core/to-host (core/create-array [42.0] [1]) 1))))]
       (is (= [42.0] result)))))
 

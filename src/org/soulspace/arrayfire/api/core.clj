@@ -5,10 +5,6 @@
             [tech.v3.datatype.native-buffer :as native-buf]
             [tech.v3.datatype.protocols :as dtype-proto]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
-            [org.soulspace.arrayfire.ffi.c-api.array :as af-array]
-            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
-            [org.soulspace.arrayfire.integration.base.memory :as bmem]
-            [org.soulspace.arrayfire.integration.base.resource :as res]
             [org.soulspace.arrayfire.integration.unified-api.array :as ua-array]
             [org.soulspace.arrayfire.integration.unified-api.device :as device])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
@@ -122,10 +118,6 @@
                          :valid-backends (keys backend-kw->backend-constant)})))
     (int backend)))
 
-;(def messages
-;  "Mapping of ArrayFire return codes to messages."
-;  {})
-
 (defn init!
   "Initialize ArrayFire runtime.
    Must be called before any other ArrayFire functions.
@@ -152,51 +144,40 @@
 
 (defn create-array
   "Create an ArrayFire array from a Clojure vector of values.
-   Values are copied to native memory and dims specifies the array dimensions.
-      
+   Values are copied to a double-array and the array is created via the integration layer.
+
    Parameters:
    - values: Clojure vector of numeric values (doubles)
    - dims: Clojure vector specifying the dimensions of the array
-   
+
    Returns:
-   ArrayFire array handle.
-   
+   AFArray instance.
+
    Example:
    (create-array [1.0 2.0 3.0 4.0] [2 2]) ; creates a 2x2 array"
   [values dims]
-  (let [n (count values)
-        ;; Allocate host buffer for input data
-        host (mem/alloc (* n 8)) ; 8 bytes per double
-        _ (doseq [i (range n)]
-            (mem/write-double host (* i 8) (double (nth values i))))
-        dimsbuf (bmem/dims->native dims)
-        outptr (mem/alloc mem/pointer-size)]
-    (check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf defs/AF_DTYPE_F64)
-     "af_create_array")
-    ;; Return the array handle
-    (mem/read-address outptr)))
+  (ua-array/create-array (double-array values) dims defs/AF_DTYPE_F64))
 
 (defn to-host
   "Copy ArrayFire array data to host memory, returning a double array.
    Note: n (number of elements) must be provided.
-      
+
    Parameters:
-   - handle: ArrayFire array handle
+   - arr: AFArray instance
    - n: number of elements to copy
-   
+
    Returns:
-   Clojure double array containing the data.
-   
+   Java double array containing the data.
+
    Example:
-   (to-host array 100) ; copies 100 elements from the array"
-  [handle n]
-  (let [buf (mem/alloc (* n 8))] ; 8 bytes per double
-    (check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-    (let [arr (double-array n)]
-      (doseq [i (range n)]
-        (aset-double arr i (mem/read-double buf (* i 8))))
-      arr)))
+   (to-host my-array 100) ; copies 100 elements from the array"
+  [^AFArray arr n]
+  (let [buf (mem/alloc (* n 8)) ; 8 bytes per double
+        _   (ua-array/get-data-ptr arr buf)
+        out (double-array n)]
+    (doseq [i (range n)]
+      (aset-double out i (mem/read-double buf (* i 8))))
+    out))
 
 ;;
 ;; Zero-copy integration with dtype-next
@@ -227,71 +208,63 @@
 
 (defn create-array-from-native
   "Create an ArrayFire array from a dtype-next native buffer (zero-copy on host side).
-   
-   The native buffer's memory is passed directly to ArrayFire without intermediate copies.
-   Note: ArrayFire will still copy the data from host to GPU (unavoidable hardware operation).
-   
+
+   The native buffer's memory address is passed directly to ArrayFire without
+   intermediate copies. Note: ArrayFire will still copy the data from host to GPU
+   (unavoidable hardware operation).
+
    Parameters:
    - native-buffer: dtype-next native buffer or tensor (must be :native-heap backed)
    - dims: Clojure vector specifying the dimensions of the array
-   
+
    Returns:
-   ArrayFire array handle.
-   
+   AFArray instance.
+
    Example:
    (let [tensor (dtype/make-container :native-heap :float64 [100])]
      (create-array-from-native tensor [100]))"
   [native-buffer dims]
   (let [dtype-kw (dtype/elemwise-datatype native-buffer)
         af-dtype (dtype->af-dtype dtype-kw)
-        ;; Get the native buffer and its address
-        nbuf (dtype/as-native-buffer native-buffer)
-        _ (when-not nbuf
-            (throw (ex-info "Buffer must be native-backed for zero-copy operation" 
-                           {:dtype dtype-kw})))
-        address (.address nbuf)
-        n-bytes (* (dtype/ecount native-buffer) (get defs/dtype->size af-dtype))
-        ;; Wrap the address in a coffi MemorySegment (zero-copy)
-        host (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress address) n-bytes)
-        dimsbuf (bmem/dims->native dims)
-        outptr (mem/alloc mem/pointer-size)]
-    (check!
-     (af-array/af-create-array outptr host (int (count dims)) dimsbuf af-dtype)
-     "af_create_array")
-    (mem/read-address outptr)))
+        nbuf     (dtype/as-native-buffer native-buffer)
+        _        (when-not nbuf
+                   (throw (ex-info "Buffer must be native-backed for zero-copy operation"
+                                  {:dtype dtype-kw})))
+        address  (.address nbuf)
+        n-bytes  (* (dtype/ecount native-buffer) (get defs/dtype->size af-dtype))
+        ;; Reinterpret the native address as a MemorySegment (zero-copy)
+        host-seg (mem/reinterpret (java.lang.foreign.MemorySegment/ofAddress address) n-bytes)]
+    (ua-array/create-array host-seg dims af-dtype)))
 
 
 (defn to-native-buffer
   "Copy ArrayFire array data to a dtype-next native buffer (minimal copies).
-   
+
    Data flow: GPU → coffi native memory → wrapped in dtype-next native buffer (zero-copy wrap).
    Note: The GPU→host copy is unavoidable (hardware limitation).
-   
+
    Parameters:
-   - handle: ArrayFire array handle
-   - dtype: dtype-next datatype keyword (e.g., :float64, :int32)
+   - arr: AFArray instance
+   - dtype-kw: dtype-next datatype keyword (e.g., :float64, :int32)
    - n: number of elements to copy
-   
+
    Returns:
    dtype-next native buffer containing the data.
-   
+
    Example:
-   (to-native-buffer array :float64 100)"
-  [handle dtype-kw n]
+   (to-native-buffer my-array :float64 100)"
+  [^AFArray arr dtype-kw n]
   (let [type-size (get defs/dtype->size (dtype->af-dtype dtype-kw))
-        n-bytes (* n type-size)
-        ;; Allocate coffi memory
-        buf (mem/alloc n-bytes)
-        _ (check! (af-array/af-get-data-ptr buf handle) "af_get_data_ptr")
-        ;; Get the address and wrap it in a dtype-next native buffer (zero-copy)
-        address (mem/address-of buf)
-        nbuf (native-buf/wrap-address 
-               address 
-               n-bytes 
-               dtype-kw 
-               (dtype-proto/platform-endianness) 
-               buf)]
-    ;; Return as a dtype-next tensor/container
+        n-bytes   (* n type-size)
+        buf       (mem/alloc n-bytes)
+        _         (ua-array/get-data-ptr arr buf)
+        address   (mem/address-of buf)
+        nbuf      (native-buf/wrap-address
+                    address
+                    n-bytes
+                    dtype-kw
+                    (dtype-proto/platform-endianness)
+                    buf)]
     (dtype-proto/->buffer nbuf)))
 
 (defn create-array-from-tensor
@@ -347,8 +320,10 @@
    multi-threaded use cases."
   nil)
 
-(def ^:private backend-lock
-  "Lock object for serializing backend/device switching."
+(def backend-lock
+  "Lock object for serializing backend/device switching.
+   Public because it is referenced by the `with-arrayfire` macro expansion
+   from other namespaces."
   (Object.))
 
 (def ^:dynamic *backend-device-stack*
@@ -371,8 +346,10 @@
      ;; => {:backend 2, :device 0}  (AF_BACKEND_CPU = 2)"
   [])
 
-(defn- open-arena
+(defn open-arena
   "Open an FFM Arena of the requested type.
+  Public because it is referenced by the `with-arrayfire` macro expansion
+  from other namespaces.
 
   Parameters:
   - arena-type: `:confined` (default, thread-local, cheap allocation) or
@@ -425,18 +402,46 @@
   "Default converter for AFArray → host data.
    Converts an AFArray to a dtype-next native buffer, preserving dtype.
    Uses the integration layer to query array metadata from ArrayFire.
-   
+
    Parameters:
    - arr: AFArray instance
-   
+
    Returns:
    dtype-next native buffer with the array data."
   [^AFArray arr]
   (let [n        (ua-array/get-elements arr)
         af-type  (ua-array/get-type arr)
-        dtype-kw (get af-dtype->dtype-keyword af-type :float64)
-        handle   (res/af-handle arr)]
-    (to-native-buffer handle dtype-kw n)))
+        dtype-kw (get af-dtype->dtype-keyword af-type :float64)]
+    (to-native-buffer arr dtype-kw n)))
+
+(defn vec-converter
+  "Converter that converts an AFArray to a Clojure vector based structure.
+   It uses the effective dimensions of the array (trailing size-1 dims are stripped)
+   to reshape the flat column-major data into nested vectors.
+   Uses the to-host function, which always returns double data.
+
+   Parameters:
+   - arr: AFArray instance
+
+   Returns:
+   Clojure vector based structure with the array data.
+   1D arrays return a flat vector, 2D a vector of column vectors, etc."
+  [^AFArray arr]
+  (let [n    (ua-array/get-elements arr)
+        ;; ArrayFire always returns 4 dims, padding unused dims with 1.
+        ;; Strip trailing 1s to get the effective logical shape.
+        all-dims       (ua-array/get-dims arr)
+        effective-dims (vec (reverse (drop-while #(= 1 %) (reverse all-dims))))
+        data           (to-host arr n)]
+    (loop [d  effective-dims
+           ds data]
+      (if (empty? d)
+        (first ds)
+        (let [size      (first d)
+              rest-dims (rest d)]
+          (recur rest-dims
+                 (mapv #(vec (take size %))
+                       (partition-all size ds))))))))
 
 ;;
 ;; with-arrayfire execution region
@@ -498,7 +503,10 @@
     (with-arrayfire {:converter-fn identity}
       ...)"
   [& args]
-  (let [opts-map?    (map? (first args))
+  (let [known-opts   #{:backend :device :converter-fn :arena-type}
+        opts-map?    (and (map? (first args))
+                          (or (empty? (first args))
+                              (some known-opts (keys (first args)))))
         [opts body]  (if opts-map?
                        [(first args) (rest args)]
                        [{} args])
@@ -552,7 +560,7 @@
 (comment
   ;; with-arrayfire REPL experiments
 
-  ;; Basic usage — explicit host conversion
+  ;; Basic usage — explicit host conversion (create-array returns AFArray)
   (with-arrayfire
     (let [a (create-array [1.0 2.0 3.0 4.0] [2 2])]
       (vec (to-host a 4))))
@@ -582,5 +590,14 @@
   (with-arrayfire
     (with-arrayfire
       (vec (to-host (create-array [42.0] [1]) 1))))
+  
+  ;; Vector Converter (Clojure vector output instead of dtype-next native buffer)
+  ;; ua-array/create-array returns an AFArray, which result-convert picks up.
+  (with-arrayfire {:backend    :cpu
+                   :converter-fn vec-converter}
+    (let [data (double-array [1.0 2.0 3.0 4.0 5.0 6.0])]
+      (ua-array/create-array data [2 3] defs/AF_DTYPE_F64)))
+  
+  ;
   )
 
