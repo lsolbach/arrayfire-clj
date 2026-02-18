@@ -1,1 +1,0 @@
-(ns org.soulspace.arrayfire.api.array)

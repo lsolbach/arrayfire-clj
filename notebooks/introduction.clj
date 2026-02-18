@@ -35,7 +35,6 @@
 ;; * Cross-platform compatibility with support for CUDA, oneAPI, OpenCL,
 ;;   and native CPU on Windows, Mac, and Linux
 ;;
-
 ;; ## ArrayFire-CLJ
 ;; [ArrayFire-CLJ](https://github.com/lsolbach/arrayfire-clj) is a Clojure
 ;; wrapper around the ArrayFire library, providing a more idiomatic Clojure

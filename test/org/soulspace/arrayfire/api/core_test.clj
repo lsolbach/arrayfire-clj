@@ -1,8 +1,8 @@
-(ns org.soulspace.arrayfire.core-test
+(ns org.soulspace.arrayfire.api.core-test
   "Tests for the arrayfire-clj core namespace, including the `with-arrayfire`
    execution region macro."
   (:require [clojure.test :refer [deftest is testing]]
-            [org.soulspace.arrayfire.core :as core]
+            [org.soulspace.arrayfire.api.core :as core]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.resource :as res]

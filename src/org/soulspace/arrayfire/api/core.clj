@@ -1,4 +1,4 @@
-(ns org.soulspace.arrayfire.core
+(ns org.soulspace.arrayfire.api.core
   (:require [coffi.mem :as mem]
             [tech.v3.resource :refer [stack-resource-context]]
             [tech.v3.datatype :as dtype]
@@ -16,7 +16,7 @@
 ;;;
 ;;; Definitions
 ;;;
-(def type->constant
+(def dtype-kw->dtype-constant
   "Mapping of Clojure keywords to ArrayFire dtype constants."
   {::f32 defs/AF_DTYPE_F32 ; float
    ::c32 defs/AF_DTYPE_C32 ; complex float
@@ -32,12 +32,12 @@
    ::u16 defs/AF_DTYPE_U16 ; unsigned short
    })
 
-(def constant->type
+(def dtype-constant->dtype-kw
   "Mapping of ArrayFire dtype constants to Clojure keywords."
     (into {}
-        (map (fn [[k v]] [v k]) type->constant)))
+        (map (fn [[k v]] [v k]) dtype-kw->dtype-constant)))
 
-(def type->size
+(def dtype-kw->size
   "Mapping of Clojure keywords to sizes in bytes for each ArrayFire dtype."
   {::f32 4  ; float
    ::c32 8  ; complex float (2 floats)
@@ -53,7 +53,7 @@
    ::u16 2  ; unsigned short
    })
 
-(def return->constant
+(def return-kw->return-constant
   "Mapping of error keywords to ArrayFire error codes."
   {::success                    defs/AF_SUCCESS
    ::err-no-mem                 defs/AF_ERR_NO_MEM
@@ -80,12 +80,12 @@
    ;
    })
 
-(def constant->return
+(def return-constant->return-kw
   "Mapping of ArrayFire return codes to error keywords."
   (into {}
-        (map (fn [[k v]] [v k]) return->constant)))
+        (map (fn [[k v]] [v k]) return-kw->return-constant)))
 
-(def backend-keyword->constant
+(def backend-kw->backend-constant
   "Mapping of backend keywords to ArrayFire backend constants."
   {:default defs/AF_BACKEND_DEFAULT
    :cpu     defs/AF_BACKEND_CPU
@@ -116,10 +116,10 @@
    ArrayFire backend constant (integer)."
   [backend]
   (if (keyword? backend)
-    (or (get backend-keyword->constant backend)
+    (or (get backend-kw->backend-constant backend)
         (throw (ex-info (str "Unknown backend: " backend)
                         {:backend backend
-                         :valid-backends (keys backend-keyword->constant)})))
+                         :valid-backends (keys backend-kw->backend-constant)})))
     (int backend)))
 
 ;(def messages
@@ -339,14 +339,54 @@
   (when (compare-and-set! af-initialized? false true)
     (init!)))
 
-(def ^:dynamic *af-arena*
+(def ^:private ^:dynamic *af-arena*
   "Dynamic var holding the current coffi Arena inside a `with-arrayfire` region.
-   Thread-confined by default — do not access from other threads."
+   Thread-confined by default (`:arena-type :confined`). Do NOT access from other
+   threads (e.g. `future`, `core.async go` blocks) — doing so will throw
+   `WrongThreadException`. Use `:arena-type :shared` in `with-arrayfire` for
+   multi-threaded use cases."
   nil)
 
-(def backend-lock
+(def ^:private backend-lock
   "Lock object for serializing backend/device switching."
   (Object.))
+
+(def ^:dynamic *backend-device-stack*
+  "Thread-local stack of backend/device frames pushed by nested `with-arrayfire`
+   regions that switch the backend or device.
+
+   Each frame is a map with keys:
+   - `:backend`  — the ArrayFire backend constant (integer) active in this region
+   - `:device`   — the device index (integer) active in this region
+
+   The top-most (innermost) frame is accessible via `(peek *backend-device-stack*)`.
+   An empty vector means no switching region is currently active.
+
+   This var is public to allow introspection of the current backend/device context
+   from helpers called inside a `with-arrayfire` body.
+
+   Example:
+     (with-arrayfire {:backend :cpu :device 0}
+       (peek *backend-device-stack*))
+     ;; => {:backend 2, :device 0}  (AF_BACKEND_CPU = 2)"
+  [])
+
+(defn- open-arena
+  "Open an FFM Arena of the requested type.
+
+  Parameters:
+  - arena-type: `:confined` (default, thread-local, cheap allocation) or
+                `:shared`   (cross-thread safe, higher overhead)
+
+  Returns:
+  An open `java.lang.foreign.Arena` instance (use in `with-open`)."
+  [arena-type]
+  (case arena-type
+    :confined (mem/confined-arena)
+    :shared   (mem/shared-arena)
+    (throw (ex-info (str "Unknown :arena-type " arena-type
+                         ". Valid values: :confined, :shared")
+                    {:arena-type arena-type}))))
 
 (defn result-convert
   "Convert AFArray values in the result before they escape the resource context.
@@ -403,51 +443,67 @@
 ;;
 (defmacro with-arrayfire
   "Execute body within a deterministic GPU compute region.
-   
-   Establishes:
-   - ArrayFire initialization (once)
-   - Optional backend/device switching (serialized via lock)
-   - FFM Arena scope (confined, deterministic cleanup)
-   - tech.resource scope (AFArray lifecycle management)
-   - Result conversion (AFArray → host data)
-   
-   AFArray values MUST NOT escape this region. Any AFArray in the return
-   value is automatically converted to host data via the converter function.
-   
-   Parameters:
-   - body: code to execute within the ArrayFire region (can return AFArray values)
-   - opts (optional): map of options for backend/device selection and result conversion
 
-   Options map (optional first argument):
-   - :backend      - keyword (:cpu, :cuda, :opencl, :oneapi) or int constant
-   - :device       - integer device index
-   - :converter-fn - function to convert AFArray to host data
-                     (default: default-af-converter)
-   
-   Returns:
-   The result of evaluating body, with all AFArray instances converted to host data.
+  Establishes:
+  - ArrayFire initialization (once)
+  - Optional backend/device switching (serialized via lock)
+  - FFM Arena scope (deterministic cleanup)
+  - tech.resource scope (AFArray lifecycle management)
+  - Result conversion (AFArray → host data via deep walk)
 
-   Examples:
-     ;; Basic usage — results auto-converted
-     (with-arrayfire
-       (let [a (create-array [1.0 2.0 3.0 4.0] [2 2])]
-         (to-host a 4)))
-   
-     ;; With backend selection
-     (with-arrayfire {:backend :cuda :device 0}
-       ...)
-   
-     ;; Skip auto-conversion when result is already host data
-     (with-arrayfire {:converter-fn identity}
-       ...)"
+  AFArray values MUST NOT escape this region. Any AFArray in the return
+  value is automatically converted to host data via the converter function.
+
+  Parameters:
+  - opts  (optional map, first argument) — see Options below
+  - body  — forms to execute within the ArrayFire region
+
+  Options map (optional first argument):
+  - :backend      keyword (:cpu, :cuda, :opencl, :oneapi, :default) or int constant.
+                  Switches the global ArrayFire backend for the duration of the body
+                  and restores it afterwards (serialized via a lock).
+  - :device       integer device index. Switches the active device and restores it.
+  - :converter-fn function to convert a single AFArray to host data.
+                  Defaults to `default-af-converter` (→ dtype-next native buffer).
+                  Pass `identity` to skip auto-conversion (only safe when body
+                  does not return any AFArray values).
+  - :arena-type   `:confined` (default) or `:shared`.
+                  `:confined`  — thread-local arena, cheap allocation.  Do NOT
+                                 use from other threads (future, go blocks) —
+                                 `WrongThreadException` will be thrown.
+                  `:shared`    — cross-thread safe arena, higher allocation
+                                 overhead.  Use when the body dispatches work
+                                 to other threads and those threads allocate
+                                 native memory through the arena.
+
+  Returns:
+  The result of evaluating body, with all AFArray instances converted to host data.
+
+  Examples:
+    ;; Basic usage — results auto-converted
+    (with-arrayfire
+      (let [a (create-array [1.0 2.0 3.0 4.0] [2 2])]
+        (to-host a 4)))
+
+    ;; With explicit backend and device selection
+    (with-arrayfire {:backend :cuda :device 0}
+      ...)
+
+    ;; Multi-threaded body — use shared arena
+    (with-arrayfire {:arena-type :shared}
+      (let [f (future (create-array [1.0 2.0] [2]))]
+        (vec (to-host @f 2))))
+
+    ;; Skip auto-conversion when result is already host data
+    (with-arrayfire {:converter-fn identity}
+      ...)"
   [& args]
-  (let [known-opts   #{:backend :device :converter-fn}
-        opts-map?    (and (map? (first args))
-                          (some known-opts (keys (first args))))
+  (let [opts-map?    (map? (first args))
         [opts body]  (if opts-map?
                        [(first args) (rest args)]
                        [{} args])
         converter    (or (:converter-fn opts) `default-af-converter)
+        arena-type   (get opts :arena-type :confined)
         has-backend? (contains? opts :backend)
         has-device?  (contains? opts :device)
         prev-backend (gensym "prev-backend")
@@ -466,12 +522,18 @@
                   `(device/set-backend! (resolve-backend ~(:backend opts))))
                ~(when has-device?
                   `(device/set-device! ~(:device opts)))
-               (with-open [~arena-sym (mem/confined-arena)]
-                 (binding [*af-arena* ~arena-sym]
-                   (stack-resource-context
-                    (let [~result-sym (do ~@body)]
-                      (device/sync!)
-                      (result-convert ~converter ~result-sym)))))
+               ;; Push an introspection frame onto the per-thread stack.
+               ;; `binding` unwinds automatically — no explicit pop needed.
+               (binding [*backend-device-stack*
+                         (conj *backend-device-stack*
+                               {:backend (device/get-active-backend)
+                                :device  (device/get-device)})]
+                 (with-open [~arena-sym (open-arena ~arena-type)]
+                   (binding [*af-arena* ~arena-sym]
+                     (stack-resource-context
+                      (let [~result-sym (do ~@body)]
+                        (device/sync!)
+                        (result-convert ~converter ~result-sym))))))
                (finally
                  ~(when has-device?
                     `(device/set-device! ~prev-device))
@@ -480,7 +542,7 @@
       ;; No backend/device switching — no lock needed
       `(do
          (ensure-af-init!)
-         (with-open [~arena-sym (mem/confined-arena)]
+         (with-open [~arena-sym (open-arena ~arena-type)]
            (binding [*af-arena* ~arena-sym]
              (stack-resource-context
               (let [~result-sym (do ~@body)]
@@ -495,12 +557,28 @@
     (let [a (create-array [1.0 2.0 3.0 4.0] [2 2])]
       (vec (to-host a 4))))
 
+  ;; Empty opts map (valid — treated as no options)
+  (with-arrayfire {}
+    (vec (to-host (create-array [1.0 2.0] [2]) 2)))
+
   ;; With backend selection
   (with-arrayfire {:backend :cpu}
     (let [a (create-array [1.0 2.0 3.0] [3])]
       (vec (to-host a 3))))
 
-  ;; Nested regions
+  ;; With shared arena for multi-threaded body
+  (with-arrayfire {:arena-type :shared}
+    (let [f (future (create-array [1.0 2.0] [2]))]
+      (vec (to-host @f 2))))
+
+  ;; Introspect the current backend/device frame from inside a switching region
+  (with-arrayfire {:backend :cpu :device 0}
+    (println "current frame:" (peek *backend-device-stack*))
+    (with-arrayfire {:backend :cpu :device 0}
+      (println "nested frame:" (peek *backend-device-stack*))
+      (println "full stack:" *backend-device-stack*)))
+
+  ;; Nested regions (no backend switch — no frame pushed)
   (with-arrayfire
     (with-arrayfire
       (vec (to-host (create-array [42.0] [1]) 1))))
