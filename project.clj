@@ -8,8 +8,8 @@
                  [cnuernber/dtype-next "11.004"]]
   :source-paths ["src"]
   :jvm-opts [; Adjust library path as needed
-             ;"-Djava.library.path=/opt/arrayfire/lib64"
-             "-Djava.library.path=/Program Files/ArrayFire/v3/lib"
+             "-Djava.library.path=/opt/arrayfire/lib64"
+             ;"-Djava.library.path=/Program Files/ArrayFire/v3/lib"
              "--enable-native-access=ALL-UNNAMED"]
   :profiles {:dev [:user {}]
              :clay {:dependencies [[org.scicloj/clay "2.0.5"]]
