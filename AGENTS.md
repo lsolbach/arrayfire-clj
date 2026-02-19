@@ -54,5 +54,6 @@ The structure of the integration layer follows the ArrayFire Unified API.
 
 ### Clojure API Layer
 The Clojure API layer provides an idiomatic Clojure API for the ArrayFire
-features.
+features. The functions in this layer use Clojure conventions with regards
+to naming, keywords, argument order and return values.
 
