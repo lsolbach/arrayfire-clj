@@ -2,6 +2,7 @@
 
 ## General
 * decide where to add parameter checks (integration/API layer)?
+* check for current memory allocation consistency
 
 ## FFI Layer
 * define aliases for typedefs/structs
