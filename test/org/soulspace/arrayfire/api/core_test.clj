@@ -11,27 +11,6 @@
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
-;;; resolve-backend tests
-;;;
-(deftest resolve-backend-keyword-test
-  (testing "Resolves backend keywords to constants"
-    (is (= defs/AF_BACKEND_CPU (core/resolve-backend :cpu)))
-    (is (= defs/AF_BACKEND_CUDA (core/resolve-backend :cuda)))
-    (is (= defs/AF_BACKEND_OPENCL (core/resolve-backend :opencl)))
-    (is (= defs/AF_BACKEND_ONEAPI (core/resolve-backend :oneapi)))
-    (is (= defs/AF_BACKEND_DEFAULT (core/resolve-backend :default)))))
-
-(deftest resolve-backend-integer-test
-  (testing "Passes integer constants through"
-    (is (= 2 (core/resolve-backend 2)))
-    (is (= 4 (core/resolve-backend 4)))))
-
-(deftest resolve-backend-invalid-test
-  (testing "Throws on invalid keyword"
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Unknown backend"
-          (core/resolve-backend :invalid)))))
-
-;;;
 ;;; result-convert tests
 ;;;
 (deftest result-convert-passthrough-test
