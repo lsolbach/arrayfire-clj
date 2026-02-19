@@ -10,15 +10,11 @@
 ## Integration Layer
 * move functions from core to integration layer?
   * dtype-next integration, array-from-tensor, array conversions
-  * keyword conversions
 * move Arena handling mechanism from core to integration layer
   * make sure, the configured arena is used for all memory allocations
 
 ## API Layer
-* add within-arrayfire? predicate
-  * check for within-arrayfire in API functions
-* add API functions
-* add specs for API functions
+* add API functions and specs for API functions
 
 ## Notebooks
 
