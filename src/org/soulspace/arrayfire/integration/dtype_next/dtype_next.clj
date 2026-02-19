@@ -1,5 +1,15 @@
 (ns org.soulspace.arrayfire.integration.dtype-next.dtype-next
-  "Integration utilities for zero-copy interoperability between ArrayFire and dtype-next."
+  "Integration utilities for zero-copy interoperability between ArrayFire and dtype-next.
+   
+   This namespace provides functions to convert between ArrayFire arrays and dtype-next
+   native buffers/tensors with minimal copying. The key idea is to leverage dtype-next's
+   ability to wrap existing native memory buffers, allowing us to avoid unnecessary
+   intermediate copies when transferring data between ArrayFire (GPU) and dtype-next (host).
+
+   Note: While we can achieve zero-copy on the host side, any transfer of data
+   from GPU to host (or vice versa) will involve a copy due to hardware limitations.
+   However, we minimize additional copies by directly wrapping native buffers where
+   possible."
   (:require [coffi.mem :as mem]
             [tech.v3.datatype :as dtype]
             [tech.v3.datatype.native-buffer :as native-buf]
@@ -8,9 +18,9 @@
             [org.soulspace.arrayfire.integration.unified-api.array :as array])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
-;;
-;; Zero-copy integration with dtype-next
-;;
+;;;
+;;; Datatype mapping between ArrayFire and dtype-next
+;;;
 (def af-dtype->dtype-next-kw
   "Mapping of ArrayFire dtype constants to dtype-next datatype keywords."
   {defs/AF_DTYPE_F32 :float32
@@ -24,29 +34,39 @@
    defs/AF_DTYPE_U8  :uint8
    defs/AF_DTYPE_B8  :uint8})
 
-(defn dtype-next-kw->af-dtype
-  "Convert dtype-next datatype to ArrayFire dtype constant.
-   
+(def dtype-next-kw->af-dtype
+  "Mapping of dtype-next datatype keywords to ArrayFire dtype constants."
+  {:float32 defs/AF_DTYPE_F32
+   :float64 defs/AF_DTYPE_F64
+   :int32   defs/AF_DTYPE_S32
+   :uint32  defs/AF_DTYPE_U32
+   :int64   defs/AF_DTYPE_S64
+   :uint64  defs/AF_DTYPE_U64
+   :int16   defs/AF_DTYPE_S16
+   :uint16  defs/AF_DTYPE_U16
+   :int8    defs/AF_DTYPE_S32  ; dtype-next int8 maps to s32
+   :uint8   defs/AF_DTYPE_U8})
+
+(defn resolve-af-dtype
+  "Resolve a dtype-next datatype keyword to the corresponding ArrayFire dtype constant.
+   Throws an exception if the dtype is unsupported.
+
    Parameters:
-   - dtype: dtype-next datatype keyword
-   
+   - dtype: dtype-next datatype keyword (e.g., :float64, :int32)
+
    Returns:
-   ArrayFire dtype constant."
+   ArrayFire dtype constant (e.g., defs/AF_DTYPE_F64).
+
+   Example:
+   (resolve-af-dtype :float64) ;=> defs/AF_DTYPE_F64"
   [dtype]
-  (case dtype
-    :float32 defs/AF_DTYPE_F32
-    :float64 defs/AF_DTYPE_F64
-    :int32   defs/AF_DTYPE_S32
-    :uint32  defs/AF_DTYPE_U32
-    :int64   defs/AF_DTYPE_S64
-    :uint64  defs/AF_DTYPE_U64
-    :int16   defs/AF_DTYPE_S16
-    :uint16  defs/AF_DTYPE_U16
-    :int8    defs/AF_DTYPE_S32  ; dtype-next int8 maps to s32
-    :uint8   defs/AF_DTYPE_U8
-    (throw (ex-info (str "Unsupported dtype: " dtype) {:dtype dtype}))))
+  (or (dtype-next-kw->af-dtype dtype)
+      (throw (ex-info (str "Unsupported dtype: " dtype) {:dtype dtype}))))
 
-
+;;;
+;;; Integration functions
+;;; (Zero-copy when possible, minimal copies when necessary)
+;;;
 (defn create-array-from-native
   "Create an ArrayFire array from a dtype-next native buffer (zero-copy on host side).
 
