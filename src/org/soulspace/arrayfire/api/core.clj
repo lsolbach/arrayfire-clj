@@ -24,7 +24,7 @@
    Clojure data structures) before they are returned from the region.
    This ensures that AFArray instances do not escape the resource management scope,
    preventing memory leaks and ensuring safe interoperability with Clojure code."
-  (:require [coffi.memory :as mem]
+  (:require [coffi.mem :as mem]
             [tech.v3.resource :refer [stack-resource-context]]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
@@ -184,14 +184,6 @@
   []
   (when (compare-and-set! af-initialized? false true)
     (device/init!)))
-
-(def ^:private ^:dynamic *af-arena*
-  "Dynamic var holding the current coffi Arena inside a `with-arrayfire` region.
-   Thread-confined by default (`:arena-type :confined`). Do NOT access from other
-   threads (e.g. `future`, `core.async go` blocks) — doing so will throw
-   `WrongThreadException`. Use `:arena-type :shared` in `with-arrayfire` for
-   multi-threaded use cases."
-  nil)
 
 (def backend-lock
   "Lock object for serializing backend/device switching.

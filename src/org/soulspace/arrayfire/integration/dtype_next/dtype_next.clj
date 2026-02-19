@@ -1,6 +1,6 @@
 (ns org.soulspace.arrayfire.integration.dtype-next.dtype-next
   "Integration utilities for zero-copy interoperability between ArrayFire and dtype-next."
-  (:require [coffi.memory :as mem]
+  (:require [coffi.mem :as mem]
             [tech.v3.datatype :as dtype]
             [tech.v3.datatype.native-buffer :as native-buf]
             [tech.v3.datatype.protocols :as dtype-proto]
