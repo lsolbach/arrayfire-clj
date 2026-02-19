@@ -59,4 +59,5 @@ features. The functions in this layer use Clojure conventions with regards
 to naming, keywords, argument order and return values. Spec is used in the
 Clojure API layer to define semantic validation and enforce the API
 contracts.
+All API functions assert they are called within an arrayfire region
 
