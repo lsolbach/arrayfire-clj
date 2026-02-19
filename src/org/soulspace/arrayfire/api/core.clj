@@ -34,7 +34,9 @@
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith]
             [org.soulspace.arrayfire.integration.unified-api.algorithm :as algo]
             [org.soulspace.arrayfire.integration.unified-api.memory :as uamem]
-            [org.soulspace.arrayfire.integration.unified-api.device :as device])
+            [org.soulspace.arrayfire.integration.unified-api.device :as device]
+            [org.soulspace.arrayfire.integration.unified-api.data :as data]
+            [org.soulspace.arrayfire.integration.unified-api.random :as random])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 (defn to-host
@@ -186,7 +188,7 @@
     :else
     result))
 
-(defn default-af-converter
+(defn ->native-buffer
   "Default converter for AFArray → host data.
    Converts an AFArray to a dtype-next native buffer, preserving dtype.
    Uses the integration layer to query array metadata from ArrayFire.
@@ -202,8 +204,8 @@
         dtype-kw (get dtype-next/af-dtype->dtype-next-kw af-type :float64)]
     (dtype-next/to-native-buffer arr dtype-kw n)))
 
-(defn vec-converter
-  "Converter that converts an AFArray to a Clojure vector based structure.
+(defn ->value
+  "Converter that converts an AFArray to a Clojure scalar or vector based value.
    It uses the effective dimensions of the array (trailing size-1 dims are stripped)
    to reshape the flat column-major data into nested vectors.
    Uses the to-host function, which always returns double data.
@@ -212,7 +214,7 @@
    - arr: AFArray instance
 
    Returns:
-   Clojure vector based structure with the array data.
+   Clojure scalar or vector based value with the array data.
    1D arrays return a flat vector, 2D a vector of column vectors, etc."
   [^AFArray arr]
   (let [n    (array/get-elements arr)
@@ -257,7 +259,7 @@
                   and restores it afterwards (serialized via a lock).
   - :device       integer device index. Switches the active device and restores it.
   - :converter-fn function to convert a single AFArray to host data.
-                  Defaults to `default-af-converter` (→ dtype-next native buffer).
+                  Defaults to `->native-buffer` (→ dtype-next native buffer).
                   Pass `identity` to skip auto-conversion (only safe when body
                   does not return any AFArray values).
   - :arena-type   `:confined` (default) or `:shared`.
@@ -298,7 +300,7 @@
         [opts body]  (if opts-map?
                        [(first args) (rest args)]
                        [{} args])
-        converter    (or (:converter-fn opts) `default-af-converter)
+        converter    (or (:converter-fn opts) `->native-buffer)
         arena-type   (get opts :arena-type :confined)
         has-backend? (contains? opts :backend)
         has-device?  (contains? opts :device)
@@ -347,7 +349,40 @@
                   (device/sync!)
                   (result-convert ~converter ~result-sym))))))))))
 
+;;;
+;;; Helper functions
+;;;
+(defn normalize-dims
+  [dims]
+  (cond
+    (nil? dims) []                       ;; scalar
+    (number? dims) [dims]                ;; 1D
+    (sequential? dims) (vec dims)
+    :else
+    (throw (ex-info "Invalid dims" {:dims dims}))))
 
+(defn infer-shape
+  "Infer the shape of a nested Clojure data structure (vector of vectors, etc.).
+   Used for inferring array dimensions when creating an AFArray from Clojure data.
+
+   Parameters:
+   - data: nested Clojure data structure (e.g. vector of vectors)
+
+   Returns:
+   Vector of dimensions inferred from the structure.
+
+   Example:
+   (infer-shape [[1 2 3] [4 5 6]]) ; => [2 3]"
+  [data]
+  (cond
+    (number? data) []
+    (sequential? data)
+    (let [len (count data)]
+      (if (sequential? (first data))
+        (into [len] (infer-shape (first data)))
+        [len]))
+    :else
+    (throw (ex-info "Cannot infer shape" {:data data}))))
 
 ;;;
 ;;; Array creation
@@ -358,7 +393,7 @@
 
    Parameters:
    - values: vector of numeric values (doubles)
-   - dims: vector specifying the dimensions of the array (e.g. [2 3] for a 2x3 array)
+   - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
    - dtype: (optional) keyword specifying the ArrayFire data type
               (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
 
@@ -370,8 +405,191 @@
   ([values dims]
    (create-array values dims :f64))
   ([values dims dtype]
-   (assert-within-arrayfire! "create-array")   
+   (assert-within-arrayfire! "create-array")
    (array/create-array (double-array (flatten values)) dims (defs/dtype-kw->const dtype))))
+
+(defn create-constant
+  "Create an ArrayFire array filled with a constant value.
+
+   Parameters:
+   - value: numeric value to fill the array with
+   - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
+
+   Returns:
+   AFArray instance.
+
+   Example:
+   (constant 42.0 [2 3]) ; creates a 2x3 array filled with 42.0"
+  ^AFArray
+  ([value]
+   (create-constant value nil :f64))
+  ([value dims]
+   (create-constant value dims :f64))
+  ([value dims dtype]
+   (assert-within-arrayfire! "constant")
+   (data/constant value (normalize-dims dims) (defs/resolve-dtype dtype))))
+
+(defn create-zeros
+  "Create an ArrayFire array filled with zeros.
+
+   Parameters:
+   - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
+
+   Returns:
+   AFArray instance.
+
+   Example:
+   (zeros [2 3]) ; creates a 2x3 array filled with zeros"
+  ^AFArray
+  ([]
+   (create-zeros nil :f64))
+  ([dims]
+   (create-zeros dims :f64))
+  ([dims dtype]
+   (create-constant 0 dims dtype)))
+
+(defn create-ones
+  "Create an ArrayFire array filled with ones.
+
+   Parameters:
+   - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
+
+   Returns:
+   AFArray instance.
+
+   Example:
+   (ones [2 3]) ; creates a 2x3 array filled with ones"
+  ^AFArray
+  ([]
+   (create-ones nil :f64))
+  ([dims]
+   (create-ones dims :f64))
+  ([dims dtype]
+   (create-constant 1 dims dtype)))
+
+(defn create-range
+  "Create an ArrayFire array filled with a range of values from 0 to n-1.
+
+   Parameters:
+   - n: number of elements in the range (if a number) or vector of dimensions (if sequential)
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
+
+   Returns:
+   AFArray instance.
+
+   Example:
+   (create-range 5) ; creates a 1D array with values [0.0, 1.0, 2.0, 3.0, 4.0]"
+  ^AFArray
+  ([n]
+   (create-range n :f64))
+  ([n dtype]
+   (assert-within-arrayfire! "create-range")
+   (let [dtype-const (defs/resolve-dtype dtype)]
+     (cond
+       (number? n)
+       (data/range n dtype-const)
+
+       (sequential? n)
+       (data/range (normalize-dims n) dtype-const)
+
+       :else
+       (throw (ex-info "Invalid range argument" {:n n}))))))
+
+(defn create-uniform-random
+  "Create an ArrayFire array filled with uniformly distributed random values.
+
+   Parameters:
+   - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
+
+   Returns:
+   AFArray instance.
+
+   Example:
+   (create-uniform-random [2 3]) ; creates a 2x3 array filled with uniform random values"
+  ^AFArray
+  ([]
+   (create-uniform-random nil :f64))
+  ([dims]
+   (create-uniform-random dims :f64))
+  ([dims dtype]
+   (assert-within-arrayfire! "create-uniform-random")
+   (random/randu (normalize-dims dims)
+                 (defs/resolve-dtype dtype))))
+
+(defn create-normal-random
+  "Create an ArrayFire array filled with normally distributed random values.
+
+   Parameters:
+   - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
+
+   Returns:
+   AFArray instance.
+
+   Example:
+   (create-normal-random [2 3]) ; creates a 2x3 array filled with normal random values"
+  ^AFArray
+  ([]
+   (create-normal-random nil :f64))
+  ([dims]
+   (create-normal-random dims :f64))
+  ([dims dtype]
+   (assert-within-arrayfire! "create-normal-random")
+   (random/randn (normalize-dims dims)
+                 (defs/resolve-dtype dtype))))
+
+
+(defn create-zeros-like
+  "Create an ArrayFire array filled with zeros, with the same shape and dtype as the given array.
+
+   Parameters:
+   - arr: AFArray instance to infer shape and dtype from
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). If not provided, uses the dtype of `arr`.
+
+   Returns:
+   AFArray instance with the same shape and dtype as `arr`, filled with zeros.
+
+   Example:
+   (create-zeros-like my-array) ; creates a new array with the same shape and dtype as my-array"
+  ([arr]
+   (create-zeros-like arr nil))
+  ([arr dtype]
+   (assert-within-arrayfire! "create-zeros-like")
+   (let [shape (array/get-dims arr)
+         dtype (or dtype (array/get-type arr))]
+     (create-zeros shape dtype))))
+
+(defn create-normal-random-like
+  "Create an ArrayFire array filled with normally distributed random values, with the same shape and dtype as the given array.
+
+   Parameters:
+   - arr: AFArray instance to infer shape and dtype from
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). If not provided, uses the dtype of `arr`.
+
+   Returns:
+   AFArray instance with the same shape and dtype as `arr`, filled with normal random values.
+
+   Example:
+   (create-normal-random-like my-array) ; creates a new array with the same shape and dtype as my-array"
+  ([arr]
+   (create-normal-random-like arr nil))
+  ([arr dtype]
+   (assert-within-arrayfire! "create-normal-random-like")
+   (let [shape (array/get-dims arr)
+         dtype (or dtype (array/get-type arr))]
+     (create-normal-random shape dtype))))
 
 
 (comment
