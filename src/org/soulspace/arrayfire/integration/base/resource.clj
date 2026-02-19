@@ -19,7 +19,8 @@
   (:require [coffi.mem :as mem]
             [tech.v3.resource :as resource]
             [org.soulspace.arrayfire.ffi.c-api.array :refer [af-release-array af-retain-array]]
-            [org.soulspace.arrayfire.integration.base.error :refer [check!]])
+            [org.soulspace.arrayfire.integration.base.error :refer [check!]]
+            [org.soulspace.arrayfire.integration.base.memory :as bmem])
   (:import [java.lang AutoCloseable]
            [java.lang.ref Cleaner Cleaner$Cleanable]
            [java.util.concurrent.atomic AtomicBoolean]
