@@ -370,6 +370,7 @@
   ([values dims]
    (create-array values dims :f64))
   ([values dims dtype]
+   (assert-within-arrayfire! "create-array")   
    (array/create-array (double-array (flatten values)) dims (defs/dtype-kw->const dtype))))
 
 
