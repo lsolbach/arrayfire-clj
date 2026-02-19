@@ -7,7 +7,17 @@
   (:import [java.lang.foreign Arena MemorySegment ValueLayout]
            [java.nio.charset StandardCharsets]))
 
-(def ^:dynamic *af-arena* nil)
+(def ^:dynamic *af-arena*
+  "Dynamic variable for the current Arena for memory allocations.
+   This allows functions to use the Arena for temporary allocations without
+   needing to pass it explicitly. By default, it is nil, and functions will
+   create their own Arena if needed.
+   
+   The allocation can be confined (thread-local, cheap) or shared (cross-thread
+   safe, higher overhead). Do NOT access a confined Arena from other
+   threads (e.g. `future`, `core.async go` blocks) — doing so will throw
+   `WrongThreadException`. Use a shared Arena for multi-threaded use cases."
+  nil)
 
 (defn open-arena
   "Open an FFM Arena of the requested type.
