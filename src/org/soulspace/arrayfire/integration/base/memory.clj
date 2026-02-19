@@ -7,6 +7,25 @@
   (:import [java.lang.foreign Arena MemorySegment ValueLayout]
            [java.nio.charset StandardCharsets]))
 
+(def ^:dynamic *af-arena* nil)
+
+(defn open-arena
+  "Open an FFM Arena of the requested type.
+  
+   Parameters:
+   - arena-type: `:confined` (default, thread-local, cheap allocation) or
+                 `:shared`   (cross-thread safe, higher overhead)
+
+   Returns:
+   An open `java.lang.foreign.Arena` instance (use in `with-open`)."
+  [arena-type]
+  (case arena-type
+    :confined (mem/confined-arena)
+    :shared   (mem/shared-arena)
+    (throw (ex-info (str "Unknown :arena-type " arena-type
+                         ". Valid values: :confined, :shared")
+                    {:arena-type arena-type}))))
+
 ;;
 ;; Null pointer helper for optional FFI parameters
 ;;
