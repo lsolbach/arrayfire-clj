@@ -51,9 +51,12 @@ JVM ecosystem:
 * dtype-next integration
 
 The structure of the integration layer follows the ArrayFire Unified API.
+The functions in this layer should enforce their invariants.
 
 ### Clojure API Layer
 The Clojure API layer provides an idiomatic Clojure API for the ArrayFire
 features. The functions in this layer use Clojure conventions with regards
-to naming, keywords, argument order and return values.
+to naming, keywords, argument order and return values. Spec is used in the
+Clojure API layer to define semantic validation and enforce the API
+contracts.
 
