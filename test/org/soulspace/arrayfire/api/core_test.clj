@@ -147,3 +147,49 @@
     (let [result (core/with-arrayfire
                    {:x 1 :y 2})]
       (is (= {:x 1 :y 2} result)))))
+
+;;;
+;;; within-arrayfire? and assert-within-arrayfire! tests
+;;;
+(deftest within-arrayfire-outside-test
+  (testing "within-arrayfire? returns false when no region is active"
+    (is (false? (core/within-arrayfire?)))))
+
+(deftest within-arrayfire-inside-no-opts-test
+  (testing "within-arrayfire? returns true inside with-arrayfire (no options)"
+    (let [result (core/with-arrayfire
+                   (core/within-arrayfire?))]
+      (is (true? result)))))
+
+(deftest within-arrayfire-inside-with-backend-test
+  (testing "within-arrayfire? returns true inside with-arrayfire with backend option"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/within-arrayfire?))]
+      (is (true? result)))))
+
+(deftest within-arrayfire-after-region-test
+  (testing "within-arrayfire? returns false after with-arrayfire exits"
+    (core/with-arrayfire nil)
+    (is (false? (core/within-arrayfire?)))))
+
+(deftest within-arrayfire-nested-test
+  (testing "within-arrayfire? returns true in nested with-arrayfire regions"
+    (let [result (core/with-arrayfire
+                   (core/with-arrayfire
+                     (core/within-arrayfire?)))]
+      (is (true? result)))))
+
+(deftest assert-within-arrayfire-outside-test
+  (testing "assert-within-arrayfire! throws IllegalStateException outside a region"
+    (is (thrown? IllegalStateException
+          (core/assert-within-arrayfire! "test-fn")))))
+
+(deftest assert-within-arrayfire-message-test
+  (testing "assert-within-arrayfire! error message includes function name"
+    (is (thrown-with-msg? IllegalStateException #"test-fn"
+          (core/assert-within-arrayfire! "test-fn")))))
+
+(deftest assert-within-arrayfire-inside-test
+  (testing "assert-within-arrayfire! does not throw inside a region"
+    (is (nil? (core/with-arrayfire
+                (core/assert-within-arrayfire! "test-fn"))))))

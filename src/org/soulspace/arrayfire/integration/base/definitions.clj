@@ -92,6 +92,22 @@
   (into {}
         (map (fn [[k v]] [v k]) backend-kw->const)))
 
+(defn resolve-backend
+  "Resolve a backend keyword or integer to an ArrayFire backend constant.
+   
+   Parameters:
+   - backend: keyword (:cpu, :cuda, :opencl, :oneapi, :default) or integer constant
+   
+   Returns:
+   ArrayFire backend constant (integer)."
+  [backend]
+  (if (keyword? backend)
+    (or (get backend-kw->const backend)
+        (throw (ex-info (str "Unknown backend: " backend)
+                        {:backend backend
+                         :valid-backends (keys backend-kw->const)})))
+    (int backend)))
+
 (def random-engine-kw->const
   "Mapping of random engine keywords to ArrayFire constants."
   {:default defs/AF_RANDOM_ENGINE_DEFAULT

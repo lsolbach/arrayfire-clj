@@ -12,6 +12,7 @@
      - indexing, reduction, reshaping, etc.
    - Arithmetic and algorithmic operations
    - with-arrayfire execution region macro
+   - Region predicate and guard (`within-arrayfire?`, `assert-within-arrayfire!`)
 
    The functions in this namespace use Clojure conventions with regards to
    naming, keywords, argument order and return values.
@@ -35,41 +36,6 @@
             [org.soulspace.arrayfire.integration.unified-api.memory :as uamem]
             [org.soulspace.arrayfire.integration.unified-api.device :as device])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
-
-;;;
-;;; Definitions
-;;;
-(defn resolve-backend
-  "Resolve a backend keyword or integer to an ArrayFire backend constant.
-   
-   Parameters:
-   - backend: keyword (:cpu, :cuda, :opencl, :oneapi, :default) or integer constant
-   
-   Returns:
-   ArrayFire backend constant (integer)."
-  [backend]
-  (if (keyword? backend)
-    (or (get defs/backend-kw->const backend)
-        (throw (ex-info (str "Unknown backend: " backend)
-                        {:backend backend
-                         :valid-backends (keys defs/backend-kw->const)})))
-    (int backend)))
-
-(defn create-array
-  "Create an ArrayFire array from a Clojure vector of values.
-   Values are copied to a double-array and the array is created via the integration layer.
-
-   Parameters:
-   - values: Clojure vector of numeric values (doubles)
-   - dims: Clojure vector specifying the dimensions of the array
-
-   Returns:
-   AFArray instance.
-
-   Example:
-   (create-array [1.0 2.0 3.0 4.0] [2 2]) ; creates a 2x2 array"
-  [values dims]
-  (array/create-array (double-array values) dims (defs/dtype-kw->const :f64)))
 
 (defn to-host
   "Copy ArrayFire array data to host memory, returning a double array.
@@ -133,6 +99,59 @@
        (peek *backend-device-stack*))
      ;; => {:backend 2, :device 0}  (AF_BACKEND_CPU = 2)"
   [])
+
+(def ^:dynamic *within-arrayfire?*
+  "True when the current thread is executing inside a `with-arrayfire` region.
+   Bound to `true` by the `with-arrayfire` macro; `false` at the root binding.
+
+   Note: Clojure's `binding` conveys dynamic vars to child threads created via
+   `future`, `pmap`, and `agent/send-off`. A `future` spawned inside a
+   `with-arrayfire` body therefore also sees `within-arrayfire?` as `true`.
+   This is correct for `:arena-type :shared` multi-threaded bodies, but be
+   aware of the behaviour when detaching work to unrelated threads.
+
+   Use `within-arrayfire?` (the predicate) to query this value from user or
+   library code — do not read this var directly."
+  false)
+
+(defn within-arrayfire?
+  "Return `true` when called from code executing inside a `with-arrayfire`
+   region; `false` otherwise.
+
+   Reads the thread-local dynamic var `*within-arrayfire?*` that
+   `with-arrayfire` binds to `true` for the duration of the body.
+
+   Intended uses:
+   - Guard API functions to fail fast when called outside a region.
+   - Conditional logic that behaves differently inside vs outside a region.
+   - Instrumentation and debugging.
+
+   Example:
+     (within-arrayfire?)      ;; => false  (no region active)
+
+     (with-arrayfire
+       (within-arrayfire?))   ;; => true"
+  []
+  *within-arrayfire?*)
+
+(defn assert-within-arrayfire!
+  "Throw an `IllegalStateException` when not inside a `with-arrayfire` region.
+   Call this at the top of API functions that require an active region.
+
+   Parameters:
+   - fname: string — the calling function name, used in the error message.
+
+   Example:
+     (defn create-array [values dims]
+       (assert-within-arrayfire! \"create-array\")
+       ...)
+
+   Throws:
+   `java.lang.IllegalStateException` with an informative message."
+  [fname]
+  (when-not (within-arrayfire?)
+    (throw (IllegalStateException.
+            (str fname " must be called within a `with-arrayfire` region.")))))
 
 (defn result-convert
   "Convert AFArray values in the result before they escape the resource context.
@@ -296,7 +315,7 @@
                  ~prev-device  (device/get-device)]
              (try
                ~(when has-backend?
-                  `(device/set-backend! (resolve-backend ~(:backend opts))))
+                  `(device/set-backend! (defs/resolve-backend ~(:backend opts))))
                ~(when has-device?
                   `(device/set-device! ~(:device opts)))
                ;; Push an introspection frame onto the per-thread stack.
@@ -304,7 +323,8 @@
                (binding [*backend-device-stack*
                          (conj *backend-device-stack*
                                {:backend (device/get-active-backend)
-                                :device  (device/get-device)})]
+                                :device  (device/get-device)})
+                         *within-arrayfire?* true]
                  (with-open [~arena-sym (bmem/open-arena ~arena-type)]
                    (binding [bmem/*af-arena* ~arena-sym]
                      (stack-resource-context
@@ -319,12 +339,39 @@
       ;; No backend/device switching — no lock needed
       `(do
          (ensure-af-init!)
-         (with-open [~arena-sym (bmem/open-arena ~arena-type)]
-           (binding [bmem/*af-arena* ~arena-sym]
-             (stack-resource-context
-              (let [~result-sym (do ~@body)]
-                (device/sync!)
-                (result-convert ~converter ~result-sym)))))))))
+         (binding [*within-arrayfire?* true]
+           (with-open [~arena-sym (bmem/open-arena ~arena-type)]
+             (binding [bmem/*af-arena* ~arena-sym]
+               (stack-resource-context
+                (let [~result-sym (do ~@body)]
+                  (device/sync!)
+                  (result-convert ~converter ~result-sym))))))))))
+
+
+
+;;;
+;;; Array creation
+;;;
+(defn create-array
+  "Create an ArrayFire array from a Clojure vector of values.
+   Values are copied to a double-array and the array is created via the integration layer.
+
+   Parameters:
+   - values: vector of numeric values (doubles)
+   - dims: vector specifying the dimensions of the array (e.g. [2 3] for a 2x3 array)
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). Defaults to :f64 (double).
+
+   Returns:
+   AFArray instance.
+
+   Example:
+   (create-array [1.0 2.0 3.0 4.0] [2 2]) ; creates a 2x2 array"
+  ([values dims]
+   (create-array values dims :f64))
+  ([values dims dtype]
+   (array/create-array (double-array (flatten values)) dims (defs/dtype-kw->const dtype))))
+
 
 (comment
   ;; with-arrayfire REPL experiments
@@ -359,14 +406,14 @@
   (with-arrayfire
     (with-arrayfire
       (vec (to-host (create-array [42.0] [1]) 1))))
-  
+
   ;; Vector Converter (Clojure vector output instead of dtype-next native buffer)
-  ;; ua-array/create-array returns an AFArray, which result-convert picks up.
+  ;; array/create-array returns an AFArray, which result-convert picks up.
   (with-arrayfire {:backend    :cpu
                    :converter-fn vec-converter}
     (let [data (double-array [1.0 2.0 3.0 4.0 5.0 6.0])]
-      (ua-array/create-array data [2 3] defs/AF_DTYPE_F64)))
-  
+      (create-array data [2 3] :f64)))
+
   ;
   )
 
