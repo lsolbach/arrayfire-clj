@@ -1,7 +1,7 @@
 (ns org.soulspace.arrayfire.api.core-test
   "Tests for the arrayfire-clj core namespace, including the `with-arrayfire`
    execution region macro."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing run-tests]]
             [org.soulspace.arrayfire.api.core :as core]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
@@ -172,3 +172,10 @@
   (testing "assert-within-arrayfire! does not throw inside a region"
     (is (nil? (core/with-arrayfire
                 (core/assert-within-arrayfire! "test-fn"))))))
+
+(comment
+  ;; Run tests in this namespace
+  (run-tests)
+
+  ;
+  )
