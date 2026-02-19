@@ -31,6 +31,18 @@
   (into {}
         (map (fn [[k v]] [v k]) dtype-kw->const)))
 
+(defn resolve-dtype
+  "Resolve a dtype keyword or integer to an ArrayFire dtype constant.
+   
+   Parameters:
+   - dtype: keyword (e.g. :f32, :f64, :s32) or integer constant
+   
+   Returns:
+   ArrayFire dtype constant (integer)."
+  [dtype]
+  (or (dtype-kw->const dtype)
+      (throw (ex-info "Unsupported dtype" {:dtype dtype}))))
+
 (def dtype-kw->size
   "Mapping of Clojure keywords to sizes in bytes for each ArrayFire dtype."
   {:f32 4  ; float
