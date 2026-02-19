@@ -81,7 +81,7 @@
    Returns: nil"
   [^long handle]
   (let [arena (Arena/ofConfined)]
-    (try 
+    (try
       (let [out (.allocate arena ValueLayout/ADDRESS)
             in  (MemorySegment/ofAddress handle)]
         (check! (af-retain-array out in) "af_retain_array")
@@ -132,6 +132,8 @@
    AFArray instance"
   ^AFArray
   [^long handle]
+  (when (zero? handle)
+    (throw (IllegalStateException. "Invalid AF handle")))
   (let [released (AtomicBoolean. false)
         cleanup  (AFArrayCleanup. handle released)
         cleanup-key (Object.)
