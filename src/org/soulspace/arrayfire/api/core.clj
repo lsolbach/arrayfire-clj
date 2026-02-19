@@ -26,9 +26,6 @@
    preventing memory leaks and ensuring safe interoperability with Clojure code."
   (:require [coffi.memory :as mem]
             [tech.v3.resource :refer [stack-resource-context]]
-            [tech.v3.datatype :as dtype]
-            [tech.v3.datatype.native-buffer :as native-buf]
-            [tech.v3.datatype.protocols :as dtype-proto]
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.dtype-next.dtype-next :as dtype-next]
@@ -119,19 +116,6 @@
    :opencl  defs/AF_BACKEND_OPENCL
    :oneapi  defs/AF_BACKEND_ONEAPI})
 
-(def af-dtype->dtype-keyword
-  "Mapping of ArrayFire dtype constants to dtype-next datatype keywords."
-  {defs/AF_DTYPE_F32 :float32
-   defs/AF_DTYPE_F64 :float64
-   defs/AF_DTYPE_S32 :int32
-   defs/AF_DTYPE_U32 :uint32
-   defs/AF_DTYPE_S64 :int64
-   defs/AF_DTYPE_U64 :uint64
-   defs/AF_DTYPE_S16 :int16
-   defs/AF_DTYPE_U16 :uint16
-   defs/AF_DTYPE_U8  :uint8
-   defs/AF_DTYPE_B8  :uint8})
-
 (defn resolve-backend
   "Resolve a backend keyword or integer to an ArrayFire backend constant.
    
@@ -147,30 +131,6 @@
                         {:backend backend
                          :valid-backends (keys backend-kw->backend-constant)})))
     (int backend)))
-
-(defn init!
-  "Initialize ArrayFire runtime.
-   Must be called before any other ArrayFire functions.
-   
-   Returns:
-   true on success."
-  []
-  (device/init!))
-
-
-(defn info
-  "Print ArrayFire device information.
-   
-   Returns:
-   :ok on success."
-  []
-  (device/info))
-
-(comment
-  (init!)
-  (info)
-  )
-
 
 (defn create-array
   "Create an ArrayFire array from a Clojure vector of values.
@@ -223,7 +183,7 @@
    Subsequent calls will be no-op, ensuring efficient initialization."
   []
   (when (compare-and-set! af-initialized? false true)
-    (init!)))
+    (device/init!)))
 
 (def ^:private ^:dynamic *af-arena*
   "Dynamic var holding the current coffi Arena inside a `with-arrayfire` region.
@@ -305,7 +265,7 @@
   [^AFArray arr]
   (let [n        (array/get-elements arr)
         af-type  (array/get-type arr)
-        dtype-kw (get af-dtype->dtype-keyword af-type :float64)]
+        dtype-kw (get dtype-next/af-dtype->dtype-next-kw af-type :float64)]
     (dtype-next/to-native-buffer arr dtype-kw n)))
 
 (defn vec-converter

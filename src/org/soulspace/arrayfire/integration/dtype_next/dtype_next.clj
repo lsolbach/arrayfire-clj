@@ -11,8 +11,20 @@
 ;;
 ;; Zero-copy integration with dtype-next
 ;;
+(def af-dtype->dtype-next-kw
+  "Mapping of ArrayFire dtype constants to dtype-next datatype keywords."
+  {defs/AF_DTYPE_F32 :float32
+   defs/AF_DTYPE_F64 :float64
+   defs/AF_DTYPE_S32 :int32
+   defs/AF_DTYPE_U32 :uint32
+   defs/AF_DTYPE_S64 :int64
+   defs/AF_DTYPE_U64 :uint64
+   defs/AF_DTYPE_S16 :int16
+   defs/AF_DTYPE_U16 :uint16
+   defs/AF_DTYPE_U8  :uint8
+   defs/AF_DTYPE_B8  :uint8})
 
-(defn dtype->af-dtype
+(defn dtype-next-kw->af-dtype
   "Convert dtype-next datatype to ArrayFire dtype constant.
    
    Parameters:
@@ -54,7 +66,7 @@
      (create-array-from-native tensor [100]))"
   [native-buffer dims]
   (let [dtype-kw (dtype/elemwise-datatype native-buffer)
-        af-dtype (dtype->af-dtype dtype-kw)
+        af-dtype (dtype-next-kw->af-dtype dtype-kw)
         nbuf     (dtype/as-native-buffer native-buffer)
         _        (when-not nbuf
                    (throw (ex-info "Buffer must be native-backed for zero-copy operation"
@@ -82,7 +94,7 @@
    Example:
    (to-native-buffer my-array :float64 100)"
   [^AFArray arr dtype-kw n]
-  (let [type-size (get defs/dtype->size (dtype->af-dtype dtype-kw))
+  (let [type-size (get defs/dtype->size (dtype-next-kw->af-dtype dtype-kw))
         n-bytes   (* n type-size)
         buf       (mem/alloc n-bytes)
         _         (array/get-data-ptr arr buf)
