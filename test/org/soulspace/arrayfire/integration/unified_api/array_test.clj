@@ -328,3 +328,121 @@
   (run-tests)
   ;
   )
+
+;;;
+;;; array->host Tests
+;;;
+
+(deftest test-array->host-f32
+  (testing "array->host returns float[] for F32 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (float-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F32)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[F") result))
+        (is (<= (Math/abs (- 1.0 (aget ^floats result 0))) 0.001))
+        (is (<= (Math/abs (- 2.0 (aget ^floats result 1))) 0.001))
+        (is (<= (Math/abs (- 3.0 (aget ^floats result 2))) 0.001))))))
+
+(deftest test-array->host-f64
+  (testing "array->host returns double[] for F64 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (double-array [1.0 2.0 3.0]) [3] defs/AF_DTYPE_F64)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[D") result))
+        (is (<= (Math/abs (- 1.0 (aget ^doubles result 0))) 0.0001))
+        (is (<= (Math/abs (- 2.0 (aget ^doubles result 1))) 0.0001))
+        (is (<= (Math/abs (- 3.0 (aget ^doubles result 2))) 0.0001))))))
+
+(deftest test-array->host-s32
+  (testing "array->host returns int[] for S32 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (int-array [1 -2 3]) [3] defs/AF_DTYPE_S32)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[I") result))
+        (is (= 1  (aget ^ints result 0)))
+        (is (= -2 (aget ^ints result 1)))
+        (is (= 3  (aget ^ints result 2)))))))
+
+(deftest test-array->host-s64
+  (testing "array->host returns long[] for S64 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (long-array [1 -2 3]) [3] defs/AF_DTYPE_S64)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[J") result))
+        (is (= 1  (aget ^longs result 0)))
+        (is (= -2 (aget ^longs result 1)))
+        (is (= 3  (aget ^longs result 2)))))))
+
+(deftest test-array->host-s16
+  (testing "array->host returns short[] for S16 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (short-array [1 -2 3]) [3] defs/AF_DTYPE_S16)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[S") result))
+        (is (= 1  (aget ^shorts result 0)))
+        (is (= -2 (aget ^shorts result 1)))
+        (is (= 3  (aget ^shorts result 2)))))))
+
+(deftest test-array->host-u32
+  (testing "array->host returns long[] for U32 arrays (widened to preserve unsigned)"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (int-array [1 -1]) [2] defs/AF_DTYPE_U32)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[J") result))
+        (is (= 1            (aget ^longs result 0)))
+        (is (= 4294967295   (aget ^longs result 1)))))))  ; 0xFFFFFFFF unsigned
+
+(deftest test-array->host-u8
+  (testing "array->host returns short[] for U8 arrays (widened to preserve unsigned)"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (byte-array [0 127 -1]) [3] defs/AF_DTYPE_U8)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[S") result))
+        (is (= 0   (aget ^shorts result 0)))
+        (is (= 127 (aget ^shorts result 1)))
+        (is (= 255 (aget ^shorts result 2)))))))  ; -1 byte → 255 unsigned
+
+(deftest test-array->host-b8
+  (testing "array->host returns byte[] for B8 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array (byte-array [0 1 1 0]) [4] defs/AF_DTYPE_B8)
+            result (array/array->host arr)]
+        (is (instance? (Class/forName "[B") result))
+        (is (= 0 (aget ^bytes result 0)))
+        (is (= 1 (aget ^bytes result 1)))
+        (is (= 1 (aget ^bytes result 2)))
+        (is (= 0 (aget ^bytes result 3)))))))
+
+(deftest test-array->host-c32
+  (testing "array->host returns vector of [re im] float pairs for C32 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)
+            result (array/array->host arr)]
+        (is (vector? result))
+        (is (= 2 (count result)))
+        (is (<= (Math/abs (- 1.0 (first  (first result)))) 0.001))
+        (is (<= (Math/abs (- 2.0 (second (first result)))) 0.001))
+        (is (<= (Math/abs (- 3.0 (first  (second result)))) 0.001))
+        (is (<= (Math/abs (- 4.0 (second (second result)))) 0.001))))))
+
+(deftest test-array->host-c64
+  (testing "array->host returns vector of [re im] double pairs for C64 arrays"
+    (device/init!)
+    (releasing!
+      (let [arr (array/create-array [[10.0 20.0] [30.0 40.0]] [2] defs/AF_DTYPE_C64)
+            result (array/array->host arr)]
+        (is (vector? result))
+        (is (= 2 (count result)))
+        (is (<= (Math/abs (- 10.0 (first  (first result)))) 0.0001))
+        (is (<= (Math/abs (- 20.0 (second (first result)))) 0.0001))
+        (is (<= (Math/abs (- 30.0 (first  (second result)))) 0.0001))
+        (is (<= (Math/abs (- 40.0 (second (second result)))) 0.0001))))))
