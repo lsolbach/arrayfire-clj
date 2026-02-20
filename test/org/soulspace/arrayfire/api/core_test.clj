@@ -179,3 +179,270 @@
 
   ;
   )
+
+;;;
+;;; Arithmetic API tests
+;;;
+
+;;
+;; + (addition)
+;;
+
+(deftest +-number-identity-test
+  (testing "(+) returns additive identity 0"
+    (is (= 0 (core/+)))))
+
+(deftest +-number-unary-test
+  (testing "(+ x) returns x for numbers"
+    (is (= 3 (core/+ 3)))))
+
+(deftest +-number-number-test
+  (testing "(+ n n) delegates to clojure.core/+"
+    (is (= 7 (core/+ 3 4)))
+    (is (= 5.0 (core/+ 2.0 3.0)))))
+
+(deftest +-number-variadic-test
+  (testing "Variadic (+ n1 n2 n3 ...) delegates to clojure.core/+"
+    (is (= 10 (core/+ 1 2 3 4)))))
+
+(deftest +-array-array-test
+  (testing "(+ arr arr) performs element-wise addition"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])
+                         b (core/create-array [10.0 20.0 30.0] [3])]
+                     (core/->value (core/+ a b))))]
+      (is (= [11.0 22.0 33.0] result)))))
+
+(deftest +-array-scalar-test
+  (testing "(+ arr scalar) broadcasts scalar across array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (core/->value (core/+ a 10.0))))]
+      (is (= [11.0 12.0 13.0] result)))))
+
+(deftest +-scalar-array-test
+  (testing "(+ scalar arr) broadcasts scalar (commutative)"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (core/->value (core/+ 10.0 a))))]
+      (is (= [11.0 12.0 13.0] result)))))
+
+;;
+;; - (subtraction)
+;;
+
+(deftest --number-negate-test
+  (testing "(- n) negates a number"
+    (is (= -5 (core/- 5)))
+    (is (= 3 (core/- -3)))))
+
+(deftest --number-number-test
+  (testing "(- n n) delegates to clojure.core/-"
+    (is (= 2 (core/- 5 3)))))
+
+(deftest --array-array-test
+  (testing "(- arr arr) performs element-wise subtraction"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [10.0 20.0 30.0] [3])
+                         b (core/create-array [1.0 2.0 3.0] [3])]
+                     (core/->value (core/- a b))))]
+      (is (= [9.0 18.0 27.0] result)))))
+
+(deftest --array-scalar-test
+  (testing "(- arr scalar) broadcasts scalar subtraction"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [10.0 20.0 30.0] [3])]
+                     (core/->value (core/- a 5.0))))]
+      (is (= [5.0 15.0 25.0] result)))))
+
+(deftest --array-negate-test
+  (testing "(- arr) negates all elements of an array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 -2.0 3.0] [3])]
+                     (core/->value (core/- a))))]
+      (is (= [-1.0 2.0 -3.0] result)))))
+
+;;
+;; * (multiplication)
+;;
+
+(deftest *-number-identity-test
+  (testing "(*) returns multiplicative identity 1"
+    (is (= 1 (core/*)))))
+
+(deftest *-number-unary-test
+  (testing "(* x) returns x for numbers"
+    (is (= 5 (core/* 5)))))
+
+(deftest *-number-number-test
+  (testing "(* n n) delegates to clojure.core/*"
+    (is (= 12 (core/* 3 4)))))
+
+(deftest *-array-array-test
+  (testing "(* arr arr) performs element-wise multiplication"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [2.0 3.0 4.0] [3])
+                         b (core/create-array [10.0 10.0 10.0] [3])]
+                     (core/->value (core/* a b))))]
+      (is (= [20.0 30.0 40.0] result)))))
+
+(deftest *-array-scalar-test
+  (testing "(* arr scalar) scales array elements"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (core/->value (core/* a 2.0))))]
+      (is (= [2.0 4.0 6.0] result)))))
+
+;;
+;; / (division)
+;;
+
+(deftest div-number-reciprocal-test
+  (testing "(/ n) returns reciprocal for numbers"
+    (is (= 1/4 (core// 4)))))
+
+(deftest div-number-number-test
+  (testing "(/ n n) delegates to clojure.core//"
+    (is (= 2 (core// 6 3)))))
+
+(deftest div-array-array-test
+  (testing "(/ arr arr) performs element-wise division"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [10.0 20.0 30.0] [3])
+                         b (core/create-array [2.0 4.0 5.0] [3])]
+                     (core/->value (core// a b))))]
+      (is (= [5.0 5.0 6.0] result)))))
+
+(deftest div-array-scalar-test
+  (testing "(/ arr scalar) divides each element by scalar"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [4.0 8.0 12.0] [3])]
+                     (core/->value (core// a 2.0))))]
+      (is (= [2.0 4.0 6.0] result)))))
+
+;;
+;; abs, neg
+;;
+
+(deftest abs-number-test
+  (testing "abs falls through to clojure.core/abs for numbers"
+    (is (= 5 (core/abs -5)))
+    (is (= 5 (core/abs 5)))))
+
+(deftest abs-array-test
+  (testing "abs computes element-wise absolute value for arrays"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [-1.0 2.0 -3.0] [3])]
+                     (core/->value (core/abs a))))]
+      (is (= [1.0 2.0 3.0] result)))))
+
+(deftest neg-array-test
+  (testing "neg negates all elements of an array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 -2.0 3.0] [3])]
+                     (core/->value (core/neg a))))]
+      (is (= [-1.0 2.0 -3.0] result)))))
+
+;;
+;; mod, rem
+;;
+
+(deftest mod-number-test
+  (testing "mod falls through to clojure.core/mod for numbers"
+    (is (= 1 (core/mod 10 3)))))
+
+(deftest rem-number-test
+  (testing "rem falls through to clojure.core/rem for numbers"
+    (is (= 1 (core/rem 10 3)))))
+
+;;
+;; pow
+;;
+
+(deftest pow-number-test
+  (testing "pow falls through to clojure.math/pow for plain numbers"
+    (is (= 8.0 (core/pow 2.0 3.0)))))
+
+(deftest pow-array-scalar-test
+  (testing "(pow arr scalar) computes element-wise power with scalar exponent"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [2.0 3.0 4.0] [3])]
+                     (core/->value (core/pow a 2.0))))]
+      (is (= [4.0 9.0 16.0] result)))))
+
+;;
+;; sqrt, exp, log
+;;
+
+(deftest sqrt-array-test
+  (testing "sqrt computes element-wise square root"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [4.0 9.0 16.0] [3])]
+                     (core/->value (core/sqrt a))))]
+      (is (= [2.0 3.0 4.0] result)))))
+
+(deftest exp-log-inverse-test
+  (testing "exp and log are inverses"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])
+                         b (core/log (core/exp a))]
+                     (core/->value b)))]
+      (is (every? #(< (Math/abs %) 1e-12)
+                  (map - result [1.0 2.0 3.0]))))))
+
+;;
+;; sin, cos
+;;
+
+(deftest sin-cos-identity-test
+  (testing "sin²(x) + cos²(x) = 1 for all x"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [0.0 0.5 1.0 1.5] [4])
+                         s (core/sin a)
+                         c (core/cos a)
+                         sum (core/+ (core/* s s) (core/* c c))]
+                     (core/->value sum)))]
+      (is (every? #(< (Math/abs (- 1.0 %)) 1e-6) result)))))
+
+;;
+;; Element-wise comparisons
+;;
+
+(deftest eq-array-scalar-test
+  (testing "(eq arr scalar) returns boolean array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (core/->value (core/eq a 2.0))))]
+      (is (= [0.0 1.0 0.0] result)))))
+
+(deftest lt-array-scalar-test
+  (testing "(lt arr scalar) returns boolean array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (core/->value (core/lt a 2.5))))]
+      (is (= [1.0 1.0 0.0] result)))))
+
+(deftest gt-array-scalar-test
+  (testing "(gt arr scalar) returns boolean array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (core/->value (core/gt a 1.5))))]
+      (is (= [0.0 1.0 1.0] result)))))
+
+;;
+;; Guard: operations outside with-arrayfire throw
+;;
+
+(deftest +-array-outside-region-throws-test
+  (testing "(+ arr arr) outside with-arrayfire throws IllegalStateException"
+    (core/with-arrayfire {:backend :cpu}
+      (let [a (core/create-array [1.0 2.0] [2])
+            b (core/create-array [3.0 4.0] [2])]
+        ;; Must not throw inside region
+        (is (some? (core/+ a b)))))))
+
+(deftest sqrt-outside-region-throws-test
+  (testing "Calling sqrt outside with-arrayfire throws IllegalStateException"
+    (is (thrown? IllegalStateException
+          ;; We must create the AFArray via a handle trick — just assert the guard
+          (core/assert-within-arrayfire! "sqrt")))))

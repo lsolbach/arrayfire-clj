@@ -25,7 +25,9 @@
    Clojure data structures) before they are returned from the region.
    This ensures that AFArray instances do not escape the resource management scope,
    preventing memory leaks and ensuring safe interoperability with Clojure code."
-  (:require [coffi.mem :as mem]
+  (:refer-clojure :exclude [+ - * / abs mod rem])
+  (:require [clojure.math]
+            [coffi.mem :as mem]
             [tech.v3.resource :refer [stack-resource-context]]
             [org.soulspace.arrayfire.integration.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
@@ -39,6 +41,7 @@
             [org.soulspace.arrayfire.integration.unified-api.random :as random])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
+; TODO move to integration layer
 (defn to-host
   "Copy ArrayFire array data to host memory, returning a double array.
    Note: n (number of elements) must be provided.
@@ -53,11 +56,11 @@
    Example:
    (to-host my-array 100) ; copies 100 elements from the array"
   [^AFArray arr n]
-  (let [buf (mem/alloc (* n 8)) ; 8 bytes per double
+  (let [buf (mem/alloc (clojure.core/* n 8)) ; 8 bytes per double
         _   (array/get-data-ptr arr buf)
         out (double-array n)]
     (doseq [i (range n)]
-      (aset-double out i (mem/read-double buf (* i 8))))
+      (aset-double out i (mem/read-double buf (clojure.core/* i 8))))
     out))
 
 
@@ -591,6 +594,1228 @@
          dtype (or dtype (array/get-type arr))]
      (create-normal-random shape dtype))))
 
+;;;
+;;; Basic arithmetic functions
+;;;
+
+;;
+;; Helper
+;;
+
+(defn scalar->array
+  "Lift a JVM Number to a 1-element AFArray of the given ArrayFire dtype constant.
+   Used together with batch=true to broadcast a scalar against an array without
+   allocating a full-sized constant array — ArrayFire handles the expansion natively.
+   
+   Parameters:
+   - x: JVM Number to lift
+   - dtype: ArrayFire dtype constant (integer)
+   
+   Returns:
+   AFArray instance containing the scalar value, with the specified dtype.
+   
+   Example:
+   (scalar->array 3.14 (defs/resolve-dtype :f32)) ; creates a 1-element array with value 3.14 as float32"
+  [x dtype]
+  (data/constant (double x) [1] dtype))
+
+;;
+;; Binary operators — shadow clojure.core/+ - * / abs
+;;
+
+(defn +
+  "Element-wise addition of arrays or numbers.
+
+   Array operands require an active `with-arrayfire` region.
+   
+   Parameters:
+   - lhs: left-hand side operand (Number or AFArray)
+   - rhs: right-hand side operand (Number or AFArray)
+   - more: additional operands for variadic addition (optional)
+ 
+   Arities:
+   - ()        → 0 (additive identity)
+   - (x)       → x
+   - (lhs rhs) → cond:
+       both Number    → clojure.core/+
+       both AFArray   → element-wise GPU add (arith/add)
+       AFArray+Number → scalar broadcast via data/constant [1] + batch=true
+       Number+AFArray → scalar broadcast (commutative)
+   - (lhs rhs & more) → left-associative fold
+
+   Returns:
+   The sum of the operands, with AFArray results converted to host data.
+   
+   Example:
+     (+ 1 2) ; => 3
+     (+ arr1 arr2) ; element-wise GPU add of two AFArrays
+     (+ arr1 5) ; adds scalar 5 to each element of arr1 via GPU broadcast"
+  ([] 0)
+  ([x] x)
+  ([lhs rhs]
+   (cond
+     (and (number? lhs) (number? rhs))
+     (clojure.core/+ lhs rhs)
+
+     (and (instance? AFArray lhs) (instance? AFArray rhs))
+     (do (assert-within-arrayfire! "+")
+         (arith/add lhs rhs))
+
+     (instance? AFArray lhs)
+     (do (assert-within-arrayfire! "+")
+         (arith/add lhs (scalar->array rhs (array/get-type lhs)) true))
+
+     :else ; rhs is AFArray
+     (do (assert-within-arrayfire! "+")
+         (arith/add (scalar->array lhs (array/get-type rhs)) rhs true))))
+  ([lhs rhs & more]
+   (reduce + (+ lhs rhs) more)))
+
+(defn -
+  "Element-wise subtraction of arrays or numbers.
+
+   Array operands require an active `with-arrayfire` region.
+
+   Parameters:
+   - lhs: left-hand side operand (Number or AFArray)
+   - rhs: right-hand side operand (Number or AFArray)
+   - more: additional operands for variadic subtraction (optional)
+
+   Arities:
+   - (x)       → negate: Number → clojure.core/-, AFArray → element-wise negation
+   - (lhs rhs) → cond:
+       both Number    → clojure.core/-
+       both AFArray   → element-wise GPU sub
+       AFArray-Number → scalar broadcast via 1-element constant + batch=true
+       Number-AFArray → scalar broadcast
+   - (lhs rhs & more) → left-associative fold
+
+   Returns:
+   The difference of the operands, as a Number or AFArray.
+
+   Example:
+   (- 5 3)      ; => 2
+   (- arr 1.0)  ; subtracts 1.0 from each element of arr via GPU broadcast
+   (- arr)      ; negates every element of arr"
+  ([x]
+   (if (instance? AFArray x)
+     (do (assert-within-arrayfire! "-")
+         (arith/mul x (scalar->array -1.0 (array/get-type x)) true))
+     (clojure.core/- x)))
+  ([lhs rhs]
+   (cond
+     (and (number? lhs) (number? rhs))
+     (clojure.core/- lhs rhs)
+
+     (and (instance? AFArray lhs) (instance? AFArray rhs))
+     (do (assert-within-arrayfire! "-")
+         (arith/sub lhs rhs))
+
+     (instance? AFArray lhs)
+     (do (assert-within-arrayfire! "-")
+         (arith/sub lhs (scalar->array rhs (array/get-type lhs)) true))
+
+     :else ; rhs is AFArray
+     (do (assert-within-arrayfire! "-")
+         (arith/sub (scalar->array lhs (array/get-type rhs)) rhs true))))
+  ([lhs rhs & more]
+   (reduce - (- lhs rhs) more)))
+
+(defn *
+  "Element-wise multiplication of arrays or numbers.
+
+   Array operands require an active `with-arrayfire` region.
+
+   Parameters:
+   - lhs: left-hand side operand (Number or AFArray)
+   - rhs: right-hand side operand (Number or AFArray)
+   - more: additional operands for variadic multiplication (optional)
+
+   Arities:
+   - ()        → 1 (multiplicative identity)
+   - (x)       → x
+   - (lhs rhs) → cond:
+       both Number    → clojure.core/*
+       both AFArray   → element-wise GPU mul
+       AFArray*Number → scalar broadcast via 1-element constant + batch=true
+       Number*AFArray → scalar broadcast (commutative)
+   - (lhs rhs & more) → left-associative fold
+
+   Returns:
+   The product of the operands, as a Number or AFArray.
+
+   Example:
+   (* 3 4)      ; => 12
+   (* arr 2.0)  ; multiplies each element of arr by 2.0 via GPU broadcast
+   (* arr1 arr2) ; element-wise GPU multiplication of two AFArrays"
+  ([] 1)
+  ([x] x)
+  ([lhs rhs]
+   (cond
+     (and (number? lhs) (number? rhs))
+     (clojure.core/* lhs rhs)
+
+     (and (instance? AFArray lhs) (instance? AFArray rhs))
+     (do (assert-within-arrayfire! "*")
+         (arith/mul lhs rhs))
+
+     (instance? AFArray lhs)
+     (do (assert-within-arrayfire! "*")
+         (arith/mul lhs (scalar->array rhs (array/get-type lhs)) true))
+
+     :else ; rhs is AFArray
+     (do (assert-within-arrayfire! "*")
+         (arith/mul (scalar->array lhs (array/get-type rhs)) rhs true))))
+  ([lhs rhs & more]
+   (reduce * (* lhs rhs) more)))
+
+(defn /
+  "Element-wise division of arrays or numbers.
+
+   Array operands require an active `with-arrayfire` region.
+
+   Parameters:
+   - lhs: left-hand side operand / numerator (Number or AFArray)
+   - rhs: right-hand side operand / denominator (Number or AFArray)
+   - more: additional operands for variadic division (optional)
+
+   Arities:
+   - (x)       → reciprocal: Number → (clojure.core// 1 x),
+                              AFArray → 1.0 divided element-wise by x via broadcast
+   - (lhs rhs) → cond:
+       both Number    → clojure.core//
+       both AFArray   → element-wise GPU div
+       AFArray/Number → scalar broadcast via 1-element constant + batch=true
+       Number/AFArray → scalar broadcast
+   - (lhs rhs & more) → left-associative fold
+
+   Returns:
+   The quotient of the operands, as a Number or AFArray.
+
+   Example:
+   (/ 10 2)     ; => 5
+   (/ arr 2.0)  ; divides each element of arr by 2.0 via GPU broadcast
+   (/ arr)      ; element-wise reciprocal 1/x for each element"
+  ([x]
+   (if (instance? AFArray x)
+     (do (assert-within-arrayfire! "/")
+         (arith/div (scalar->array 1.0 (array/get-type x)) x true))
+     (clojure.core// 1 x)))
+  ([lhs rhs]
+   (cond
+     (and (number? lhs) (number? rhs))
+     (clojure.core// lhs rhs)
+
+     (and (instance? AFArray lhs) (instance? AFArray rhs))
+     (do (assert-within-arrayfire! "/")
+         (arith/div lhs rhs))
+
+     (instance? AFArray lhs)
+     (do (assert-within-arrayfire! "/")
+         (arith/div lhs (scalar->array rhs (array/get-type lhs)) true))
+
+     :else ; rhs is AFArray
+     (do (assert-within-arrayfire! "/")
+         (arith/div (scalar->array lhs (array/get-type rhs)) rhs true))))
+  ([lhs rhs & more]
+   (reduce / (/ lhs rhs) more)))
+
+(defn abs
+  "Absolute value of each element.
+   For complex arrays returns the element-wise magnitude sqrt(re² + im²).
+   Falls through to clojure.core/abs for plain numbers.
+
+   Supported types: f32, f64, c32, c64, s32, s64, u32, u64, s16, u16, u8, b8
+
+   Parameters:
+   - x: input value (Number or AFArray)
+
+   Returns:
+   For AFArray: AFArray with the element-wise absolute value. Requires an active `with-arrayfire` region.
+   For Number: the absolute value as a Number.
+
+   Example:
+   (abs -5)      ; => 5
+   (abs arr)     ; element-wise |x| across all array elements"
+  [x]
+  (if (instance? AFArray x)
+    (do (assert-within-arrayfire! "abs")
+        (arith/abs x))
+    (clojure.core/abs x)))
+
+(defn neg
+  "Negate every element of an AFArray (equivalent to `(- arr)`).
+
+   Supported types: f32, f64, c32, c64, s32, s64, u32, u64, s16, u16, u8, b8
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with every element negated. Requires an active `with-arrayfire` region.
+
+   Example:
+   (neg arr)  ; negates every element: [1.0 -2.0 3.0] → [-1.0 2.0 -3.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "neg")
+  (arith/mul a (scalar->array -1.0 (array/get-type a)) true))
+
+;;
+;; Modulo and remainder — fall through to clojure.core for plain numbers
+;;
+
+(defn mod
+  "Element-wise modulo (floored division remainder).
+   Falls through to clojure.core/mod for plain numbers.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
+   Parameters:
+   - lhs: dividend (Number or AFArray)
+   - rhs: divisor  (Number or AFArray)
+
+   Returns:
+   Element-wise lhs mod rhs, as a Number or AFArray.
+   Supports scalar broadcasting when one operand is a Number.
+   Requires an active `with-arrayfire` region when any operand is an AFArray.
+
+   Example:
+   (mod 10 3)    ; => 1
+   (mod arr 3.0) ; element-wise modulo by 3.0 via GPU broadcast"
+  [lhs rhs]
+  (cond
+    (and (number? lhs) (number? rhs))
+    (clojure.core/mod lhs rhs)
+
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "mod")
+        (arith/mod lhs rhs))
+
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "mod")
+        (arith/mod lhs (scalar->array rhs (array/get-type lhs)) true))
+
+    :else ; rhs is AFArray
+    (do (assert-within-arrayfire! "mod")
+        (arith/mod (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+(defn rem
+  "Element-wise remainder (truncated division).
+   Falls through to clojure.core/rem for plain numbers.
+
+   Unlike `mod` (which uses floored division), `rem` uses truncated division —
+   the result has the same sign as the dividend.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
+   Parameters:
+   - lhs: dividend (Number or AFArray)
+   - rhs: divisor  (Number or AFArray)
+
+   Returns:
+   Element-wise remainder of lhs divided by rhs, as a Number or AFArray.
+   Supports scalar broadcasting when one operand is a Number.
+   Requires an active `with-arrayfire` region when any operand is an AFArray.
+
+   Example:
+   (rem 10 3)    ; => 1
+   (rem arr 3.0) ; element-wise remainder by 3.0 via GPU broadcast"
+  [lhs rhs]
+  (cond
+    (and (number? lhs) (number? rhs))
+    (clojure.core/rem lhs rhs)
+
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "rem")
+        (arith/rem lhs rhs))
+
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "rem")
+        (arith/rem lhs (scalar->array rhs (array/get-type lhs)) true))
+
+    :else ; rhs is AFArray
+    (do (assert-within-arrayfire! "rem")
+        (arith/rem (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+;;
+;; Power and roots — named as in clojure.math
+;;
+
+(defn pow
+  "Raise each element of lhs to the power rhs (element-wise).
+   Falls through to clojure.math/pow for plain numbers.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - lhs: base (Number or AFArray)
+   - rhs: exponent (Number or AFArray)
+
+   Returns:
+   Element-wise lhs^rhs, as a Number or AFArray.
+   Supports scalar broadcasting when one operand is a Number.
+   Requires an active `with-arrayfire` region when any operand is an AFArray.
+
+   Example:
+   (pow 2.0 3.0) ; => 8.0
+   (pow arr 2.0) ; squares each element of arr via GPU broadcast"
+  [lhs rhs]
+  (cond
+    (and (number? lhs) (number? rhs))
+    (clojure.math/pow lhs rhs)
+
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "pow")
+        (arith/pow lhs rhs))
+
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "pow")
+        (arith/pow lhs (scalar->array rhs (array/get-type lhs)) true))
+
+    :else ; rhs is AFArray
+    (do (assert-within-arrayfire! "pow")
+        (arith/pow (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+(defn sqrt
+  "Element-wise square root of each array element.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise sqrt(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (sqrt (create-array [4.0 9.0 16.0] [3])) ; => [2.0 3.0 4.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "sqrt")
+  (arith/sqrt a))
+
+(defn cbrt
+  "Element-wise cube root of each array element.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise x^(1/3). Requires an active `with-arrayfire` region.
+
+   Example:
+   (cbrt (create-array [8.0 27.0] [2])) ; => [2.0 3.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "cbrt")
+  (arith/cbrt a))
+
+(defn rsqrt
+  "Element-wise reciprocal square root: 1 / sqrt(x).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise 1/sqrt(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (rsqrt (create-array [4.0 16.0] [2])) ; => [0.5 0.25]"
+  [^AFArray a]
+  (assert-within-arrayfire! "rsqrt")
+  (arith/rsqrt a))
+
+(defn pow2
+  "Element-wise 2^x for each array element.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise 2^x. Requires an active `with-arrayfire` region.
+
+   Example:
+   (pow2 (create-array [0.0 1.0 2.0 3.0] [4])) ; => [1.0 2.0 4.0 8.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "pow2")
+  (arith/pow2 a))
+
+;;
+;; Exponential and logarithm — named as in clojure.math
+;;
+
+(defn exp
+  "Element-wise natural exponential e^x.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise e^x. Requires an active `with-arrayfire` region.
+
+   Example:
+   (exp (create-array [0.0 1.0 2.0] [3])) ; => [1.0 e e²]"
+  [^AFArray a]
+  (assert-within-arrayfire! "exp")
+  (arith/exp a))
+
+(defn expm1
+  "Element-wise exp(x) - 1, numerically stable for small x.
+
+   Prefer `expm1` over `(- (exp x) 1)` when x is close to zero to avoid
+   catastrophic cancellation.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise exp(x) - 1. Requires an active `with-arrayfire` region.
+
+   Example:
+   (expm1 (create-array [0.0 1.0] [2])) ; => [0.0 (e - 1)]"
+  [^AFArray a]
+  (assert-within-arrayfire! "expm1")
+  (arith/expm1 a))
+
+(defn log
+  "Element-wise natural logarithm ln(x).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise ln(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (log (create-array [1.0 Math/E] [2])) ; => [0.0 1.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "log")
+  (arith/log a))
+
+(defn log2
+  "Element-wise base-2 logarithm log₂(x).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise log₂(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (log2 (create-array [1.0 2.0 4.0 8.0] [4])) ; => [0.0 1.0 2.0 3.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "log2")
+  (arith/log2 a))
+
+(defn log10
+  "Element-wise base-10 logarithm log₁₀(x).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise log₁₀(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (log10 (create-array [1.0 10.0 100.0] [3])) ; => [0.0 1.0 2.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "log10")
+  (arith/log10 a))
+
+(defn log1p
+  "Element-wise log(1 + x), numerically stable for small x.
+
+   Prefer `log1p` over `(log (+ 1 x))` when x is close to zero to avoid
+   catastrophic cancellation.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise log(1 + x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (log1p (create-array [0.0 1.0] [2])) ; => [0.0 ln(2)]"
+  [^AFArray a]
+  (assert-within-arrayfire! "log1p")
+  (arith/log1p a))
+
+;;
+;; Rounding — named as in clojure.core
+;;
+
+(defn floor
+  "Element-wise floor: largest integer ≤ x.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise floor(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (floor (create-array [1.7 -1.7 2.0] [3])) ; => [1.0 -2.0 2.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "floor")
+  (arith/floor a))
+
+(defn ceil
+  "Element-wise ceiling: smallest integer ≥ x.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise ceil(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (ceil (create-array [1.2 -1.2 2.0] [3])) ; => [2.0 -1.0 2.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "ceil")
+  (arith/ceil a))
+
+(defn round
+  "Element-wise rounding to the nearest integer (round half away from zero).
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise round(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (round (create-array [1.4 1.5 -1.5] [3])) ; => [1.0 2.0 -2.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "round")
+  (arith/round a))
+
+(defn trunc
+  "Element-wise truncation toward zero (drop the fractional part).
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise trunc(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (trunc (create-array [1.7 -1.7] [2])) ; => [1.0 -1.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "trunc")
+  (arith/trunc a))
+
+(defn sign
+  "Element-wise sign function: returns -1 for negatives, +1 for positives, 0 for zero.
+
+   Note: ArrayFire's af_sign returns 1 for negative values and 0 otherwise
+   (i.e. it is the sign bit, not the mathematical signum). This wrapper
+   re-exports the integration layer's `sign` function as-is.
+
+   Supported types: f32, f64, s32, s64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise sign values. Requires an active `with-arrayfire` region.
+
+   Example:
+   (sign (create-array [-3.0 0.0 5.0] [3])) ; => [1 0 0] (sign bit convention)"
+  [^AFArray a]
+  (assert-within-arrayfire! "sign")
+  (arith/sign a))
+
+;;
+;; Trigonometry — named as in clojure.math
+;;
+
+(defn sin
+  "Element-wise sine of each element (input in radians).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray), values interpreted as radians
+
+   Returns:
+   AFArray with element-wise sin(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (sin (create-array [0.0 (/ Math/PI 2)] [2])) ; => [0.0 1.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "sin")
+  (arith/sin a))
+
+(defn cos
+  "Element-wise cosine of each element (input in radians).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray), values interpreted as radians
+
+   Returns:
+   AFArray with element-wise cos(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (cos (create-array [0.0 Math/PI] [2])) ; => [1.0 -1.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "cos")
+  (arith/cos a))
+
+(defn tan
+  "Element-wise tangent of each element (input in radians).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray), values interpreted as radians
+
+   Returns:
+   AFArray with element-wise tan(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (tan (create-array [0.0 (/ Math/PI 4)] [2])) ; => [0.0 1.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "tan")
+  (arith/tan a))
+
+(defn asin
+  "Element-wise arcsine; result in [-π/2, π/2] (radians).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray), values in [-1, 1]
+
+   Returns:
+   AFArray with element-wise arcsin(x) in radians. Requires an active `with-arrayfire` region.
+
+   Example:
+   (asin (create-array [0.0 1.0] [2])) ; => [0.0 π/2]"
+  [^AFArray a]
+  (assert-within-arrayfire! "asin")
+  (arith/asin a))
+
+(defn acos
+  "Element-wise arccosine; result in [0, π] (radians).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray), values in [-1, 1]
+
+   Returns:
+   AFArray with element-wise arccos(x) in radians. Requires an active `with-arrayfire` region.
+
+   Example:
+   (acos (create-array [1.0 0.0 -1.0] [3])) ; => [0.0 π/2 π]"
+  [^AFArray a]
+  (assert-within-arrayfire! "acos")
+  (arith/acos a))
+
+(defn atan
+  "Element-wise arctangent; result in (-π/2, π/2) (radians).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise arctan(x) in radians. Requires an active `with-arrayfire` region.
+
+   Example:
+   (atan (create-array [0.0 1.0] [2])) ; => [0.0 π/4]"
+  [^AFArray a]
+  (assert-within-arrayfire! "atan")
+  (arith/atan a))
+
+(defn atan2
+  "Element-wise two-argument arctangent atan(y/x).
+   Uses the signs of both arguments to determine the correct quadrant.
+   Result is in (-π, π] (radians).
+
+   Supports scalar broadcasting: one operand may be a Number.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - y: y-coordinate (Number or AFArray)
+   - x: x-coordinate (Number or AFArray)
+
+   Returns:
+   AFArray with element-wise atan2(y, x) in radians.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (atan2 (create-array [1.0 1.0 -1.0] [3])
+          (create-array [1.0 -1.0 1.0] [3])) ; => [π/4 3π/4 -π/4]"
+  [y x]
+  (cond
+    (and (instance? AFArray y) (instance? AFArray x))
+    (do (assert-within-arrayfire! "atan2")
+        (arith/atan2 y x))
+
+    (instance? AFArray y)
+    (do (assert-within-arrayfire! "atan2")
+        (arith/atan2 y (scalar->array x (array/get-type y)) true))
+
+    :else ; x is AFArray
+    (do (assert-within-arrayfire! "atan2")
+        (arith/atan2 (scalar->array y (array/get-type x)) x true))))
+
+;;
+;; Hyperbolic functions — named as in clojure.math
+;;
+
+(defn sinh
+  "Element-wise hyperbolic sine: (e^x - e^-x) / 2.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise sinh(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (sinh (create-array [0.0 1.0] [2])) ; => [0.0 ~1.1752]"
+  [^AFArray a]
+  (assert-within-arrayfire! "sinh")
+  (arith/sinh a))
+
+(defn cosh
+  "Element-wise hyperbolic cosine: (e^x + e^-x) / 2.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise cosh(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (cosh (create-array [0.0 1.0] [2])) ; => [1.0 ~1.5431]"
+  [^AFArray a]
+  (assert-within-arrayfire! "cosh")
+  (arith/cosh a))
+
+(defn tanh
+  "Element-wise hyperbolic tangent: sinh(x) / cosh(x).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise tanh(x) in (-1, 1). Requires an active `with-arrayfire` region.
+
+   Example:
+   (tanh (create-array [0.0 1.0] [2])) ; => [0.0 ~0.7616]"
+  [^AFArray a]
+  (assert-within-arrayfire! "tanh")
+  (arith/tanh a))
+
+(defn asinh
+  "Element-wise inverse hyperbolic sine: log(x + sqrt(x² + 1)).
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise asinh(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (asinh (create-array [0.0 1.0] [2])) ; => [0.0 ~0.8814]"
+  [^AFArray a]
+  (assert-within-arrayfire! "asinh")
+  (arith/asinh a))
+
+(defn acosh
+  "Element-wise inverse hyperbolic cosine: log(x + sqrt(x² - 1)); x ≥ 1.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray), values must be ≥ 1
+
+   Returns:
+   AFArray with element-wise acosh(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (acosh (create-array [1.0 2.0] [2])) ; => [0.0 ~1.3170]"
+  [^AFArray a]
+  (assert-within-arrayfire! "acosh")
+  (arith/acosh a))
+
+(defn atanh
+  "Element-wise inverse hyperbolic tangent: 0.5 * log((1 + x) / (1 - x)); |x| < 1.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray), values must be in (-1, 1)
+
+   Returns:
+   AFArray with element-wise atanh(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (atanh (create-array [0.0 0.5] [2])) ; => [0.0 ~0.5493]"
+  [^AFArray a]
+  (assert-within-arrayfire! "atanh")
+  (arith/atanh a))
+
+;;
+;; Special / activation functions
+;;
+
+(defn sigmoid
+  "Element-wise sigmoid activation function: 1 / (1 + exp(-x)).
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise sigmoid(x) in (0, 1). Requires an active `with-arrayfire` region.
+
+   Example:
+   (sigmoid (create-array [0.0 1.0 -1.0] [3])) ; => [0.5 ~0.731 ~0.269]"
+  [^AFArray a]
+  (assert-within-arrayfire! "sigmoid")
+  (arith/sigmoid a))
+
+(defn erf
+  "Element-wise Gauss error function: (2/√π) ∫₀ˣ exp(-t²) dt.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise erf(x) in (-1, 1). Requires an active `with-arrayfire` region.
+
+   Example:
+   (erf (create-array [0.0 1.0] [2])) ; => [0.0 ~0.8427]"
+  [^AFArray a]
+  (assert-within-arrayfire! "erf")
+  (arith/erf a))
+
+(defn erfc
+  "Element-wise complementary error function: 1 - erf(x).
+
+   Prefer `erfc` over `(- 1 (erf x))` for large x to avoid catastrophic cancellation.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise erfc(x) in (0, 2). Requires an active `with-arrayfire` region.
+
+   Example:
+   (erfc (create-array [0.0 1.0] [2])) ; => [1.0 ~0.1573]"
+  [^AFArray a]
+  (assert-within-arrayfire! "erfc")
+  (arith/erfc a))
+
+(defn tgamma
+  "Element-wise gamma function Γ(x).
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise Γ(x). Requires an active `with-arrayfire` region.
+
+   Example:
+   (tgamma (create-array [1.0 2.0 3.0 4.0] [4])) ; => [1.0 1.0 2.0 6.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "tgamma")
+  (arith/tgamma a))
+
+(defn lgamma
+  "Element-wise log-gamma function: log|Γ(x)|.
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise log|Γ(x)|. Requires an active `with-arrayfire` region.
+
+   Example:
+   (lgamma (create-array [1.0 2.0 3.0] [3])) ; => [0.0 0.0 ~0.693]"
+  [^AFArray a]
+  (assert-within-arrayfire! "lgamma")
+  (arith/lgamma a))
+
+(defn factorial
+  "Element-wise factorial: n! = Γ(n + 1).
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray), values should be non-negative integers
+
+   Returns:
+   AFArray with element-wise n!. Requires an active `with-arrayfire` region.
+
+   Example:
+   (factorial (create-array [0.0 1.0 2.0 3.0 4.0] [5])) ; => [1.0 1.0 2.0 6.0 24.0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "factorial")
+  (arith/factorial a))
+
+(defn arg
+  "Element-wise complex argument (phase angle) of a complex array.
+   For a complex value z = re + im·i, returns atan2(im, re).
+
+   Supported types: c32, c64
+   Output types: f32 (from c32), f64 (from c64)
+
+   Parameters:
+   - a: input complex array (AFArray)
+
+   Returns:
+   AFArray with element-wise phase angle in (-π, π] (radians).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (arg complex-arr) ; returns the phase angle of each complex element"
+  [^AFArray a]
+  (assert-within-arrayfire! "arg")
+  (arith/arg a))
+
+;;
+;; Predicates
+;;
+
+(defn nan?
+  "Element-wise NaN check. Returns a boolean array (b8) indicating NaN elements.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray of b8 (boolean) where true (1) marks NaN positions.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (nan? (create-array [1.0 Double/NaN 3.0] [3])) ; => [0 1 0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "nan?")
+  (arith/nan? a))
+
+(defn inf?
+  "Element-wise infinity check. Returns a boolean array (b8) indicating infinite elements.
+
+   Supported types: f32, f64, c32, c64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray of b8 (boolean) where true (1) marks infinite positions.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (inf? (create-array [1.0 Double/POSITIVE_INFINITY 3.0] [3])) ; => [0 1 0]"
+  [^AFArray a]
+  (assert-within-arrayfire! "inf?")
+  (arith/inf? a))
+
+;;
+;; Element-wise comparisons — distinct names to avoid shadowing =, <, > etc.
+;;
+
+(defn eq
+  "Element-wise equality test. Returns a boolean array (b8).
+   Supports scalar broadcasting when one operand is a Number.
+
+   Supported types: f32, f64, c32, c64, s32, u32, u8, s64, u64, s16, u16, b8
+
+   Parameters:
+   - lhs: left-hand side (Number or AFArray)
+   - rhs: right-hand side (Number or AFArray)
+
+   Returns:
+   AFArray of b8 where true (1) marks positions where lhs = rhs.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (eq arr 2.0) ; marks positions where each element equals 2.0"
+  [lhs rhs]
+  (cond
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "eq") (arith/eq lhs rhs))
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "eq") (arith/eq lhs (scalar->array rhs (array/get-type lhs)) true))
+    :else
+    (do (assert-within-arrayfire! "eq") (arith/eq (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+(defn ne
+  "Element-wise inequality test. Returns a boolean array (b8).
+   Supports scalar broadcasting when one operand is a Number.
+
+   Supported types: f32, f64, c32, c64, s32, u32, u8, s64, u64, s16, u16, b8
+
+   Parameters:
+   - lhs: left-hand side (Number or AFArray)
+   - rhs: right-hand side (Number or AFArray)
+
+   Returns:
+   AFArray of b8 where true (1) marks positions where lhs ≠ rhs.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (ne arr 0.0) ; marks positions where each element is not zero"
+  [lhs rhs]
+  (cond
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "ne") (arith/neq lhs rhs))
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "ne") (arith/neq lhs (scalar->array rhs (array/get-type lhs)) true))
+    :else
+    (do (assert-within-arrayfire! "ne") (arith/neq (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+(defn lt
+  "Element-wise less-than test. Returns a boolean array (b8).
+   Supports scalar broadcasting when one operand is a Number.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
+   Parameters:
+   - lhs: left-hand side (Number or AFArray)
+   - rhs: right-hand side (Number or AFArray)
+
+   Returns:
+   AFArray of b8 where true (1) marks positions where lhs < rhs.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (lt arr 0.0) ; marks negative elements"
+  [lhs rhs]
+  (cond
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "lt") (arith/lt lhs rhs))
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "lt") (arith/lt lhs (scalar->array rhs (array/get-type lhs)) true))
+    :else
+    (do (assert-within-arrayfire! "lt") (arith/lt (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+(defn le
+  "Element-wise less-than-or-equal test. Returns a boolean array (b8).
+   Supports scalar broadcasting when one operand is a Number.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
+   Parameters:
+   - lhs: left-hand side (Number or AFArray)
+   - rhs: right-hand side (Number or AFArray)
+
+   Returns:
+   AFArray of b8 where true (1) marks positions where lhs ≤ rhs.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (le arr 1.0) ; marks elements that are at most 1.0"
+  [lhs rhs]
+  (cond
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "le") (arith/le lhs rhs))
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "le") (arith/le lhs (scalar->array rhs (array/get-type lhs)) true))
+    :else
+    (do (assert-within-arrayfire! "le") (arith/le (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+(defn gt
+  "Element-wise greater-than test. Returns a boolean array (b8).
+   Supports scalar broadcasting when one operand is a Number.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
+   Parameters:
+   - lhs: left-hand side (Number or AFArray)
+   - rhs: right-hand side (Number or AFArray)
+
+   Returns:
+   AFArray of b8 where true (1) marks positions where lhs > rhs.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (gt arr 0.0) ; marks positive elements"
+  [lhs rhs]
+  (cond
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "gt") (arith/gt lhs rhs))
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "gt") (arith/gt lhs (scalar->array rhs (array/get-type lhs)) true))
+    :else
+    (do (assert-within-arrayfire! "gt") (arith/gt (scalar->array lhs (array/get-type rhs)) rhs true))))
+
+(defn ge
+  "Element-wise greater-than-or-equal test. Returns a boolean array (b8).
+   Supports scalar broadcasting when one operand is a Number.
+
+   Supported types: f32, f64, s32, u32, u8, s64, u64, s16, u16
+
+   Parameters:
+   - lhs: left-hand side (Number or AFArray)
+   - rhs: right-hand side (Number or AFArray)
+
+   Returns:
+   AFArray of b8 where true (1) marks positions where lhs ≥ rhs.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (ge arr 0.0) ; marks non-negative elements"
+  [lhs rhs]
+  (cond
+    (and (instance? AFArray lhs) (instance? AFArray rhs))
+    (do (assert-within-arrayfire! "ge") (arith/ge lhs rhs))
+    (instance? AFArray lhs)
+    (do (assert-within-arrayfire! "ge") (arith/ge lhs (scalar->array rhs (array/get-type lhs)) true))
+    :else
+    (do (assert-within-arrayfire! "ge") (arith/ge (scalar->array lhs (array/get-type rhs)) rhs true))))
 
 (comment
   ;; with-arrayfire REPL experiments
