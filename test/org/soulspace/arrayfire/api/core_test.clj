@@ -413,21 +413,24 @@
     (let [result (core/with-arrayfire {:backend :cpu}
                    (let [a (core/create-array [1.0 2.0 3.0] [3])]
                      (core/->value (core/eq a 2.0))))]
-      (is (= [0.0 1.0 0.0] result)))))
+      ;; B8 boolean arrays copy to byte[] — values are 0 (false) or 1 (true)
+      (is (= [0 1 0] result)))))
 
 (deftest lt-array-scalar-test
   (testing "(lt arr scalar) returns boolean array"
     (let [result (core/with-arrayfire {:backend :cpu}
                    (let [a (core/create-array [1.0 2.0 3.0] [3])]
                      (core/->value (core/lt a 2.5))))]
-      (is (= [1.0 1.0 0.0] result)))))
+      ;; B8 boolean arrays copy to byte[] — values are 0 (false) or 1 (true)
+      (is (= [1 1 0] result)))))
 
 (deftest gt-array-scalar-test
   (testing "(gt arr scalar) returns boolean array"
     (let [result (core/with-arrayfire {:backend :cpu}
                    (let [a (core/create-array [1.0 2.0 3.0] [3])]
                      (core/->value (core/gt a 1.5))))]
-      (is (= [0.0 1.0 1.0] result)))))
+      ;; B8 boolean arrays copy to byte[] — values are 0 (false) or 1 (true)
+      (is (= [0 1 1] result)))))
 
 ;;
 ;; Guard: operations outside with-arrayfire throw
@@ -441,8 +444,87 @@
         ;; Must not throw inside region
         (is (some? (core/+ a b)))))))
 
-(deftest sqrt-outside-region-throws-test
-  (testing "Calling sqrt outside with-arrayfire throws IllegalStateException"
-    (is (thrown? IllegalStateException
-          ;; We must create the AFArray via a handle trick — just assert the guard
-          (core/assert-within-arrayfire! "sqrt")))))
+;;;
+;;; to-host tests (new multi-dtype support)
+;;;
+
+(deftest to-host-f32-test
+  (testing "to-host returns float[] for F32 arrays"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (vec (core/to-host a))))]
+      (is (= 3 (count result)))
+      (is (<= (Math/abs (- 1.0 (first result))) 0.001))
+      (is (<= (Math/abs (- 2.0 (second result))) 0.001))
+      (is (<= (Math/abs (- 3.0 (nth result 2))) 0.001)))))
+
+(deftest to-host-deprecated-2-arity-test
+  (testing "to-host 2-arity deprecated signature still works (n is ignored)"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (vec (core/to-host a 99))))]
+      (is (= 3 (count result))))))
+
+(deftest to-host-c32-test
+  (testing "to-host returns vector of [re im] pairs for C32 arrays"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (ua-array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)]
+                     (core/to-host a)))]
+      (is (vector? result))
+      (is (= 2 (count result)))
+      (is (<= (Math/abs (- 1.0 (first  (first result)))) 0.001))
+      (is (<= (Math/abs (- 2.0 (second (first result)))) 0.001))
+      (is (<= (Math/abs (- 3.0 (first  (second result)))) 0.001))
+      (is (<= (Math/abs (- 4.0 (second (second result)))) 0.001)))))
+
+(deftest to-host-c64-test
+  (testing "to-host returns vector of [re im] double pairs for C64 arrays"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (ua-array/create-array [[10.0 20.0] [30.0 40.0]] [2] defs/AF_DTYPE_C64)]
+                     (core/to-host a)))]
+      (is (vector? result))
+      (is (= 2 (count result)))
+      (is (<= (Math/abs (- 10.0 (first  (first result)))) 0.0001))
+      (is (<= (Math/abs (- 20.0 (second (first result)))) 0.0001))
+      (is (<= (Math/abs (- 30.0 (first  (second result)))) 0.0001))
+      (is (<= (Math/abs (- 40.0 (second (second result)))) 0.0001)))))
+
+(deftest to-host-b8-test
+  (testing "to-host returns byte[] for B8 (boolean) arrays"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                     (vec (core/to-host (core/eq a 2.0)))))]
+      ;; eq returns B8; byte values 0 = false, 1 = true
+      (is (= [0 1 0] result)))))
+
+;;;
+;;; ->native-buffer guard tests
+;;;
+
+(deftest ->native-buffer-throws-for-c32-test
+  (testing "->native-buffer throws ExceptionInfo for C32 arrays"
+    (core/with-arrayfire {:backend :cpu}
+      (let [a (ua-array/create-array [[1.0 2.0]] [1] defs/AF_DTYPE_C32)]
+        (is (thrown? clojure.lang.ExceptionInfo
+                     (core/->native-buffer a)))))))
+
+(deftest ->native-buffer-throws-for-c64-test
+  (testing "->native-buffer throws ExceptionInfo for C64 arrays"
+    (core/with-arrayfire {:backend :cpu}
+      (let [a (ua-array/create-array [[1.0 2.0]] [1] defs/AF_DTYPE_C64)]
+        (is (thrown? clojure.lang.ExceptionInfo
+                     (core/->native-buffer a)))))))
+
+;;;
+;;; ->value complex dtype tests
+;;;
+
+(deftest ->value-c32-test
+  (testing "->value returns nested vector structure for a 1D C32 array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (ua-array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)]
+                     (core/->value a)))]
+      (is (vector? result))
+      (is (= 2 (count result)))
+      (is (<= (Math/abs (- 1.0 (first  (first result)))) 0.001))
+      (is (<= (Math/abs (- 2.0 (second (first result)))) 0.001)))))

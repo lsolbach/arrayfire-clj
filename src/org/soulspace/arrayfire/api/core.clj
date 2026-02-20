@@ -27,7 +27,6 @@
    preventing memory leaks and ensuring safe interoperability with Clojure code."
   (:refer-clojure :exclude [+ - * / abs mod rem])
   (:require [clojure.math]
-            [coffi.mem :as mem]
             [tech.v3.resource :refer [stack-resource-context]]
             [org.soulspace.arrayfire.integration.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
@@ -41,27 +40,37 @@
             [org.soulspace.arrayfire.integration.unified-api.random :as random])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
-; TODO move to integration layer
 (defn to-host
-  "Copy ArrayFire array data to host memory, returning a double array.
-   Note: n (number of elements) must be provided.
+  "Copy ArrayFire array data to host memory, returning a type-appropriate JVM object.
+
+   The return type is determined by the AFArray's element dtype:
+   - F32  → float[]
+   - F64  → double[]
+   - B8   → byte[]  (0 = false, 1 = true)
+   - S32  → int[]
+   - U32  → long[]  (widened; unsigned 0–4294967295 range preserved)
+   - U8   → short[] (widened; unsigned 0–255 range preserved)
+   - S64  → long[]
+   - U64  → long[]  (bits preserved; use Long/toUnsignedString for display)
+   - S16  → short[]
+   - U16  → int[]   (widened; unsigned 0–65535 range preserved)
+   - C32  → persistent vector of [real imag] float pairs
+   - C64  → persistent vector of [real imag] double pairs
 
    Parameters:
    - arr: AFArray instance
-   - n: number of elements to copy
+   - n:   (deprecated, ignored) previously required element count
 
    Returns:
-   Java double array containing the data.
+   JVM host representation appropriate for the array's element dtype.
 
    Example:
-   (to-host my-array 100) ; copies 100 elements from the array"
-  [^AFArray arr n]
-  (let [buf (mem/alloc (clojure.core/* n 8)) ; 8 bytes per double
-        _   (array/get-data-ptr arr buf)
-        out (double-array n)]
-    (doseq [i (range n)]
-      (aset-double out i (mem/read-double buf (clojure.core/* i 8))))
-    out))
+   (to-host my-f32-array)   ; => float[]
+   (to-host my-c32-array)   ; => [[1.0 2.0] [3.0 4.0] …]"
+  ([^AFArray arr]
+   (array/array->host arr))
+  ([^AFArray arr _n]
+   (array/array->host arr)))
 
 
 ;;;
@@ -192,26 +201,38 @@
     result))
 
 (defn ->native-buffer
-  "Default converter for AFArray → host data.
-   Converts an AFArray to a dtype-next native buffer, preserving dtype.
+  "Default converter for AFArray → dtype-next native buffer, preserving dtype.
    Uses the integration layer to query array metadata from ArrayFire.
+
+   Not supported for complex types (C32, C64): dtype-next has no complex
+   dtype. Use `->value` or `to-host` instead for complex arrays.
 
    Parameters:
    - arr: AFArray instance
 
    Returns:
-   dtype-next native buffer with the array data."
+   dtype-next native buffer with the array data.
+
+   Throws:
+   ExceptionInfo when arr has a complex element type (C32 or C64)."
   [^AFArray arr]
-  (let [n        (array/get-elements arr)
-        af-type  (array/get-type arr)
-        dtype-kw (get dtype-next/af-dtype->dtype-next-kw af-type :float64)]
-    (dtype-next/to-native-buffer arr dtype-kw n)))
+  (let [n       (array/get-elements arr)
+        af-type (array/get-type arr)
+        complex-types #{(defs/resolve-dtype :c32) (defs/resolve-dtype :c64)}]
+    (when (complex-types af-type)
+      (throw (ex-info (str "->native-buffer does not support complex arrays (C32/C64). "
+                           "Use ->value or to-host instead.")
+                      {:af-type af-type})))
+    (let [dtype-kw (get dtype-next/af-dtype->dtype-next-kw af-type :float64)]
+      (dtype-next/to-native-buffer arr dtype-kw n))))
 
 (defn ->value
   "Converter that converts an AFArray to a Clojure scalar or vector based value.
    It uses the effective dimensions of the array (trailing size-1 dims are stripped)
-   to reshape the flat column-major data into nested vectors.
-   Uses the to-host function, which always returns double data.
+   to reshape the element sequence into nested vectors.
+
+   For real/integer/boolean dtypes, elements are JVM primitives (boxed to numbers).
+   For complex dtypes (C32/C64), each element is a [real imag] vector.
 
    Parameters:
    - arr: AFArray instance
@@ -220,12 +241,11 @@
    Clojure scalar or vector based value with the array data.
    1D arrays return a flat vector, 2D a vector of column vectors, etc."
   [^AFArray arr]
-  (let [n    (array/get-elements arr)
-        ;; ArrayFire always returns 4 dims, padding unused dims with 1.
+  (let [;; ArrayFire always returns 4 dims, padding unused dims with 1.
         ;; Strip trailing 1s to get the effective logical shape.
         all-dims       (array/get-dims arr)
         effective-dims (vec (reverse (drop-while #(= 1 %) (reverse all-dims))))
-        data           (to-host arr n)]
+        data           (array/array->host arr)]
     (loop [d  effective-dims
            ds data]
       (if (empty? d)
@@ -409,7 +429,14 @@
    (create-array values dims :f64))
   ([values dims dtype]
    (assert-within-arrayfire! "create-array")
-   (array/create-array (double-array (flatten values)) dims (defs/dtype-kw->const dtype))))
+   ;; `flatten` only works on sequential? Clojure collections; Java arrays (e.g. double[])
+   ;; are seqable but NOT sequential?, so `flatten` silently returns [].
+   ;; Use `seq` instead for arrays, `flatten` only for nested Clojure sequences.
+   (let [double-arr (cond
+                      (sequential? values) (double-array (flatten values))
+                      (seqable? values)    (double-array (seq values))
+                      :else                values)]
+     (array/create-array double-arr dims (defs/dtype-kw->const dtype)))))
 
 (defn create-constant
   "Create an ArrayFire array filled with a constant value.
@@ -1851,10 +1878,11 @@
     (with-arrayfire
       (vec (to-host (create-array [42.0] [1]) 1))))
 
-  ;; Vector Converter (Clojure vector output instead of dtype-next native buffer)
-  ;; array/create-array returns an AFArray, which result-convert picks up.
-  (with-arrayfire {:backend    :cpu
-                   :converter-fn vec-converter}
+  ;; Clojure vector output instead of dtype-next native buffer.
+  ;; ArrayFire is column-major, so a [2 3] array returns 3 column vectors of length 2.
+  ;; => [[1.0 2.0] [3.0 4.0] [5.0 6.0]]
+  (with-arrayfire {:backend      :cpu
+                   :converter-fn ->value}
     (let [data (double-array [1.0 2.0 3.0 4.0 5.0 6.0])]
       (create-array data [2 3] :f64)))
 
