@@ -40,17 +40,25 @@ The FFI Layer provides only the FFI bindings to the ArrayFire API, as true to
 the original ArrayFire API structure as possible, so that the ArrayFire
 API documentation can be used for this layer. This structure makes it easy to
 keep arrayfire-clj in sync with future ArrayFire versions.
+The FFI layer also loads the ArrayFire libraries and provides definitions for
+the ArrayFire constants.
 
 ### Integration Layer
 The integration layer provides the integration of ArrayFire in the Clojure and
 JVM ecosystem: 
-* loading and initialization of the ArrayFire libraries
+* initialization of the ArrayFire libraries
 * resource management of the created ArrayFire resources (e.g. array memory
   and handles) in Clojure on the JVM.
+  * all Arena based memory allocations must be done in the integration layer
+  * all memory allocations must use the Arena bound to
+    org.soulspace.arrayfire.integration.base.memory/*af-arena* by default,
+    if an Arena is bound
 * error and exception handling
 * dtype-next integration
 
 The structure of the integration layer follows the ArrayFire Unified API.
+The name of the functions follow Clojure semantic conventions, e.g. for
+predicates and functions with side effects.
 The functions in this layer should enforce their invariants.
 
 ### Clojure API Layer
@@ -59,5 +67,6 @@ features. The functions in this layer use Clojure conventions with regards
 to naming, keywords, argument order and return values. Spec is used in the
 Clojure API layer to define semantic validation and enforce the API
 contracts.
+
 All API functions assert they are called within an arrayfire region
 
