@@ -296,6 +296,20 @@
 
 ;; Rounding functions
 
+(defcfn af-abs
+  "Compute the absolute value of each element in the array.
+
+   For real types returns |x|. For complex types returns the magnitude sqrt(re²+im²).
+
+   Parameters:
+   - out: Output pointer for result array
+   - in:  Input array
+
+   Type Support: f32, f64, c32, c64, s32, s64, u32, u64, s16, u16, u8, b8, f16
+
+   Returns: AF_SUCCESS or error code"
+  "af_abs" [::mem/pointer ::mem/pointer] ::mem/int)
+
 (defcfn af-trunc
   "Truncate array elements towards zero.
    
