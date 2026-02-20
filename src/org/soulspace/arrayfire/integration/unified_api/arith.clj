@@ -1,7 +1,7 @@
 (ns org.soulspace.arrayfire.integration.unified-api.arith
   "Integration of the ArrayFire Arithmetic related FFI bindings with the error
    handling and resource management on the JVM."
-  (:refer-clojure :exclude [cast not zero? mod rem and or])
+  (:refer-clojure :exclude [abs cast not zero? mod rem and or])
   (:require [org.soulspace.arrayfire.ffi.c-api.unary :as unary]
             [org.soulspace.arrayfire.ffi.c-api.binary :as binary]
             [org.soulspace.arrayfire.ffi.c-api.cast :as ffi-cast]
@@ -17,6 +17,22 @@
 ;;
 ;; Rounding and Truncation
 ;;
+(defn abs
+  "Compute the absolute value of each element in the array.
+   For complex arrays this returns the element-wise magnitude (sqrt(re² + im²)).
+
+   Supported types: f32, f64, c32, c64, s32, s64, u32, u64, s16, u16, u8, b8
+
+   Parameters:
+   - a: Input array (AFArray)
+
+   Returns:
+   An AFArray with the absolute value (or magnitude for complex) of each element."
+  [^AFArray a]
+  (let [out (res/native-af-array-pointer)]
+    (check! (unary/af-abs out (res/af-handle a)) "af-abs")
+    (res/af-array-new (res/deref-af-array out))))
+
 (defn trunc
   "Truncate the values of an array to their integer parts.
 
