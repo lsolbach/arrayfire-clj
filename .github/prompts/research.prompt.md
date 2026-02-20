@@ -1,1 +1,2 @@
 Research the following topic thoroughly using all available resources. Please define all abbreviations at least once before using it.
+Document your research in a markdown document in the 'dev/research' folder.

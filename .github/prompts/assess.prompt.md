@@ -1,1 +1,1 @@
-Thoroughly assess the #codebase to answer the following question:
+Thoroughly assess the #codebase to answer the given question and document your assessment in a markdown document in the 'dev/assessments' folder.
