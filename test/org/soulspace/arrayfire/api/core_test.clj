@@ -6,7 +6,7 @@
             [org.soulspace.arrayfire.ffi.base.definitions :as defs]
             [org.soulspace.arrayfire.integration.base.memory :as bmem]
             [org.soulspace.arrayfire.integration.base.resource :as res]
-            [org.soulspace.arrayfire.integration.unified-api.array :as ua-array]
+            [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.device :as device])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
@@ -39,13 +39,13 @@
     (let [result (core/with-arrayfire
                    (let [a (core/create-array [1.0 2.0 3.0 4.0] [2 2])]
                      ;; create-array returns AFArray; to-host accepts AFArray
-                     (vec (core/to-host a 4))))]
+                     (vec (array/array->host a))))]
       (is (= [1.0 2.0 3.0 4.0] result)))))
 
 (deftest with-arrayfire-auto-convert-test
   (testing "AFArray result is auto-converted to native buffer"
     (let [result (core/with-arrayfire
-                   (ua-array/create-array
+                   (array/create-array
                      (bmem/double-array->segment (double-array [10.0 20.0 30.0]))
                      [3]
                      defs/AF_DTYPE_F64))]
@@ -55,7 +55,7 @@
 (deftest with-arrayfire-deep-convert-map-test
   (testing "Map containing AFArray is deep-converted"
     (let [result (core/with-arrayfire
-                   {:data (ua-array/create-array
+                   {:data (array/create-array
                             (bmem/double-array->segment (double-array [1.0 2.0]))
                             [2]
                             defs/AF_DTYPE_F64)
@@ -67,7 +67,7 @@
 (deftest with-arrayfire-deep-convert-vector-test
   (testing "Vector containing AFArray is deep-converted"
     (let [result (core/with-arrayfire
-                   [(ua-array/create-array
+                   [(array/create-array
                       (bmem/double-array->segment (double-array [1.0]))
                       [1]
                       defs/AF_DTYPE_F64)
@@ -98,13 +98,13 @@
     (let [result (core/with-arrayfire
                    (core/with-arrayfire
                      ;; create-array returns AFArray; to-host accepts AFArray
-                     (vec (core/to-host (core/create-array [42.0] [1]) 1))))]
+                     (vec (array/array->host (core/create-array [42.0] [1])))))]
       (is (= [42.0] result)))))
 
 (deftest with-arrayfire-converter-fn-test
   (testing "Custom converter-fn is used"
     (let [result (core/with-arrayfire {:converter-fn (fn [_arr] :converted)}
-                   (ua-array/create-array
+                   (array/create-array
                      (bmem/double-array->segment (double-array [1.0]))
                      [1]
                      defs/AF_DTYPE_F64))]
@@ -452,7 +452,7 @@
   (testing "to-host returns float[] for F32 arrays"
     (let [result (core/with-arrayfire {:backend :cpu}
                    (let [a (core/create-array [1.0 2.0 3.0] [3])]
-                     (vec (core/to-host a))))]
+                     (vec (array/array->host a))))]
       (is (= 3 (count result)))
       (is (<= (Math/abs (- 1.0 (first result))) 0.001))
       (is (<= (Math/abs (- 2.0 (second result))) 0.001))
@@ -468,8 +468,8 @@
 (deftest to-host-c32-test
   (testing "to-host returns vector of [re im] pairs for C32 arrays"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (ua-array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)]
-                     (core/to-host a)))]
+                   (let [a (array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)]
+                     (array/array->host a)))]
       (is (vector? result))
       (is (= 2 (count result)))
       (is (<= (Math/abs (- 1.0 (first  (first result)))) 0.001))
@@ -480,8 +480,8 @@
 (deftest to-host-c64-test
   (testing "to-host returns vector of [re im] double pairs for C64 arrays"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (ua-array/create-array [[10.0 20.0] [30.0 40.0]] [2] defs/AF_DTYPE_C64)]
-                     (core/to-host a)))]
+                   (let [a (array/create-array [[10.0 20.0] [30.0 40.0]] [2] defs/AF_DTYPE_C64)]
+                     (array/array->host a)))]
       (is (vector? result))
       (is (= 2 (count result)))
       (is (<= (Math/abs (- 10.0 (first  (first result)))) 0.0001))
@@ -493,7 +493,7 @@
   (testing "to-host returns byte[] for B8 (boolean) arrays"
     (let [result (core/with-arrayfire {:backend :cpu}
                    (let [a (core/create-array [1.0 2.0 3.0] [3])]
-                     (vec (core/to-host (core/eq a 2.0)))))]
+                     (vec (array/array->host (core/eq a 2.0)))))]
       ;; eq returns B8; byte values 0 = false, 1 = true
       (is (= [0 1 0] result)))))
 
@@ -504,14 +504,14 @@
 (deftest ->native-buffer-throws-for-c32-test
   (testing "->native-buffer throws ExceptionInfo for C32 arrays"
     (core/with-arrayfire {:backend :cpu}
-      (let [a (ua-array/create-array [[1.0 2.0]] [1] defs/AF_DTYPE_C32)]
+      (let [a (array/create-array [[1.0 2.0]] [1] defs/AF_DTYPE_C32)]
         (is (thrown? clojure.lang.ExceptionInfo
                      (core/->native-buffer a)))))))
 
 (deftest ->native-buffer-throws-for-c64-test
   (testing "->native-buffer throws ExceptionInfo for C64 arrays"
     (core/with-arrayfire {:backend :cpu}
-      (let [a (ua-array/create-array [[1.0 2.0]] [1] defs/AF_DTYPE_C64)]
+      (let [a (array/create-array [[1.0 2.0]] [1] defs/AF_DTYPE_C64)]
         (is (thrown? clojure.lang.ExceptionInfo
                      (core/->native-buffer a)))))))
 
@@ -522,7 +522,7 @@
 (deftest ->value-c32-test
   (testing "->value returns nested vector structure for a 1D C32 array"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (ua-array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)]
+                   (let [a (array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)]
                      (core/->value a)))]
       (is (vector? result))
       (is (= 2 (count result)))

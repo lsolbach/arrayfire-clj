@@ -40,39 +40,6 @@
             [org.soulspace.arrayfire.integration.unified-api.random :as random])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
-(defn to-host
-  "Copy ArrayFire array data to host memory, returning a type-appropriate JVM object.
-
-   The return type is determined by the AFArray's element dtype:
-   - F32  → float[]
-   - F64  → double[]
-   - B8   → byte[]  (0 = false, 1 = true)
-   - S32  → int[]
-   - U32  → long[]  (widened; unsigned 0–4294967295 range preserved)
-   - U8   → short[] (widened; unsigned 0–255 range preserved)
-   - S64  → long[]
-   - U64  → long[]  (bits preserved; use Long/toUnsignedString for display)
-   - S16  → short[]
-   - U16  → int[]   (widened; unsigned 0–65535 range preserved)
-   - C32  → persistent vector of [real imag] float pairs
-   - C64  → persistent vector of [real imag] double pairs
-
-   Parameters:
-   - arr: AFArray instance
-   - n:   (deprecated, ignored) previously required element count
-
-   Returns:
-   JVM host representation appropriate for the array's element dtype.
-
-   Example:
-   (to-host my-f32-array)   ; => float[]
-   (to-host my-c32-array)   ; => [[1.0 2.0] [3.0 4.0] …]"
-  ([^AFArray arr]
-   (array/array->host arr))
-  ([^AFArray arr _n]
-   (array/array->host arr)))
-
-
 ;;;
 ;;; Resource management and initialization
 ;;;
