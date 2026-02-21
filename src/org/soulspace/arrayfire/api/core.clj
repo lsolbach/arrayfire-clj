@@ -343,6 +343,19 @@
 ;;; Helper functions
 ;;;
 (defn normalize-dims
+  "Normalize dimensions input to a vector of integers. Accepts nil (scalar), number (1D), or sequential (vector of dims).
+
+   Parameters:
+   - dims: nil, number, or sequential specifying dimensions
+
+   Returns:
+   Vector of dimensions. Examples:
+   - nil → []
+   - 5 → [5]
+   - [2 3] → [2 3]
+
+   Throws:
+   ExceptionInfo if dims is not nil, a number, or sequential."
   [dims]
   (cond
     (nil? dims) []                       ;; scalar
@@ -392,6 +405,7 @@
 
    Example:
    (create-array [1.0 2.0 3.0 4.0] [2 2]) ; creates a 2x2 array"
+  ^AFArray
   ([values dims]
    (create-array values dims :f64))
   ([values dims dtype]
@@ -559,6 +573,7 @@
 
    Example:
    (create-zeros-like my-array) ; creates a new array with the same shape and dtype as my-array"
+  ^AFArray
   ([arr]
    (create-zeros-like arr nil))
   ([arr dtype]
@@ -580,6 +595,7 @@
 
    Example:
    (create-normal-random-like my-array) ; creates a new array with the same shape and dtype as my-array"
+  ^AFArray
   ([arr]
    (create-normal-random-like arr nil))
   ([arr dtype]
@@ -596,6 +612,7 @@
 ;; Helper
 ;;
 
+; TODO improve datatype handling
 (defn scalar->array
   "Lift a JVM Number to a 1-element AFArray of the given ArrayFire dtype constant.
    Used together with batch=true to broadcast a scalar against an array without
@@ -610,6 +627,7 @@
    
    Example:
    (scalar->array 3.14 (defs/resolve-dtype :f32)) ; creates a 1-element array with value 3.14 as float32"
+  ^AFArray
   [x dtype]
   (data/constant (double x) [1] dtype))
 
@@ -850,6 +868,7 @@
 
    Example:
    (neg arr)  ; negates every element: [1.0 -2.0 3.0] → [-1.0 2.0 -3.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "neg")
   (arith/mul a (scalar->array -1.0 (array/get-type a)) true))
@@ -876,6 +895,7 @@
    Example:
    (mod 10 3)    ; => 1
    (mod arr 3.0) ; element-wise modulo by 3.0 via GPU broadcast"
+  ^AFArray
   [lhs rhs]
   (cond
     (and (number? lhs) (number? rhs))
@@ -914,6 +934,7 @@
    Example:
    (rem 10 3)    ; => 1
    (rem arr 3.0) ; element-wise remainder by 3.0 via GPU broadcast"
+  ^AFArray
   [lhs rhs]
   (cond
     (and (number? lhs) (number? rhs))
@@ -953,6 +974,7 @@
    Example:
    (pow 2.0 3.0) ; => 8.0
    (pow arr 2.0) ; squares each element of arr via GPU broadcast"
+  ^AFArray
   [lhs rhs]
   (cond
     (and (number? lhs) (number? rhs))
@@ -983,6 +1005,7 @@
 
    Example:
    (sqrt (create-array [4.0 9.0 16.0] [3])) ; => [2.0 3.0 4.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sqrt")
   (arith/sqrt a))
@@ -1000,6 +1023,7 @@
 
    Example:
    (cbrt (create-array [8.0 27.0] [2])) ; => [2.0 3.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "cbrt")
   (arith/cbrt a))
@@ -1017,6 +1041,7 @@
 
    Example:
    (rsqrt (create-array [4.0 16.0] [2])) ; => [0.5 0.25]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "rsqrt")
   (arith/rsqrt a))
@@ -1034,6 +1059,7 @@
 
    Example:
    (pow2 (create-array [0.0 1.0 2.0 3.0] [4])) ; => [1.0 2.0 4.0 8.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "pow2")
   (arith/pow2 a))
@@ -1055,6 +1081,7 @@
 
    Example:
    (exp (create-array [0.0 1.0 2.0] [3])) ; => [1.0 e e²]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "exp")
   (arith/exp a))
@@ -1075,6 +1102,7 @@
 
    Example:
    (expm1 (create-array [0.0 1.0] [2])) ; => [0.0 (e - 1)]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "expm1")
   (arith/expm1 a))
@@ -1092,6 +1120,7 @@
 
    Example:
    (log (create-array [1.0 Math/E] [2])) ; => [0.0 1.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log")
   (arith/log a))
@@ -1109,6 +1138,7 @@
 
    Example:
    (log2 (create-array [1.0 2.0 4.0 8.0] [4])) ; => [0.0 1.0 2.0 3.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log2")
   (arith/log2 a))
@@ -1126,6 +1156,7 @@
 
    Example:
    (log10 (create-array [1.0 10.0 100.0] [3])) ; => [0.0 1.0 2.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log10")
   (arith/log10 a))
@@ -1146,6 +1177,7 @@
 
    Example:
    (log1p (create-array [0.0 1.0] [2])) ; => [0.0 ln(2)]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log1p")
   (arith/log1p a))
@@ -1167,6 +1199,7 @@
 
    Example:
    (floor (create-array [1.7 -1.7 2.0] [3])) ; => [1.0 -2.0 2.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "floor")
   (arith/floor a))
@@ -1184,6 +1217,7 @@
 
    Example:
    (ceil (create-array [1.2 -1.2 2.0] [3])) ; => [2.0 -1.0 2.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "ceil")
   (arith/ceil a))
@@ -1201,6 +1235,7 @@
 
    Example:
    (round (create-array [1.4 1.5 -1.5] [3])) ; => [1.0 2.0 -2.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "round")
   (arith/round a))
@@ -1218,16 +1253,16 @@
 
    Example:
    (trunc (create-array [1.7 -1.7] [2])) ; => [1.0 -1.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "trunc")
   (arith/trunc a))
 
-(defn sign
-  "Element-wise sign function: returns -1 for negatives, +1 for positives, 0 for zero.
+(defn sign-bit
+  "Element-wise sign function: returns 1 for negatives, 0 otherwise.
 
-   Note: ArrayFire's af_sign returns 1 for negative values and 0 otherwise
-   (i.e. it is the sign bit, not the mathematical signum). This wrapper
-   re-exports the integration layer's `sign` function as-is.
+   Note: ArrayFire's af_sign returns 1 for negative values and 0 for non-negative values
+   (i.e. it is the sign bit, not the mathematical signum).
 
    Supported types: f32, f64, s32, s64
 
@@ -1238,9 +1273,10 @@
    AFArray with element-wise sign values. Requires an active `with-arrayfire` region.
 
    Example:
-   (sign (create-array [-3.0 0.0 5.0] [3])) ; => [1 0 0] (sign bit convention)"
+   (sign-bit (create-array [-3.0 0.0 5.0] [3])) ; => [1 0 0] (sign bit convention)"
+  ^AFArray
   [^AFArray a]
-  (assert-within-arrayfire! "sign")
+  (assert-within-arrayfire! "sign-bit")
   (arith/sign a))
 
 ;;
@@ -1260,6 +1296,7 @@
 
    Example:
    (sin (create-array [0.0 (/ Math/PI 2)] [2])) ; => [0.0 1.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sin")
   (arith/sin a))
@@ -1277,6 +1314,7 @@
 
    Example:
    (cos (create-array [0.0 Math/PI] [2])) ; => [1.0 -1.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "cos")
   (arith/cos a))
@@ -1294,6 +1332,7 @@
 
    Example:
    (tan (create-array [0.0 (/ Math/PI 4)] [2])) ; => [0.0 1.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "tan")
   (arith/tan a))
@@ -1311,6 +1350,7 @@
 
    Example:
    (asin (create-array [0.0 1.0] [2])) ; => [0.0 π/2]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "asin")
   (arith/asin a))
@@ -1328,6 +1368,7 @@
 
    Example:
    (acos (create-array [1.0 0.0 -1.0] [3])) ; => [0.0 π/2 π]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "acos")
   (arith/acos a))
@@ -1345,6 +1386,7 @@
 
    Example:
    (atan (create-array [0.0 1.0] [2])) ; => [0.0 π/4]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "atan")
   (arith/atan a))
@@ -1369,19 +1411,18 @@
    Example:
    (atan2 (create-array [1.0 1.0 -1.0] [3])
           (create-array [1.0 -1.0 1.0] [3])) ; => [π/4 3π/4 -π/4]"
+  ^AFArray
   [y x]
+  (assert-within-arrayfire! "atan2")
   (cond
     (and (instance? AFArray y) (instance? AFArray x))
-    (do (assert-within-arrayfire! "atan2")
-        (arith/atan2 y x))
+    (arith/atan2 y x)
 
     (instance? AFArray y)
-    (do (assert-within-arrayfire! "atan2")
-        (arith/atan2 y (scalar->array x (array/get-type y)) true))
+    (arith/atan2 y (scalar->array x (array/get-type y)) true)
 
     :else ; x is AFArray
-    (do (assert-within-arrayfire! "atan2")
-        (arith/atan2 (scalar->array y (array/get-type x)) x true))))
+    (arith/atan2 (scalar->array y (array/get-type x)) x true)))
 
 ;;
 ;; Hyperbolic functions — named as in clojure.math
@@ -1400,6 +1441,7 @@
 
    Example:
    (sinh (create-array [0.0 1.0] [2])) ; => [0.0 ~1.1752]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sinh")
   (arith/sinh a))
@@ -1417,6 +1459,7 @@
 
    Example:
    (cosh (create-array [0.0 1.0] [2])) ; => [1.0 ~1.5431]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "cosh")
   (arith/cosh a))
@@ -1434,6 +1477,7 @@
 
    Example:
    (tanh (create-array [0.0 1.0] [2])) ; => [0.0 ~0.7616]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "tanh")
   (arith/tanh a))
@@ -1451,6 +1495,7 @@
 
    Example:
    (asinh (create-array [0.0 1.0] [2])) ; => [0.0 ~0.8814]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "asinh")
   (arith/asinh a))
@@ -1468,6 +1513,7 @@
 
    Example:
    (acosh (create-array [1.0 2.0] [2])) ; => [0.0 ~1.3170]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "acosh")
   (arith/acosh a))
@@ -1485,6 +1531,7 @@
 
    Example:
    (atanh (create-array [0.0 0.5] [2])) ; => [0.0 ~0.5493]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "atanh")
   (arith/atanh a))
@@ -1506,6 +1553,7 @@
 
    Example:
    (sigmoid (create-array [0.0 1.0 -1.0] [3])) ; => [0.5 ~0.731 ~0.269]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sigmoid")
   (arith/sigmoid a))
@@ -1523,6 +1571,7 @@
 
    Example:
    (erf (create-array [0.0 1.0] [2])) ; => [0.0 ~0.8427]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "erf")
   (arith/erf a))
@@ -1542,6 +1591,7 @@
 
    Example:
    (erfc (create-array [0.0 1.0] [2])) ; => [1.0 ~0.1573]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "erfc")
   (arith/erfc a))
@@ -1559,6 +1609,7 @@
 
    Example:
    (tgamma (create-array [1.0 2.0 3.0 4.0] [4])) ; => [1.0 1.0 2.0 6.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "tgamma")
   (arith/tgamma a))
@@ -1593,6 +1644,7 @@
 
    Example:
    (factorial (create-array [0.0 1.0 2.0 3.0 4.0] [5])) ; => [1.0 1.0 2.0 6.0 24.0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "factorial")
   (arith/factorial a))
@@ -1613,6 +1665,7 @@
 
    Example:
    (arg complex-arr) ; returns the phase angle of each complex element"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "arg")
   (arith/arg a))
@@ -1635,6 +1688,7 @@
 
    Example:
    (nan? (create-array [1.0 Double/NaN 3.0] [3])) ; => [0 1 0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "nan?")
   (arith/nan? a))
@@ -1653,6 +1707,7 @@
 
    Example:
    (inf? (create-array [1.0 Double/POSITIVE_INFINITY 3.0] [3])) ; => [0 1 0]"
+  ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "inf?")
   (arith/inf? a))
@@ -1677,14 +1732,16 @@
 
    Example:
    (eq arr 2.0) ; marks positions where each element equals 2.0"
+  ^AFArray
   [lhs rhs]
+  (assert-within-arrayfire! "eq")
   (cond
     (and (instance? AFArray lhs) (instance? AFArray rhs))
-    (do (assert-within-arrayfire! "eq") (arith/eq lhs rhs))
+    (arith/eq lhs rhs)
     (instance? AFArray lhs)
-    (do (assert-within-arrayfire! "eq") (arith/eq lhs (scalar->array rhs (array/get-type lhs)) true))
+    (arith/eq lhs (scalar->array rhs (array/get-type lhs)) true)
     :else
-    (do (assert-within-arrayfire! "eq") (arith/eq (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/eq (scalar->array lhs (array/get-type rhs)) rhs true)))
 
 (defn ne
   "Element-wise inequality test. Returns a boolean array (b8).
@@ -1702,14 +1759,16 @@
 
    Example:
    (ne arr 0.0) ; marks positions where each element is not zero"
+  ^AFArray
   [lhs rhs]
+  (assert-within-arrayfire! "ne")
   (cond
     (and (instance? AFArray lhs) (instance? AFArray rhs))
-    (do (assert-within-arrayfire! "ne") (arith/neq lhs rhs))
+    (arith/neq lhs rhs)
     (instance? AFArray lhs)
-    (do (assert-within-arrayfire! "ne") (arith/neq lhs (scalar->array rhs (array/get-type lhs)) true))
+    (arith/neq lhs (scalar->array rhs (array/get-type lhs)) true)
     :else
-    (do (assert-within-arrayfire! "ne") (arith/neq (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/neq (scalar->array lhs (array/get-type rhs)) rhs true)))
 
 (defn lt
   "Element-wise less-than test. Returns a boolean array (b8).
@@ -1727,14 +1786,16 @@
 
    Example:
    (lt arr 0.0) ; marks negative elements"
+  ^AFArray
   [lhs rhs]
+  (assert-within-arrayfire! "lt")
   (cond
     (and (instance? AFArray lhs) (instance? AFArray rhs))
-    (do (assert-within-arrayfire! "lt") (arith/lt lhs rhs))
+    (arith/lt lhs rhs)
     (instance? AFArray lhs)
-    (do (assert-within-arrayfire! "lt") (arith/lt lhs (scalar->array rhs (array/get-type lhs)) true))
+    (arith/lt lhs (scalar->array rhs (array/get-type lhs)) true)
     :else
-    (do (assert-within-arrayfire! "lt") (arith/lt (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/lt (scalar->array lhs (array/get-type rhs)) rhs true)))
 
 (defn le
   "Element-wise less-than-or-equal test. Returns a boolean array (b8).
@@ -1752,14 +1813,16 @@
 
    Example:
    (le arr 1.0) ; marks elements that are at most 1.0"
+  ^AFArray
   [lhs rhs]
+  (assert-within-arrayfire! "le")
   (cond
     (and (instance? AFArray lhs) (instance? AFArray rhs))
-    (do (assert-within-arrayfire! "le") (arith/le lhs rhs))
+    (arith/le lhs rhs)
     (instance? AFArray lhs)
-    (do (assert-within-arrayfire! "le") (arith/le lhs (scalar->array rhs (array/get-type lhs)) true))
+    (arith/le lhs (scalar->array rhs (array/get-type lhs)) true)
     :else
-    (do (assert-within-arrayfire! "le") (arith/le (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/le (scalar->array lhs (array/get-type rhs)) rhs true)))
 
 (defn gt
   "Element-wise greater-than test. Returns a boolean array (b8).
@@ -1777,14 +1840,16 @@
 
    Example:
    (gt arr 0.0) ; marks positive elements"
+  ^AFArray
   [lhs rhs]
+  (assert-within-arrayfire! "gt")
   (cond
     (and (instance? AFArray lhs) (instance? AFArray rhs))
-    (do (assert-within-arrayfire! "gt") (arith/gt lhs rhs))
+    (arith/gt lhs rhs)
     (instance? AFArray lhs)
-    (do (assert-within-arrayfire! "gt") (arith/gt lhs (scalar->array rhs (array/get-type lhs)) true))
+    (arith/gt lhs (scalar->array rhs (array/get-type lhs)) true)
     :else
-    (do (assert-within-arrayfire! "gt") (arith/gt (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/gt (scalar->array lhs (array/get-type rhs)) rhs true)))
 
 (defn ge
   "Element-wise greater-than-or-equal test. Returns a boolean array (b8).
@@ -1802,14 +1867,16 @@
 
    Example:
    (ge arr 0.0) ; marks non-negative elements"
+  ^AFArray
   [lhs rhs]
+  (assert-within-arrayfire! "ge")
   (cond
     (and (instance? AFArray lhs) (instance? AFArray rhs))
-    (do (assert-within-arrayfire! "ge") (arith/ge lhs rhs))
+    (arith/ge lhs rhs)
     (instance? AFArray lhs)
-    (do (assert-within-arrayfire! "ge") (arith/ge lhs (scalar->array rhs (array/get-type lhs)) true))
+    (arith/ge lhs (scalar->array rhs (array/get-type lhs)) true)
     :else
-    (do (assert-within-arrayfire! "ge") (arith/ge (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/ge (scalar->array lhs (array/get-type rhs)) rhs true)))
 
 (comment
   ;; with-arrayfire REPL experiments
