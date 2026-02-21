@@ -37,6 +37,7 @@
             [org.soulspace.arrayfire.integration.unified-api.memory :as uamem]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
+            [org.soulspace.arrayfire.integration.unified-api.index :as index]
             [org.soulspace.arrayfire.integration.unified-api.random :as random])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
@@ -614,20 +615,6 @@
 ;;;
 ;;; Array information and metadata
 ;;;
-(defn shape
-  "Get the shape (dimensions) of an AFArray as a vector of integers.
-
-   Parameters:
-   - arr: AFArray instance
-
-   Returns:
-   Vector of dimensions. For example, a 2x3 array returns [2 3]. A scalar returns [].
-
-   Example:
-   (shape my-array) ; => [2 3]"
-  [^AFArray arr]
-  (vec (array/get-dims arr)))
-
 (defn datatype
   "Get the dtype of an AFArray as a keyword.
 
@@ -640,7 +627,70 @@
    Example:
    (datatype my-array) ; => :f64"
   [^AFArray arr]
-  (get defs/af-dtype->dtype-kw (array/get-type arr) :unknown))
+  (assert-within-arrayfire! "datatype")
+  (get defs/dtype-const->kw (array/get-type arr) :unknown))
+
+(defn shape
+  "Get the shape (dimensions) of an AFArray as a vector of integers.
+
+   Parameters:
+   - arr: AFArray instance
+
+   Returns:
+   Vector of dimensions. For example, a 2x3 array returns [2 3]. A scalar returns [].
+
+   Example:
+   (shape my-array) ; => [2 3]"
+  [^AFArray arr]
+  (assert-within-arrayfire! "shape")
+  (vec (array/get-dims arr)))
+
+(defn effective-shape
+  "Get the effective shape of an AFArray by stripping trailing size-1 dimensions.
+
+   Parameters:
+   - arr: AFArray instance
+
+   Returns:
+   Vector of effective dimensions. For example, an array with dims [2 3 1 1] returns [2 3]. A scalar returns [].
+
+   Example:
+   (effective-shape my-array) ; => [2 3] for an array with dims [2 3 1 1]"
+  [^AFArray arr]
+  (assert-within-arrayfire! "effective-shape")
+  (let [all-dims (array/get-dims arr)]
+    (vec (reverse (drop-while #(= 1 %) (reverse all-dims))))))
+
+(defn size
+  "Get the size of an AFArray along a specific dimension.
+
+   Parameters:
+   - arr: AFArray instance
+   - dim: integer dimension index (0-based)
+
+   Returns:
+   Integer size along the specified dimension. For example, for a 2x3 array, (size arr 0) returns 2 and (size arr 1) returns 3.
+
+   Example:
+   (size my-array 0) ; => size along the first dimension"
+  [^AFArray arr dim]
+  (assert-within-arrayfire! "size")
+  (nth (array/get-dims arr) dim ))
+
+(defn rank
+  "Get the rank (number of dimensions) of an AFArray.
+
+   Parameters:
+   - arr: AFArray instance
+
+   Returns:
+   Integer representing the rank. For example, a 2D array returns 2, a scalar returns 0.
+
+   Example:
+   (rank my-array) ; => 2 for a 2D array"
+  [^AFArray arr]
+  (assert-within-arrayfire! "rank")
+  (array/get-numdims arr))
 
 (defn element-count
   "Get the total number of elements in an AFArray.
@@ -654,11 +704,64 @@
    Example:
    (element-count my-array) ; => 6 for a 2x3 array"
   [^AFArray arr]
+  (assert-within-arrayfire! "element-count")
   (array/get-elements arr))
 
 ;;;
 ;;; Array indexing and manipulation
-;;; 
+;;;
+#_(defn slice
+  "Slice an AFArray using start, end, and step parameters for each dimension.
+
+   Parameters:
+   - arr: AFArray instance
+   - slices: vector of slice specifications, one per dimension. Each slice is a map with keys :start, :end, and optional :step.
+
+   Returns:
+   AFArray instance containing the sliced subset of the original array.
+
+   Example:
+   (slice my-array [{:start 0 :end 2} {:start 1 :end 3}]) ; slices rows 0-1 and columns 1-2"
+  ^AFArray
+  [^AFArray arr slices]
+  (assert-within-arrayfire! "slice")
+  ; TODO convert slice specifications to the format expected by the integration layer
+  (index/slice arr slices))
+
+
+#_(defn index
+  "Index into an AFArray using a vector of indices for each dimension.
+
+   Parameters:
+   - arr: AFArray instance
+   - indices: vector of index vectors, one per dimension. Each index vector can contain integers or ranges.
+
+   Returns:
+   AFArray instance containing the indexed subset of the original array.
+
+   Example:
+   (index my-array [[0 1] [1 2]]) ; indexes rows 0 and 1, columns 1 and 2"
+  ^AFArray
+  [^AFArray arr indices]
+  (assert-within-arrayfire! "index")
+  (array/index arr indices))
+
+#_(defn reshape
+  "Reshape an AFArray to new dimensions.
+
+   Parameters:
+   - arr: AFArray instance
+   - new-dims: vector specifying the new dimensions (e.g. [6] to flatten a 2x3 array)
+
+   Returns:
+   AFArray instance with the same data but reshaped to the new dimensions.
+
+   Example:
+   (reshape my-array [6]) ; reshapes a 2x3 array into a 1D array with 6 elements"
+  ^AFArray
+  [^AFArray arr new-dims]
+  (assert-within-arrayfire! "reshape")
+  (array/reshape arr new-dims))
 
 ;;;
 ;;; Basic arithmetic functions
@@ -1020,7 +1123,7 @@
     (arith/pow lhs (scalar->array rhs (array/get-type lhs)) true)
 
     :else ; rhs is AFArray
-    (arith/pow (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/pow (scalar->array lhs (array/get-type rhs)) rhs true)))
 
 (defn sqrt
   "Element-wise square root of each array element.
