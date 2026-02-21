@@ -10,6 +10,7 @@
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)
            (java.lang.foreign Arena MemorySegment)))
 
+
 ;;;
 ;;; ArrayFire Initialization
 ;;;
@@ -695,3 +696,47 @@
         (bmem/c-string->string str-buf))
       (finally
         (.close arena)))))
+
+
+;;;
+;;; Backend/Device Context Management
+;;;
+
+; Atom to track whether ArrayFire has been initialized.
+; Ensures init! is called only once.
+(defonce af-initialized? (atom false))
+
+(defn ensure-af-init!
+  "Ensure that ArrayFire is initialized. Calls init! only on the first invocation.
+   Subsequent calls will be no-op, ensuring efficient initialization."
+  []
+  (when (compare-and-set! af-initialized? false true)
+    (init!)))
+
+(def backend-lock
+  "Lock object for serializing backend/device switching.
+   Public because it is referenced by the `with-arrayfire` macro expansion
+   from other namespaces."
+  (Object.))
+
+(def ^:dynamic *backend-device-stack*
+  "Thread-local stack of backend/device frames pushed by nested `with-arrayfire`
+   regions that switch the backend or device.
+
+   Each frame is a map with keys:
+   - `:backend`  — the ArrayFire backend constant (integer) active in this region
+   - `:device`   — the device index (integer) active in this region
+
+   The top-most (innermost) frame is accessible via `(peek *backend-device-stack*)`.
+   An empty vector means no switching region is currently active.
+
+   This var is public to allow introspection of the current backend/device context
+   from helpers called inside a `with-arrayfire` body.
+
+   Example:
+     (with-arrayfire {:backend :cpu :device 0}
+       (peek *backend-device-stack*))
+     ;; => {:backend 2, :device 0}  (AF_BACKEND_CPU = 2)"
+  [])
+
+
