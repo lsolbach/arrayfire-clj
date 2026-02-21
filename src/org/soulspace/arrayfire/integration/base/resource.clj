@@ -35,7 +35,9 @@
   ^MemorySegment
   ([]
    ;; One pointer-sized slot
-   (.allocate (Arena/ofAuto) ValueLayout/ADDRESS))
+   (if bmem/*af-arena*
+     (.allocate bmem/*af-arena* ValueLayout/ADDRESS)
+     (.allocate (Arena/ofAuto) ValueLayout/ADDRESS)))
   ([^Arena arena]
    ;; One pointer-sized slot
    (.allocate arena ValueLayout/ADDRESS)))
