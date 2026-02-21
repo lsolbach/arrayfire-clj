@@ -41,61 +41,8 @@
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
-;;; Resource management and initialization
-;;;
-(def ^:dynamic *within-arrayfire?*
-  "True when the current thread is executing inside a `with-arrayfire` region.
-   Bound to `true` by the `with-arrayfire` macro; `false` at the root binding.
-
-   Note: Clojure's `binding` conveys dynamic vars to child threads created via
-   `future`, `pmap`, and `agent/send-off`. A `future` spawned inside a
-   `with-arrayfire` body therefore also sees `within-arrayfire?` as `true`.
-   This is correct for `:arena-type :shared` multi-threaded bodies, but be
-   aware of the behaviour when detaching work to unrelated threads.
-
-   Use `within-arrayfire?` (the predicate) to query this value from user or
-   library code — do not read this var directly."
-  false)
-
-(defn within-arrayfire?
-  "Return `true` when called from code executing inside a `with-arrayfire`
-   region; `false` otherwise.
-
-   Reads the thread-local dynamic var `*within-arrayfire?*` that
-   `with-arrayfire` binds to `true` for the duration of the body.
-
-   Intended uses:
-   - Guard API functions to fail fast when called outside a region.
-   - Conditional logic that behaves differently inside vs outside a region.
-   - Instrumentation and debugging.
-
-   Example:
-     (within-arrayfire?)      ;; => false  (no region active)
-
-     (with-arrayfire
-       (within-arrayfire?))   ;; => true"
-  []
-  *within-arrayfire?*)
-
-(defn assert-within-arrayfire!
-  "Throw an `IllegalStateException` when not inside a `with-arrayfire` region.
-   Call this at the top of API functions that require an active region.
-
-   Parameters:
-   - fname: string — the calling function name, used in the error message.
-
-   Example:
-     (defn create-array [values dims]
-       (assert-within-arrayfire! \"create-array\")
-       ...)
-
-   Throws:
-   `java.lang.IllegalStateException` with an informative message."
-  [fname]
-  (when-not (within-arrayfire?)
-    (throw (IllegalStateException.
-            (str fname " must be called within a `with-arrayfire` region.")))))
-
+;;; AFArray conversion
+;;; 
 (defn result-convert
   "Convert AFArray values in the result before they escape the resource context.
    Walks the result structure to find and convert any AFArray instances.
@@ -184,6 +131,62 @@
           (recur rest-dims
                  (mapv #(vec (take size %))
                        (partition-all size ds))))))))
+
+;;;
+;;; Resource management and initialization
+;;;
+(def ^:dynamic *within-arrayfire?*
+  "True when the current thread is executing inside a `with-arrayfire` region.
+   Bound to `true` by the `with-arrayfire` macro; `false` at the root binding.
+
+   Note: Clojure's `binding` conveys dynamic vars to child threads created via
+   `future`, `pmap`, and `agent/send-off`. A `future` spawned inside a
+   `with-arrayfire` body therefore also sees `within-arrayfire?` as `true`.
+   This is correct for `:arena-type :shared` multi-threaded bodies, but be
+   aware of the behaviour when detaching work to unrelated threads.
+
+   Use `within-arrayfire?` (the predicate) to query this value from user or
+   library code — do not read this var directly."
+  false)
+
+(defn within-arrayfire?
+  "Return `true` when called from code executing inside a `with-arrayfire`
+   region; `false` otherwise.
+
+   Reads the thread-local dynamic var `*within-arrayfire?*` that
+   `with-arrayfire` binds to `true` for the duration of the body.
+
+   Intended uses:
+   - Guard API functions to fail fast when called outside a region.
+   - Conditional logic that behaves differently inside vs outside a region.
+   - Instrumentation and debugging.
+
+   Example:
+     (within-arrayfire?)      ;; => false  (no region active)
+
+     (with-arrayfire
+       (within-arrayfire?))   ;; => true"
+  []
+  *within-arrayfire?*)
+
+(defn assert-within-arrayfire!
+  "Throw an `IllegalStateException` when not inside a `with-arrayfire` region.
+   Call this at the top of API functions that require an active region.
+
+   Parameters:
+   - fname: string — the calling function name, used in the error message.
+
+   Example:
+     (defn create-array [values dims]
+       (assert-within-arrayfire! \"create-array\")
+       ...)
+
+   Throws:
+   `java.lang.IllegalStateException` with an informative message."
+  [fname]
+  (when-not (within-arrayfire?)
+    (throw (IllegalStateException.
+            (str fname " must be called within a `with-arrayfire` region.")))))
 
 ;;
 ;; with-arrayfire execution region
@@ -304,6 +307,26 @@
 ;;;
 ;;; Helper functions
 ;;;
+
+; TODO improve datatype handling
+(defn scalar->array
+  "Lift a JVM Number to a 1-element AFArray of the given ArrayFire dtype constant.
+   Used together with batch=true to broadcast a scalar against an array without
+   allocating a full-sized constant array — ArrayFire handles the expansion natively.
+   
+   Parameters:
+   - x: JVM Number to lift
+   - dtype: ArrayFire dtype constant (integer)
+   
+   Returns:
+   AFArray instance containing the scalar value, with the specified dtype.
+   
+   Example:
+   (scalar->array 3.14 (defs/resolve-dtype :f32)) ; creates a 1-element array with value 3.14 as float32"
+  ^AFArray
+  [x dtype]
+  (data/constant (double x) [1] dtype))
+
 (defn normalize-dims
   "Normalize dimensions input to a vector of integers. Accepts nil (scalar), number (1D), or sequential (vector of dims).
 
@@ -589,31 +612,57 @@
      (random-normal shape dtype))))
 
 ;;;
+;;; Array information and metadata
+;;;
+(defn shape
+  "Get the shape (dimensions) of an AFArray as a vector of integers.
+
+   Parameters:
+   - arr: AFArray instance
+
+   Returns:
+   Vector of dimensions. For example, a 2x3 array returns [2 3]. A scalar returns [].
+
+   Example:
+   (shape my-array) ; => [2 3]"
+  [^AFArray arr]
+  (vec (array/get-dims arr)))
+
+(defn datatype
+  "Get the dtype of an AFArray as a keyword.
+
+   Parameters:
+   - arr: AFArray instance
+
+   Returns:
+   Keyword representing the dtype (e.g. :f32, :f64, :s32, etc.).
+
+   Example:
+   (datatype my-array) ; => :f64"
+  [^AFArray arr]
+  (get defs/af-dtype->dtype-kw (array/get-type arr) :unknown))
+
+(defn element-count
+  "Get the total number of elements in an AFArray.
+
+   Parameters:
+   - arr: AFArray instance
+
+   Returns:
+   Integer count of total elements in the array.
+
+   Example:
+   (element-count my-array) ; => 6 for a 2x3 array"
+  [^AFArray arr]
+  (array/get-elements arr))
+
+;;;
+;;; Array indexing and manipulation
+;;; 
+
+;;;
 ;;; Basic arithmetic functions
 ;;;
-
-;;
-;; Helper
-;;
-
-; TODO improve datatype handling
-(defn scalar->array
-  "Lift a JVM Number to a 1-element AFArray of the given ArrayFire dtype constant.
-   Used together with batch=true to broadcast a scalar against an array without
-   allocating a full-sized constant array — ArrayFire handles the expansion natively.
-   
-   Parameters:
-   - x: JVM Number to lift
-   - dtype: ArrayFire dtype constant (integer)
-   
-   Returns:
-   AFArray instance containing the scalar value, with the specified dtype.
-   
-   Example:
-   (scalar->array 3.14 (defs/resolve-dtype :f32)) ; creates a 1-element array with value 3.14 as float32"
-  ^AFArray
-  [x dtype]
-  (data/constant (double x) [1] dtype))
 
 ;;
 ;; Binary operators — shadow clojure.core/+ - * / abs
