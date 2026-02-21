@@ -37,7 +37,7 @@
 (deftest with-arrayfire-basic-test
   (testing "Basic with-arrayfire region with explicit host conversion"
     (let [result (core/with-arrayfire
-                   (let [a (core/create-array [1.0 2.0 3.0 4.0] [2 2])]
+                   (let [a (core/array [1.0 2.0 3.0 4.0] [2 2])]
                      ;; create-array returns AFArray; to-host accepts AFArray
                      (vec (array/array->host a))))]
       (is (= [1.0 2.0 3.0 4.0] result)))))
@@ -98,7 +98,7 @@
     (let [result (core/with-arrayfire
                    (core/with-arrayfire
                      ;; create-array returns AFArray; to-host accepts AFArray
-                     (vec (array/array->host (core/create-array [42.0] [1])))))]
+                     (vec (array/array->host (core/array [42.0] [1])))))]
       (is (= [42.0] result)))))
 
 (deftest with-arrayfire-converter-fn-test
@@ -208,22 +208,22 @@
 (deftest +-array-array-test
   (testing "(+ arr arr) performs element-wise addition"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])
-                         b (core/create-array [10.0 20.0 30.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])
+                         b (core/array [10.0 20.0 30.0] [3])]
                      (core/->value (core/+ a b))))]
       (is (= [11.0 22.0 33.0] result)))))
 
 (deftest +-array-scalar-test
   (testing "(+ arr scalar) broadcasts scalar across array"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (core/->value (core/+ a 10.0))))]
       (is (= [11.0 12.0 13.0] result)))))
 
 (deftest +-scalar-array-test
   (testing "(+ scalar arr) broadcasts scalar (commutative)"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (core/->value (core/+ 10.0 a))))]
       (is (= [11.0 12.0 13.0] result)))))
 
@@ -243,22 +243,22 @@
 (deftest --array-array-test
   (testing "(- arr arr) performs element-wise subtraction"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [10.0 20.0 30.0] [3])
-                         b (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [10.0 20.0 30.0] [3])
+                         b (core/array [1.0 2.0 3.0] [3])]
                      (core/->value (core/- a b))))]
       (is (= [9.0 18.0 27.0] result)))))
 
 (deftest --array-scalar-test
   (testing "(- arr scalar) broadcasts scalar subtraction"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [10.0 20.0 30.0] [3])]
+                   (let [a (core/array [10.0 20.0 30.0] [3])]
                      (core/->value (core/- a 5.0))))]
       (is (= [5.0 15.0 25.0] result)))))
 
 (deftest --array-negate-test
   (testing "(- arr) negates all elements of an array"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 -2.0 3.0] [3])]
+                   (let [a (core/array [1.0 -2.0 3.0] [3])]
                      (core/->value (core/- a))))]
       (is (= [-1.0 2.0 -3.0] result)))))
 
@@ -281,15 +281,15 @@
 (deftest *-array-array-test
   (testing "(* arr arr) performs element-wise multiplication"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [2.0 3.0 4.0] [3])
-                         b (core/create-array [10.0 10.0 10.0] [3])]
+                   (let [a (core/array [2.0 3.0 4.0] [3])
+                         b (core/array [10.0 10.0 10.0] [3])]
                      (core/->value (core/* a b))))]
       (is (= [20.0 30.0 40.0] result)))))
 
 (deftest *-array-scalar-test
   (testing "(* arr scalar) scales array elements"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (core/->value (core/* a 2.0))))]
       (is (= [2.0 4.0 6.0] result)))))
 
@@ -308,15 +308,15 @@
 (deftest div-array-array-test
   (testing "(/ arr arr) performs element-wise division"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [10.0 20.0 30.0] [3])
-                         b (core/create-array [2.0 4.0 5.0] [3])]
+                   (let [a (core/array [10.0 20.0 30.0] [3])
+                         b (core/array [2.0 4.0 5.0] [3])]
                      (core/->value (core// a b))))]
       (is (= [5.0 5.0 6.0] result)))))
 
 (deftest div-array-scalar-test
   (testing "(/ arr scalar) divides each element by scalar"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [4.0 8.0 12.0] [3])]
+                   (let [a (core/array [4.0 8.0 12.0] [3])]
                      (core/->value (core// a 2.0))))]
       (is (= [2.0 4.0 6.0] result)))))
 
@@ -332,14 +332,14 @@
 (deftest abs-array-test
   (testing "abs computes element-wise absolute value for arrays"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [-1.0 2.0 -3.0] [3])]
+                   (let [a (core/array [-1.0 2.0 -3.0] [3])]
                      (core/->value (core/abs a))))]
       (is (= [1.0 2.0 3.0] result)))))
 
 (deftest neg-array-test
   (testing "neg negates all elements of an array"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 -2.0 3.0] [3])]
+                   (let [a (core/array [1.0 -2.0 3.0] [3])]
                      (core/->value (core/neg a))))]
       (is (= [-1.0 2.0 -3.0] result)))))
 
@@ -366,7 +366,7 @@
 (deftest pow-array-scalar-test
   (testing "(pow arr scalar) computes element-wise power with scalar exponent"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [2.0 3.0 4.0] [3])]
+                   (let [a (core/array [2.0 3.0 4.0] [3])]
                      (core/->value (core/pow a 2.0))))]
       (is (= [4.0 9.0 16.0] result)))))
 
@@ -377,14 +377,14 @@
 (deftest sqrt-array-test
   (testing "sqrt computes element-wise square root"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [4.0 9.0 16.0] [3])]
+                   (let [a (core/array [4.0 9.0 16.0] [3])]
                      (core/->value (core/sqrt a))))]
       (is (= [2.0 3.0 4.0] result)))))
 
 (deftest exp-log-inverse-test
   (testing "exp and log are inverses"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])
+                   (let [a (core/array [1.0 2.0 3.0] [3])
                          b (core/log (core/exp a))]
                      (core/->value b)))]
       (is (every? #(< (Math/abs %) 1e-12)
@@ -397,7 +397,7 @@
 (deftest sin-cos-identity-test
   (testing "sin²(x) + cos²(x) = 1 for all x"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [0.0 0.5 1.0 1.5] [4])
+                   (let [a (core/array [0.0 0.5 1.0 1.5] [4])
                          s (core/sin a)
                          c (core/cos a)
                          sum (core/+ (core/* s s) (core/* c c))]
@@ -411,7 +411,7 @@
 (deftest eq-array-scalar-test
   (testing "(eq arr scalar) returns boolean array"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (core/->value (core/eq a 2.0))))]
       ;; B8 boolean arrays copy to byte[] — values are 0 (false) or 1 (true)
       (is (= [0 1 0] result)))))
@@ -419,7 +419,7 @@
 (deftest lt-array-scalar-test
   (testing "(lt arr scalar) returns boolean array"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (core/->value (core/lt a 2.5))))]
       ;; B8 boolean arrays copy to byte[] — values are 0 (false) or 1 (true)
       (is (= [1 1 0] result)))))
@@ -427,7 +427,7 @@
 (deftest gt-array-scalar-test
   (testing "(gt arr scalar) returns boolean array"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (core/->value (core/gt a 1.5))))]
       ;; B8 boolean arrays copy to byte[] — values are 0 (false) or 1 (true)
       (is (= [0 1 1] result)))))
@@ -439,8 +439,8 @@
 (deftest +-array-outside-region-throws-test
   (testing "(+ arr arr) outside with-arrayfire throws IllegalStateException"
     (core/with-arrayfire {:backend :cpu}
-      (let [a (core/create-array [1.0 2.0] [2])
-            b (core/create-array [3.0 4.0] [2])]
+      (let [a (core/array [1.0 2.0] [2])
+            b (core/array [3.0 4.0] [2])]
         ;; Must not throw inside region
         (is (some? (core/+ a b)))))))
 
@@ -451,7 +451,7 @@
 (deftest to-host-f32-test
   (testing "to-host returns float[] for F32 arrays"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (vec (array/array->host a))))]
       (is (= 3 (count result)))
       (is (<= (Math/abs (- 1.0 (first result))) 0.001))
@@ -461,7 +461,7 @@
 (deftest to-host-deprecated-2-arity-test
   (testing "to-host 2-arity deprecated signature still works (n is ignored)"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (vec (core/to-host a 99))))]
       (is (= 3 (count result))))))
 
@@ -492,7 +492,7 @@
 (deftest to-host-b8-test
   (testing "to-host returns byte[] for B8 (boolean) arrays"
     (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/create-array [1.0 2.0 3.0] [3])]
+                   (let [a (core/array [1.0 2.0 3.0] [3])]
                      (vec (array/array->host (core/eq a 2.0)))))]
       ;; eq returns B8; byte values 0 = false, 1 = true
       (is (= [0 1 0] result)))))

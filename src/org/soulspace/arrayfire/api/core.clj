@@ -25,7 +25,7 @@
    Clojure data structures) before they are returned from the region.
    This ensures that AFArray instances do not escape the resource management scope,
    preventing memory leaks and ensuring safe interoperability with Clojure code."
-  (:refer-clojure :exclude [+ - * / abs mod rem])
+  (:refer-clojure :exclude [+ - * / abs mod rem range])
   (:require [clojure.math]
             [tech.v3.resource :refer [stack-resource-context]]
             [org.soulspace.arrayfire.integration.base.definitions :as defs]
@@ -43,44 +43,6 @@
 ;;;
 ;;; Resource management and initialization
 ;;;
-
-; Atom to track whether ArrayFire has been initialized.
-; Ensures init! is called only once.
-(defonce af-initialized? (atom false))
-
-(defn ensure-af-init!
-  "Ensure that ArrayFire is initialized. Calls init! only on the first invocation.
-   Subsequent calls will be no-op, ensuring efficient initialization."
-  []
-  (when (compare-and-set! af-initialized? false true)
-    (device/init!)))
-
-(def backend-lock
-  "Lock object for serializing backend/device switching.
-   Public because it is referenced by the `with-arrayfire` macro expansion
-   from other namespaces."
-  (Object.))
-
-(def ^:dynamic *backend-device-stack*
-  "Thread-local stack of backend/device frames pushed by nested `with-arrayfire`
-   regions that switch the backend or device.
-
-   Each frame is a map with keys:
-   - `:backend`  — the ArrayFire backend constant (integer) active in this region
-   - `:device`   — the device index (integer) active in this region
-
-   The top-most (innermost) frame is accessible via `(peek *backend-device-stack*)`.
-   An empty vector means no switching region is currently active.
-
-   This var is public to allow introspection of the current backend/device context
-   from helpers called inside a `with-arrayfire` body.
-
-   Example:
-     (with-arrayfire {:backend :cpu :device 0}
-       (peek *backend-device-stack*))
-     ;; => {:backend 2, :device 0}  (AF_BACKEND_CPU = 2)"
-  [])
-
 (def ^:dynamic *within-arrayfire?*
   "True when the current thread is executing inside a `with-arrayfire` region.
    Bound to `true` by the `with-arrayfire` macro; `false` at the root binding.
@@ -267,7 +229,7 @@
   Examples:
     ;; Basic usage — results auto-converted
     (with-arrayfire
-      (let [a (create-array [1.0 2.0 3.0 4.0] [2 2])]
+      (let [a (array [1.0 2.0 3.0 4.0] [2 2])]
         (to-host a 4)))
 
     ;; With explicit backend and device selection
@@ -276,7 +238,7 @@
 
     ;; Multi-threaded body — use shared arena
     (with-arrayfire {:arena-type :shared}
-      (let [f (future (create-array [1.0 2.0] [2]))]
+      (let [f (future (array [1.0 2.0] [2]))]
         (vec (to-host @f 2))))
 
     ;; Skip auto-conversion when result is already host data
@@ -301,8 +263,8 @@
     (if (or has-backend? has-device?)
       ;; With backend/device switching — needs lock
       `(do
-         (ensure-af-init!)
-         (locking backend-lock
+         (device/ensure-af-init!)
+         (locking device/backend-lock
            (let [~prev-backend (device/get-active-backend)
                  ~prev-device  (device/get-device)]
              (try
@@ -312,8 +274,8 @@
                   `(device/set-device! ~(:device opts)))
                ;; Push an introspection frame onto the per-thread stack.
                ;; `binding` unwinds automatically — no explicit pop needed.
-               (binding [*backend-device-stack*
-                         (conj *backend-device-stack*
+               (binding [device/*backend-device-stack*
+                         (conj device/*backend-device-stack*
                                {:backend (device/get-active-backend)
                                 :device  (device/get-device)})
                          *within-arrayfire?* true]
@@ -330,7 +292,7 @@
                     `(device/set-backend! ~prev-backend)))))))
       ;; No backend/device switching — no lock needed
       `(do
-         (ensure-af-init!)
+         (device/ensure-af-init!)
          (binding [*within-arrayfire?* true]
            (with-open [~arena-sym (bmem/open-arena ~arena-type)]
              (binding [bmem/*af-arena* ~arena-sym]
@@ -390,7 +352,7 @@
 ;;;
 ;;; Array creation
 ;;;
-(defn create-array
+(defn array
   "Create an ArrayFire array from a Clojure vector of values.
    Values are copied to a double-array and the array is created via the integration layer.
 
@@ -404,12 +366,12 @@
    AFArray instance.
 
    Example:
-   (create-array [1.0 2.0 3.0 4.0] [2 2]) ; creates a 2x2 array"
+   (array [1.0 2.0 3.0 4.0] [2 2]) ; creates a 2x2 array"
   ^AFArray
   ([values dims]
-   (create-array values dims :f64))
+   (array values dims :f64))
   ([values dims dtype]
-   (assert-within-arrayfire! "create-array")
+   (assert-within-arrayfire! "array")
    ;; `flatten` only works on sequential? Clojure collections; Java arrays (e.g. double[])
    ;; are seqable but NOT sequential?, so `flatten` silently returns [].
    ;; Use `seq` instead for arrays, `flatten` only for nested Clojure sequences.
@@ -419,7 +381,7 @@
                       :else                values)]
      (array/create-array double-arr dims (defs/dtype-kw->const dtype)))))
 
-(defn create-constant
+(defn constant
   "Create an ArrayFire array filled with a constant value.
 
    Parameters:
@@ -435,14 +397,14 @@
    (constant 42.0 [2 3]) ; creates a 2x3 array filled with 42.0"
   ^AFArray
   ([value]
-   (create-constant value nil :f64))
+   (constant value nil :f64))
   ([value dims]
-   (create-constant value dims :f64))
+   (constant value dims :f64))
   ([value dims dtype]
    (assert-within-arrayfire! "constant")
    (data/constant value (normalize-dims dims) (defs/resolve-dtype dtype))))
 
-(defn create-zeros
+(defn zeros
   "Create an ArrayFire array filled with zeros.
 
    Parameters:
@@ -457,13 +419,13 @@
    (zeros [2 3]) ; creates a 2x3 array filled with zeros"
   ^AFArray
   ([]
-   (create-zeros nil :f64))
+   (zeros nil :f64))
   ([dims]
-   (create-zeros dims :f64))
+   (zeros dims :f64))
   ([dims dtype]
-   (create-constant 0 dims dtype)))
+   (constant 0 dims dtype)))
 
-(defn create-ones
+(defn ones
   "Create an ArrayFire array filled with ones.
 
    Parameters:
@@ -478,13 +440,13 @@
    (ones [2 3]) ; creates a 2x3 array filled with ones"
   ^AFArray
   ([]
-   (create-ones nil :f64))
+   (ones nil :f64))
   ([dims]
-   (create-ones dims :f64))
+   (ones dims :f64))
   ([dims dtype]
-   (create-constant 1 dims dtype)))
+   (constant 1 dims dtype)))
 
-(defn create-range
+(defn range
   "Create an ArrayFire array filled with a range of values from 0 to n-1.
 
    Parameters:
@@ -496,12 +458,12 @@
    AFArray instance.
 
    Example:
-   (create-range 5) ; creates a 1D array with values [0.0, 1.0, 2.0, 3.0, 4.0]"
+   (range 5) ; creates a 1D array with values [0.0, 1.0, 2.0, 3.0, 4.0]"
   ^AFArray
   ([n]
-   (create-range n :f64))
+   (range n :f64))
   ([n dtype]
-   (assert-within-arrayfire! "create-range")
+   (assert-within-arrayfire! "range")
    (let [dtype-const (defs/resolve-dtype dtype)]
      (cond
        (number? n)
@@ -513,7 +475,7 @@
        :else
        (throw (ex-info "Invalid range argument" {:n n}))))))
 
-(defn create-uniform-random
+(defn random-uniform
   "Create an ArrayFire array filled with uniformly distributed random values.
 
    Parameters:
@@ -525,18 +487,18 @@
    AFArray instance.
 
    Example:
-   (create-uniform-random [2 3]) ; creates a 2x3 array filled with uniform random values"
+   (random-uniform [2 3]) ; creates a 2x3 array filled with uniform random values"
   ^AFArray
   ([]
-   (create-uniform-random nil :f64))
+   (random-uniform nil :f64))
   ([dims]
-   (create-uniform-random dims :f64))
+   (random-uniform dims :f64))
   ([dims dtype]
-   (assert-within-arrayfire! "create-uniform-random")
+   (assert-within-arrayfire! "random-uniform")
    (random/randu (normalize-dims dims)
                  (defs/resolve-dtype dtype))))
 
-(defn create-normal-random
+(defn random-normal
   "Create an ArrayFire array filled with normally distributed random values.
 
    Parameters:
@@ -548,19 +510,19 @@
    AFArray instance.
 
    Example:
-   (create-normal-random [2 3]) ; creates a 2x3 array filled with normal random values"
+   (random-normal [2 3]) ; creates a 2x3 array filled with normal random values"
   ^AFArray
   ([]
-   (create-normal-random nil :f64))
+   (random-normal nil :f64))
   ([dims]
-   (create-normal-random dims :f64))
+   (random-normal dims :f64))
   ([dims dtype]
-   (assert-within-arrayfire! "create-normal-random")
+   (assert-within-arrayfire! "random-normal")
    (random/randn (normalize-dims dims)
                  (defs/resolve-dtype dtype))))
 
 
-(defn create-zeros-like
+(defn zeros-like
   "Create an ArrayFire array filled with zeros, with the same shape and dtype as the given array.
 
    Parameters:
@@ -572,17 +534,39 @@
    AFArray instance with the same shape and dtype as `arr`, filled with zeros.
 
    Example:
-   (create-zeros-like my-array) ; creates a new array with the same shape and dtype as my-array"
+   (zeros-like my-array) ; creates a new array with the same shape and dtype as my-array"
   ^AFArray
   ([arr]
-   (create-zeros-like arr nil))
+   (zeros-like arr nil))
   ([arr dtype]
-   (assert-within-arrayfire! "create-zeros-like")
+   (assert-within-arrayfire! "zeros-like")
    (let [shape (array/get-dims arr)
          dtype (or dtype (array/get-type arr))]
-     (create-zeros shape dtype))))
+     (zeros shape dtype))))
 
-(defn create-normal-random-like
+(defn random-uniform-like
+  "Create an ArrayFire array filled with uniformly distributed random values, with the same shape and dtype as the given array.
+
+   Parameters:
+   - arr: AFArray instance to infer shape and dtype from
+   - dtype: (optional) keyword specifying the ArrayFire data type
+              (e.g. :f32, :f64, :s32, etc.). If not provided, uses the dtype of `arr`.
+
+   Returns:
+   AFArray instance with the same shape and dtype as `arr`, filled with uniform random values.
+
+   Example:
+   (random-uniform-like my-array) ; creates a new array with the same shape and dtype as my-array"
+  ^AFArray
+  ([arr]
+   (random-uniform-like arr nil))
+  ([arr dtype]
+   (assert-within-arrayfire! "random-uniform-like")
+   (let [shape (array/get-dims arr)
+         dtype (or dtype (array/get-type arr))]
+     (random-uniform shape dtype))))
+
+(defn random-normal-like
   "Create an ArrayFire array filled with normally distributed random values, with the same shape and dtype as the given array.
 
    Parameters:
@@ -594,15 +578,15 @@
    AFArray instance with the same shape and dtype as `arr`, filled with normal random values.
 
    Example:
-   (create-normal-random-like my-array) ; creates a new array with the same shape and dtype as my-array"
+   (random-normal-like my-array) ; creates a new array with the same shape and dtype as my-array"
   ^AFArray
   ([arr]
-   (create-normal-random-like arr nil))
+   (random-normal-like arr nil))
   ([arr dtype]
-   (assert-within-arrayfire! "create-normal-random-like")
+   (assert-within-arrayfire! "random-normal-like")
    (let [shape (array/get-dims arr)
          dtype (or dtype (array/get-type arr))]
-     (create-normal-random shape dtype))))
+     (random-normal shape dtype))))
 
 ;;;
 ;;; Basic arithmetic functions
@@ -955,7 +939,6 @@
 ;;
 ;; Power and roots — named as in clojure.math
 ;;
-
 (defn pow
   "Raise each element of lhs to the power rhs (element-wise).
    Falls through to clojure.math/pow for plain numbers.
@@ -976,21 +959,19 @@
    (pow arr 2.0) ; squares each element of arr via GPU broadcast"
   ^AFArray
   [lhs rhs]
+  (assert-within-arrayfire! "pow")
   (cond
     (and (number? lhs) (number? rhs))
     (clojure.math/pow lhs rhs)
 
     (and (instance? AFArray lhs) (instance? AFArray rhs))
-    (do (assert-within-arrayfire! "pow")
-        (arith/pow lhs rhs))
+    (arith/pow lhs rhs)
 
     (instance? AFArray lhs)
-    (do (assert-within-arrayfire! "pow")
-        (arith/pow lhs (scalar->array rhs (array/get-type lhs)) true))
+    (arith/pow lhs (scalar->array rhs (array/get-type lhs)) true)
 
     :else ; rhs is AFArray
-    (do (assert-within-arrayfire! "pow")
-        (arith/pow (scalar->array lhs (array/get-type rhs)) rhs true))))
+    (arith/pow (scalar->array lhs (array/get-type rhs)) rhs true))))
 
 (defn sqrt
   "Element-wise square root of each array element.
@@ -1004,7 +985,7 @@
    AFArray with element-wise sqrt(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (sqrt (create-array [4.0 9.0 16.0] [3])) ; => [2.0 3.0 4.0]"
+   (sqrt (array [4.0 9.0 16.0] [3])) ; => [2.0 3.0 4.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sqrt")
@@ -1022,7 +1003,7 @@
    AFArray with element-wise x^(1/3). Requires an active `with-arrayfire` region.
 
    Example:
-   (cbrt (create-array [8.0 27.0] [2])) ; => [2.0 3.0]"
+   (cbrt (array [8.0 27.0] [2])) ; => [2.0 3.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "cbrt")
@@ -1040,7 +1021,7 @@
    AFArray with element-wise 1/sqrt(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (rsqrt (create-array [4.0 16.0] [2])) ; => [0.5 0.25]"
+   (rsqrt (array [4.0 16.0] [2])) ; => [0.5 0.25]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "rsqrt")
@@ -1058,7 +1039,7 @@
    AFArray with element-wise 2^x. Requires an active `with-arrayfire` region.
 
    Example:
-   (pow2 (create-array [0.0 1.0 2.0 3.0] [4])) ; => [1.0 2.0 4.0 8.0]"
+   (pow2 (array [0.0 1.0 2.0 3.0] [4])) ; => [1.0 2.0 4.0 8.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "pow2")
@@ -1080,7 +1061,7 @@
    AFArray with element-wise e^x. Requires an active `with-arrayfire` region.
 
    Example:
-   (exp (create-array [0.0 1.0 2.0] [3])) ; => [1.0 e e²]"
+   (exp (array [0.0 1.0 2.0] [3])) ; => [1.0 e e²]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "exp")
@@ -1101,7 +1082,7 @@
    AFArray with element-wise exp(x) - 1. Requires an active `with-arrayfire` region.
 
    Example:
-   (expm1 (create-array [0.0 1.0] [2])) ; => [0.0 (e - 1)]"
+   (expm1 (array [0.0 1.0] [2])) ; => [0.0 (e - 1)]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "expm1")
@@ -1119,7 +1100,7 @@
    AFArray with element-wise ln(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (log (create-array [1.0 Math/E] [2])) ; => [0.0 1.0]"
+   (log (array [1.0 Math/E] [2])) ; => [0.0 1.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log")
@@ -1137,7 +1118,7 @@
    AFArray with element-wise log₂(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (log2 (create-array [1.0 2.0 4.0 8.0] [4])) ; => [0.0 1.0 2.0 3.0]"
+   (log2 (array [1.0 2.0 4.0 8.0] [4])) ; => [0.0 1.0 2.0 3.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log2")
@@ -1155,7 +1136,7 @@
    AFArray with element-wise log₁₀(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (log10 (create-array [1.0 10.0 100.0] [3])) ; => [0.0 1.0 2.0]"
+   (log10 (array [1.0 10.0 100.0] [3])) ; => [0.0 1.0 2.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log10")
@@ -1176,7 +1157,7 @@
    AFArray with element-wise log(1 + x). Requires an active `with-arrayfire` region.
 
    Example:
-   (log1p (create-array [0.0 1.0] [2])) ; => [0.0 ln(2)]"
+   (log1p (array [0.0 1.0] [2])) ; => [0.0 ln(2)]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "log1p")
@@ -1198,7 +1179,7 @@
    AFArray with element-wise floor(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (floor (create-array [1.7 -1.7 2.0] [3])) ; => [1.0 -2.0 2.0]"
+   (floor (array [1.7 -1.7 2.0] [3])) ; => [1.0 -2.0 2.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "floor")
@@ -1216,7 +1197,7 @@
    AFArray with element-wise ceil(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (ceil (create-array [1.2 -1.2 2.0] [3])) ; => [2.0 -1.0 2.0]"
+   (ceil (array [1.2 -1.2 2.0] [3])) ; => [2.0 -1.0 2.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "ceil")
@@ -1234,7 +1215,7 @@
    AFArray with element-wise round(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (round (create-array [1.4 1.5 -1.5] [3])) ; => [1.0 2.0 -2.0]"
+   (round (array [1.4 1.5 -1.5] [3])) ; => [1.0 2.0 -2.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "round")
@@ -1252,7 +1233,7 @@
    AFArray with element-wise trunc(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (trunc (create-array [1.7 -1.7] [2])) ; => [1.0 -1.0]"
+   (trunc (array [1.7 -1.7] [2])) ; => [1.0 -1.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "trunc")
@@ -1273,7 +1254,7 @@
    AFArray with element-wise sign values. Requires an active `with-arrayfire` region.
 
    Example:
-   (sign-bit (create-array [-3.0 0.0 5.0] [3])) ; => [1 0 0] (sign bit convention)"
+   (sign-bit (array [-3.0 0.0 5.0] [3])) ; => [1 0 0] (sign bit convention)"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sign-bit")
@@ -1295,7 +1276,7 @@
    AFArray with element-wise sin(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (sin (create-array [0.0 (/ Math/PI 2)] [2])) ; => [0.0 1.0]"
+   (sin (array [0.0 (/ Math/PI 2)] [2])) ; => [0.0 1.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sin")
@@ -1313,7 +1294,7 @@
    AFArray with element-wise cos(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (cos (create-array [0.0 Math/PI] [2])) ; => [1.0 -1.0]"
+   (cos (array [0.0 Math/PI] [2])) ; => [1.0 -1.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "cos")
@@ -1331,7 +1312,7 @@
    AFArray with element-wise tan(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (tan (create-array [0.0 (/ Math/PI 4)] [2])) ; => [0.0 1.0]"
+   (tan (array [0.0 (/ Math/PI 4)] [2])) ; => [0.0 1.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "tan")
@@ -1349,7 +1330,7 @@
    AFArray with element-wise arcsin(x) in radians. Requires an active `with-arrayfire` region.
 
    Example:
-   (asin (create-array [0.0 1.0] [2])) ; => [0.0 π/2]"
+   (asin (array [0.0 1.0] [2])) ; => [0.0 π/2]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "asin")
@@ -1367,7 +1348,7 @@
    AFArray with element-wise arccos(x) in radians. Requires an active `with-arrayfire` region.
 
    Example:
-   (acos (create-array [1.0 0.0 -1.0] [3])) ; => [0.0 π/2 π]"
+   (acos (array [1.0 0.0 -1.0] [3])) ; => [0.0 π/2 π]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "acos")
@@ -1385,7 +1366,7 @@
    AFArray with element-wise arctan(x) in radians. Requires an active `with-arrayfire` region.
 
    Example:
-   (atan (create-array [0.0 1.0] [2])) ; => [0.0 π/4]"
+   (atan (array [0.0 1.0] [2])) ; => [0.0 π/4]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "atan")
@@ -1409,8 +1390,8 @@
    Requires an active `with-arrayfire` region.
 
    Example:
-   (atan2 (create-array [1.0 1.0 -1.0] [3])
-          (create-array [1.0 -1.0 1.0] [3])) ; => [π/4 3π/4 -π/4]"
+   (atan2 (array [1.0 1.0 -1.0] [3])
+          (array [1.0 -1.0 1.0] [3])) ; => [π/4 3π/4 -π/4]"
   ^AFArray
   [y x]
   (assert-within-arrayfire! "atan2")
@@ -1440,7 +1421,7 @@
    AFArray with element-wise sinh(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (sinh (create-array [0.0 1.0] [2])) ; => [0.0 ~1.1752]"
+   (sinh (array [0.0 1.0] [2])) ; => [0.0 ~1.1752]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sinh")
@@ -1458,7 +1439,7 @@
    AFArray with element-wise cosh(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (cosh (create-array [0.0 1.0] [2])) ; => [1.0 ~1.5431]"
+   (cosh (array [0.0 1.0] [2])) ; => [1.0 ~1.5431]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "cosh")
@@ -1476,7 +1457,7 @@
    AFArray with element-wise tanh(x) in (-1, 1). Requires an active `with-arrayfire` region.
 
    Example:
-   (tanh (create-array [0.0 1.0] [2])) ; => [0.0 ~0.7616]"
+   (tanh (array [0.0 1.0] [2])) ; => [0.0 ~0.7616]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "tanh")
@@ -1494,7 +1475,7 @@
    AFArray with element-wise asinh(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (asinh (create-array [0.0 1.0] [2])) ; => [0.0 ~0.8814]"
+   (asinh (array [0.0 1.0] [2])) ; => [0.0 ~0.8814]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "asinh")
@@ -1512,7 +1493,7 @@
    AFArray with element-wise acosh(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (acosh (create-array [1.0 2.0] [2])) ; => [0.0 ~1.3170]"
+   (acosh (array [1.0 2.0] [2])) ; => [0.0 ~1.3170]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "acosh")
@@ -1530,7 +1511,7 @@
    AFArray with element-wise atanh(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (atanh (create-array [0.0 0.5] [2])) ; => [0.0 ~0.5493]"
+   (atanh (array [0.0 0.5] [2])) ; => [0.0 ~0.5493]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "atanh")
@@ -1552,7 +1533,7 @@
    AFArray with element-wise sigmoid(x) in (0, 1). Requires an active `with-arrayfire` region.
 
    Example:
-   (sigmoid (create-array [0.0 1.0 -1.0] [3])) ; => [0.5 ~0.731 ~0.269]"
+   (sigmoid (array [0.0 1.0 -1.0] [3])) ; => [0.5 ~0.731 ~0.269]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "sigmoid")
@@ -1570,7 +1551,7 @@
    AFArray with element-wise erf(x) in (-1, 1). Requires an active `with-arrayfire` region.
 
    Example:
-   (erf (create-array [0.0 1.0] [2])) ; => [0.0 ~0.8427]"
+   (erf (array [0.0 1.0] [2])) ; => [0.0 ~0.8427]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "erf")
@@ -1590,7 +1571,7 @@
    AFArray with element-wise erfc(x) in (0, 2). Requires an active `with-arrayfire` region.
 
    Example:
-   (erfc (create-array [0.0 1.0] [2])) ; => [1.0 ~0.1573]"
+   (erfc (array [0.0 1.0] [2])) ; => [1.0 ~0.1573]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "erfc")
@@ -1608,7 +1589,7 @@
    AFArray with element-wise Γ(x). Requires an active `with-arrayfire` region.
 
    Example:
-   (tgamma (create-array [1.0 2.0 3.0 4.0] [4])) ; => [1.0 1.0 2.0 6.0]"
+   (tgamma (array [1.0 2.0 3.0 4.0] [4])) ; => [1.0 1.0 2.0 6.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "tgamma")
@@ -1626,7 +1607,7 @@
    AFArray with element-wise log|Γ(x)|. Requires an active `with-arrayfire` region.
 
    Example:
-   (lgamma (create-array [1.0 2.0 3.0] [3])) ; => [0.0 0.0 ~0.693]"
+   (lgamma (array [1.0 2.0 3.0] [3])) ; => [0.0 0.0 ~0.693]"
   [^AFArray a]
   (assert-within-arrayfire! "lgamma")
   (arith/lgamma a))
@@ -1643,7 +1624,7 @@
    AFArray with element-wise n!. Requires an active `with-arrayfire` region.
 
    Example:
-   (factorial (create-array [0.0 1.0 2.0 3.0 4.0] [5])) ; => [1.0 1.0 2.0 6.0 24.0]"
+   (factorial (array [0.0 1.0 2.0 3.0 4.0] [5])) ; => [1.0 1.0 2.0 6.0 24.0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "factorial")
@@ -1673,7 +1654,6 @@
 ;;
 ;; Predicates
 ;;
-
 (defn nan?
   "Element-wise NaN check. Returns a boolean array (b8) indicating NaN elements.
 
@@ -1687,7 +1667,7 @@
    Requires an active `with-arrayfire` region.
 
    Example:
-   (nan? (create-array [1.0 Double/NaN 3.0] [3])) ; => [0 1 0]"
+   (nan? (array [1.0 Double/NaN 3.0] [3])) ; => [0 1 0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "nan?")
@@ -1706,7 +1686,7 @@
    Requires an active `with-arrayfire` region.
 
    Example:
-   (inf? (create-array [1.0 Double/POSITIVE_INFINITY 3.0] [3])) ; => [0 1 0]"
+   (inf? (array [1.0 Double/POSITIVE_INFINITY 3.0] [3])) ; => [0 1 0]"
   ^AFArray
   [^AFArray a]
   (assert-within-arrayfire! "inf?")
@@ -1881,23 +1861,23 @@
 (comment
   ;; with-arrayfire REPL experiments
 
-  ;; Basic usage — explicit host conversion (create-array returns AFArray)
+  ;; Basic usage — explicit host conversion (array returns AFArray)
   (with-arrayfire
-    (let [a (create-array [1.0 2.0 3.0 4.0] [2 2])]
+    (let [a (array [1.0 2.0 3.0 4.0] [2 2])]
       (vec (to-host a 4))))
 
   ;; Empty opts map (valid — treated as no options)
   (with-arrayfire {}
-    (vec (to-host (create-array [1.0 2.0] [2]) 2)))
+    (vec (to-host (array [1.0 2.0] [2]) 2)))
 
   ;; With backend selection
   (with-arrayfire {:backend :cpu}
-    (let [a (create-array [1.0 2.0 3.0] [3])]
+    (let [a (array [1.0 2.0 3.0] [3])]
       (vec (to-host a 3))))
 
   ;; With shared arena for multi-threaded body
   (with-arrayfire {:arena-type :shared}
-    (let [f (future (create-array [1.0 2.0] [2]))]
+    (let [f (future (array [1.0 2.0] [2]))]
       (vec (to-host @f 2))))
 
   ;; Introspect the current backend/device frame from inside a switching region
@@ -1910,7 +1890,7 @@
   ;; Nested regions (no backend switch — no frame pushed)
   (with-arrayfire
     (with-arrayfire
-      (vec (to-host (create-array [42.0] [1]) 1))))
+      (vec (to-host (array [42.0] [1]) 1))))
 
   ;; Clojure vector output instead of dtype-next native buffer.
   ;; ArrayFire is column-major, so a [2 3] array returns 3 column vectors of length 2.
@@ -1918,7 +1898,7 @@
   (with-arrayfire {:backend      :cpu
                    :converter-fn ->value}
     (let [data (double-array [1.0 2.0 3.0 4.0 5.0 6.0])]
-      (create-array data [2 3] :f64)))
+      (array data [2 3] :f64)))
 
   ;
   )
