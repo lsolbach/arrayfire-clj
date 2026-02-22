@@ -223,9 +223,11 @@
   [^AFArray lhs seqs ^AFArray rhs]
   (let [out (res/native-af-array-pointer)
         ndims (count seqs)
-        seqs-array (mem/alloc (* ndims 8))]
-    (doseq [[i seq-ptr] (map-indexed vector seqs)]
-      (mem/write-long seqs-array (* i 8) (.address seq-ptr)))
+        ;; af_seq layout: { double begin; double end; double step; } = 24 bytes inline
+        ;; af_assign_seq expects a contiguous C array of af_seq structs, not pointer array
+        seqs-array (mem/alloc (* ndims 24))]
+    (doseq [[i seq-seg] (map-indexed vector seqs)]
+      (mem/copy-segment (mem/slice seqs-array (* i 24) 24) seq-seg))
     (check! (assign-ffi/af-assign-seq out (res/af-handle lhs) (int ndims) 
                                           seqs-array (res/af-handle rhs))
                 "af-assign-seq")

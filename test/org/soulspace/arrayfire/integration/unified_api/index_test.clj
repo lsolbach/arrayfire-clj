@@ -55,7 +55,7 @@
             s0 (idx/make-seq 0 9 1)
             result (idx/index arr [s0])]
         (is (instance? AFArray result))
-        (is (= [10] (array/get-dims result)))))))
+        (is (= [10 1 1 1] (array/get-dims result)))))))
 
 (deftest test-index-two-dim
   (testing "index with two dimension sequences"
@@ -66,7 +66,7 @@
             s1 (idx/make-seq 0 4 1)
             result (idx/index arr [s0 s1])]
         (is (instance? AFArray result))
-        (is (= [5 5] (array/get-dims result)))))))
+        (is (= [5 5 1 1] (array/get-dims result)))))))
 
 (deftest test-index-all-elements
   (testing "index selecting all elements in dimension"
@@ -77,7 +77,7 @@
             s1 (idx/make-seq 0 9 1)
             result (idx/index arr [s0 s1])]
         (is (instance? AFArray result))
-        (is (= [20 10] (array/get-dims result)))))))
+        (is (= [20 10 1 1] (array/get-dims result)))))))
 
 (deftest test-index-with-step
   (testing "index with step to select every nth element"
@@ -87,7 +87,7 @@
             s0 (idx/make-seq 0 -1 2)
             result (idx/index arr [s0])]
         (is (instance? AFArray result))
-        (is (= [50] (array/get-dims result)))))))
+        (is (= [50 1 1 1] (array/get-dims result)))))))
 
 (deftest test-lookup-1d
   (testing "lookup extracts specific elements by index array"
@@ -97,7 +97,7 @@
             indices (array/create-array (int-array [0 10 20 30]) [4] defs/AF_DTYPE_S32)
             result (idx/lookup arr indices)]
         (is (instance? AFArray result))
-        (is (= [4] (array/get-dims result)))))))
+        (is (= [4 1 1 1] (array/get-dims result)))))))
 
 (deftest test-lookup-with-dim
   (testing "lookup along specific dimension"
@@ -109,8 +109,8 @@
             result-dim1 (idx/lookup arr indices 1)]
         (is (instance? AFArray result-dim0))
         (is (instance? AFArray result-dim1))
-        (is (= [3 20] (array/get-dims result-dim0)))
-        (is (= [10 3] (array/get-dims result-dim1)))))))
+        (is (= [3 20 1 1] (array/get-dims result-dim0)))
+        (is (= [10 3 1 1] (array/get-dims result-dim1)))))))
 
 ;;;
 ;;; Generalized Indexing Tests
@@ -128,7 +128,7 @@
           (idx/set-seq-indexer! indexers (idx/make-seq 0 -1 1) 1 false)
           (let [result (idx/index-gen arr indexers 2)]
             (is (instance? AFArray result))
-            (is (= [10 20] (array/get-dims result))))
+            (is (= [10 20 1 1] (array/get-dims result))))
           (finally
             (idx/release-indexers! indexers)))))))
 
@@ -143,7 +143,7 @@
           (idx/set-array-indexer! indexers idx-arr 0)
           (let [result (idx/index-gen arr indexers 1)]
             (is (instance? AFArray result))
-            (is (= [5] (array/get-dims result))))
+            (is (= [5 1 1 1] (array/get-dims result))))
           (finally
             (idx/release-indexers! indexers)))))))
 
@@ -161,7 +161,7 @@
             vals (data/constant 99.0 [5 5] defs/AF_DTYPE_F32)
             result (idx/assign-seq arr [s0 s1] vals)]
         (is (instance? AFArray result))
-        (is (= [20 20] (array/get-dims result)))))))
+        (is (= [20 20 1 1] (array/get-dims result)))))))
 
 (deftest test-assign-seq-full-dimension
   (testing "assign-seq to full dimension"
@@ -172,7 +172,7 @@
             vals (data/constant 42.0 [10] defs/AF_DTYPE_F32)
             result (idx/assign-seq arr [s0] vals)]
         (is (instance? AFArray result))
-        (is (= [100] (array/get-dims result)))))))
+        (is (= [100 1 1 1] (array/get-dims result)))))))
 
 (deftest test-assign-gen-with-indexers
   (testing "assign-gen with generalized indexers"
@@ -187,7 +187,7 @@
           (idx/set-seq-indexer! indexers (idx/make-seq 0 -1 1) 1 false)
           (let [result (idx/assign-gen arr indexers 2 vals)]
             (is (instance? AFArray result))
-            (is (= [30 30] (array/get-dims result))))
+            (is (= [30 30 1 1] (array/get-dims result))))
           (finally
             (idx/release-indexers! indexers)))))))
 
@@ -268,7 +268,7 @@
       (let [arr (data/range [20 30] 0 defs/AF_DTYPE_F32)
             result (idx/slice arr [[0 9] nil])]
         (is (instance? AFArray result))
-        (is (= [10 30] (array/get-dims result)))))))
+        (is (= [10 30 1 1] (array/get-dims result)))))))
 
 (deftest test-slice-with-step
   (testing "slice with step parameter"
@@ -277,7 +277,7 @@
       (let [arr (data/range [100] 0 defs/AF_DTYPE_F32)
             result (idx/slice arr [[0 -1 2]])]
         (is (instance? AFArray result))
-        (is (= [50] (array/get-dims result)))))))
+        (is (= [50 1 1 1] (array/get-dims result)))))))
 
 (deftest test-slice-two-dimensions
   (testing "slice with two dimension ranges"
@@ -286,7 +286,7 @@
       (let [arr (data/range [50 60] 0 defs/AF_DTYPE_F32)
             result (idx/slice arr [[5 14] [10 19]])]
         (is (instance? AFArray result))
-        (is (= [10 10] (array/get-dims result)))))))
+        (is (= [10 10 1 1] (array/get-dims result)))))))
 
 (deftest test-slice-nil-dimension
   (testing "slice with nil for full dimension"
@@ -295,7 +295,7 @@
       (let [arr (data/range [20 30 40] 0 defs/AF_DTYPE_F32)
             result (idx/slice arr [nil [5 14] nil])]
         (is (instance? AFArray result))
-        (is (= [20 10 40] (array/get-dims result)))))))
+        (is (= [20 10 40 1] (array/get-dims result)))))))
 
 ;;;
 ;;; Complex Indexing Tests
@@ -313,7 +313,7 @@
           (idx/set-seq-param-indexer! indexers 0 49 1 1 false)
           (let [result (idx/index-gen arr indexers 2)]
             (is (instance? AFArray result))
-            (is (= [5 50] (array/get-dims result))))
+            (is (= [5 50 1 1] (array/get-dims result))))
           (finally
             (idx/release-indexers! indexers)))))))
 
