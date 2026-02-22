@@ -265,6 +265,14 @@
   (into {}
         (map (fn [[k v]] [v k]) mat-prop-kw->const)))
 
+(defn resolve-mat-prop
+  "Resolve a keyword or int mat-prop to its integer constant.
+   Falls back to 0 (AF_MAT_NONE) for unknown keywords."
+  [k]
+  (if (keyword? k)
+    (get mat-prop-kw->const k 0)
+    (int k)))
+
 (def norm-type-kw->const
   "Mapping of norm type keywords to ArrayFire constants."
   {:vector-1   defs/AF_NORM_VECTOR_1
@@ -281,6 +289,14 @@
   "Mapping of ArrayFire norm type constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) norm-type-kw->const)))
+
+(defn resolve-norm-type
+  "Resolve a keyword or int norm-type to its integer constant.
+   Falls back to 2 (AF_NORM_VECTOR_2 / L2) for unknown keywords."
+  [k]
+  (if (keyword? k)
+    (get norm-type-kw->const k 2)
+    (int k)))
 
 (def image-format-kw->const
   "Mapping of image format keywords to ArrayFire constants."
