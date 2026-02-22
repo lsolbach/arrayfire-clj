@@ -328,28 +328,6 @@
   [x dtype]
   (data/constant (double x) [1] dtype))
 
-(defn normalize-dims
-  "Normalize dimensions input to a vector of integers. Accepts nil (scalar), number (1D), or sequential (vector of dims).
-
-   Parameters:
-   - dims: nil, number, or sequential specifying dimensions
-
-   Returns:
-   Vector of dimensions. Examples:
-   - nil → []
-   - 5 → [5]
-   - [2 3] → [2 3]
-
-   Throws:
-   ExceptionInfo if dims is not nil, a number, or sequential."
-  [dims]
-  (cond
-    (nil? dims) []                       ;; scalar
-    (number? dims) [dims]                ;; 1D
-    (sequential? dims) (vec dims)
-    :else
-    (throw (ex-info "Invalid dims" {:dims dims}))))
-
 (defn infer-shape
   "Infer the shape of a nested Clojure data structure (vector of vectors, etc.).
    Used for inferring array dimensions when creating an AFArray from Clojure data.
@@ -372,6 +350,79 @@
         [len]))
     :else
     (throw (ex-info "Cannot infer shape" {:data data}))))
+
+(defn normalize-dims
+  "Normalize dimensions input to a vector of integers. Accepts nil (scalar), number (1D), or sequential (vector of dims).
+
+   Parameters:
+   - dims: nil, number, or sequential specifying dimensions
+
+   Returns:
+   Vector of dimensions. Examples:
+   - nil → []
+   - 5 → [5]
+   - [2 3] → [2 3]
+
+   Throws:
+   ExceptionInfo if dims is not nil, a number, or sequential."
+  [dims]
+  (cond
+    (nil? dims) []                       ;; scalar
+    (number? dims) [dims]                ;; 1D
+    (sequential? dims) (vec dims)
+    :else
+    (throw (ex-info "Invalid dims" {:dims dims}))))
+
+(defn- normalize-range-spec
+  "Coerce a range spec to [begin end step] as doubles.
+
+   Accepted forms:
+   - nil              → [0.0 -1.0 1.0]  (select all, -1 = ArrayFire 'last' sentinel)
+   - n (Number)       → [n n 1.0]       (single element at index n)
+   - [start end]      → [start end 1.0] (inclusive range, step 1)
+   - [start end step] → as given"
+  [spec]
+  (cond
+    (nil? spec)
+    [0.0 -1.0 1.0]
+
+    (number? spec)
+    [(double spec) (double spec) 1.0]
+
+    (and (sequential? spec) (= 2 (count spec)))
+    [(double (first spec)) (double (second spec)) 1.0]
+
+    (and (sequential? spec) (= 3 (count spec)))
+    [(double (first spec)) (double (second spec)) (double (nth spec 2))]
+
+    :else
+    (throw (ex-info "Invalid range spec — expected nil, number, [start end] or [start end step]"
+                    {:spec spec}))))
+
+(defn- configure-indexers!
+  "Set seq-param indexers for all 4 dimensions.
+   Range specs beyond what is given default to nil (= 'all elements').
+   Always returns 4 (ArrayFire requires all dims initialised when using index-gen)."
+  [indexers range-specs]
+  (dotimes [dim 4]
+    (let [spec             (nth range-specs dim nil)
+          [begin end step] (normalize-range-spec spec)]
+      (index/set-seq-param-indexer! indexers begin end step dim false)))
+  4)
+
+(defn- range-map->range-specs
+  "Expand a map {:rows … :cols … :depth … :batch …} to an ordered vector of
+   specs for dims 0–3. Dimensions between the first and last explicitly set
+   that are missing from the map default to nil (= 'all elements')."
+  [range-map]
+  (let [dim-keys [:rows :cols :depth :batch]
+        max-dim  (reduce (fn [acc [i k]]
+                           (if (contains? range-map k) i acc))
+                         -1
+                         (map-indexed vector dim-keys))]
+    (if (neg? max-dim)
+      []
+      (mapv #(get range-map %) (take (inc max-dim) dim-keys)))))
 
 ;;;
 ;;; Array creation
@@ -710,61 +761,6 @@
 ;;;
 ;;; Array indexing and manipulation
 ;;;
-
-;; ── Internal helpers ──────────────────────────────────────────────────────────
-
-(defn- normalize-range-spec
-  "Coerce a range spec to [begin end step] as doubles.
-
-   Accepted forms:
-   - nil              → [0.0 -1.0 1.0]  (select all, -1 = ArrayFire 'last' sentinel)
-   - n (Number)       → [n n 1.0]       (single element at index n)
-   - [start end]      → [start end 1.0] (inclusive range, step 1)
-   - [start end step] → as given"
-  [spec]
-  (cond
-    (nil? spec)
-    [0.0 -1.0 1.0]
-
-    (number? spec)
-    [(double spec) (double spec) 1.0]
-
-    (and (sequential? spec) (= 2 (count spec)))
-    [(double (first spec)) (double (second spec)) 1.0]
-
-    (and (sequential? spec) (= 3 (count spec)))
-    [(double (first spec)) (double (second spec)) (double (nth spec 2))]
-
-    :else
-    (throw (ex-info "Invalid range spec — expected nil, number, [start end] or [start end step]"
-                    {:spec spec}))))
-
-(defn- configure-indexers!
-  "Set seq-param indexers for all 4 dimensions.
-   Range specs beyond what is given default to nil (= 'all elements').
-   Always returns 4 (ArrayFire requires all dims initialised when using index-gen)."
-  [indexers range-specs]
-  (dotimes [dim 4]
-    (let [spec             (nth range-specs dim nil)
-          [begin end step] (normalize-range-spec spec)]
-      (index/set-seq-param-indexer! indexers begin end step dim false)))
-  4)
-
-(defn- range-map->range-specs
-  "Expand a map {:rows … :cols … :depth … :batch …} to an ordered vector of
-   specs for dims 0–3. Dimensions between the first and last explicitly set
-   that are missing from the map default to nil (= 'all elements')."
-  [range-map]
-  (let [dim-keys [:rows :cols :depth :batch]
-        max-dim  (reduce (fn [acc [i k]]
-                           (if (contains? range-map k) i acc))
-                         -1
-                         (map-indexed vector dim-keys))]
-    (if (neg? max-dim)
-      []
-      (mapv #(get range-map %) (take (inc max-dim) dim-keys)))))
-
-;; ── Public API ────────────────────────────────────────────────────────────────
 
 (defn slice
   "Extract a subarray using range-based (sequence) indexing.
