@@ -521,6 +521,27 @@
    - af-max: Maximum value"
   "af_min" [::mem/pointer ::mem/pointer ::mem/int] ::mem/int)
 
+;; af_err af_imin(af_array *out, af_array *idx, const af_array in, const int dim)
+(defcfn af-imin
+  "Find minimum value and its index along a dimension.
+
+   Returns both the minimum value array and an index array indicating where
+   in the specified dimension each minimum value is located.
+
+   Parameters:
+   - out: out pointer for minimum values array
+   - idx: out pointer for index array (u32 dtype) of minimum positions
+   - in: input array
+   - dim: dimension to reduce (0-3)
+
+   Returns:
+   ArrayFire error code (af_err)
+
+   See also:
+   - af-min: Returns only minimum values (no index)
+   - af-imax: Returns maximum AND index"
+  "af_imin" [::mem/pointer ::mem/pointer ::mem/pointer ::mem/int] ::mem/int)
+
 ;; af_err af_max(af_array *out, const af_array in, const int dim)
 (defcfn af-max
   "Find maximum value along a dimension.
@@ -559,6 +580,27 @@
    See also:
    - af-imax: Returns maximum AND index"
   "af_max" [::mem/pointer ::mem/pointer ::mem/int] ::mem/int)
+
+;; af_err af_imax(af_array *out, af_array *idx, const af_array in, const int dim)
+(defcfn af-imax
+  "Find maximum value and its index along a dimension.
+
+   Returns both the maximum value array and an index array indicating where
+   in the specified dimension each maximum value is located.
+
+   Parameters:
+   - out: out pointer for maximum values array
+   - idx: out pointer for index array (u32 dtype) of maximum positions
+   - in: input array
+   - dim: dimension to reduce (0-3)
+
+   Returns:
+   ArrayFire error code (af_err)
+
+   See also:
+   - af-max: Returns only maximum values (no index)
+   - af-imin: Returns minimum AND index"
+  "af_imax" [::mem/pointer ::mem/pointer ::mem/pointer ::mem/int] ::mem/int)
 
 ;; af_err af_all_true(af_array *out, const af_array in, const int dim)
 (defcfn af-all-true
