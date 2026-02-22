@@ -471,6 +471,71 @@
       (is (<= (Math/abs (- 1.0 (first  (first result)))) 0.001))
       (is (<= (Math/abs (- 2.0 (second (first result)))) 0.001)))))
 
+;;;
+;;; diagonal / get-diagonal tests
+;;;
+
+(deftest diagonal-creates-matrix-test
+  (testing "diagonal creates a square diagonal matrix from a 1-D array"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [v (core/array [1.0 2.0 3.0] [3])
+                         m (core/diagonal v)]
+                     [(core/shape m) (core/->value m)]))]
+      (is (= [3 3] (first result)))
+      ;; ->value returns vector-of-columns; access element at [row r, col c] via (get-in val [c r])
+      (let [val (second result)]
+        (is (<= (Math/abs (- 1.0 (get-in val [0 0]))) 0.001))   ; d[0,0]
+        (is (<= (Math/abs (- 2.0 (get-in val [1 1]))) 0.001))   ; d[1,1]
+        (is (<= (Math/abs (- 3.0 (get-in val [2 2]))) 0.001))))))  ; d[2,2]  ; [2,2]
+
+(deftest diagonal-with-offset-test
+  (testing "diagonal with positive offset creates superdiagonal"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [v (core/array [1.0 2.0] [2])
+                         m (core/diagonal v 1)]
+                     (core/shape m)))]
+      ;; With 2-element vector + offset 1, result is 3×3
+      (is (= [3 3] result)))))
+
+(deftest get-diagonal-extracts-main-diagonal-test
+  (testing "get-diagonal extracts the main diagonal of a matrix"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [m (core/array [1.0 0.0 0.0
+                                        0.0 2.0 0.0
+                                        0.0 0.0 3.0] [3 3])
+                         d (core/get-diagonal m)]
+                     [(core/shape d) (core/->value d)]))]
+      (is (= [3] (first result)))
+      (let [vals (second result)]
+        (is (<= (Math/abs (- 1.0 (nth vals 0))) 0.001))
+        (is (<= (Math/abs (- 2.0 (nth vals 1))) 0.001))
+        (is (<= (Math/abs (- 3.0 (nth vals 2))) 0.001))))))
+
+(deftest get-diagonal-with-offset-test
+  (testing "get-diagonal with positive offset extracts superdiagonal"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [;; column-major layout: col0=[0,0,0] col1=[5,0,0] col2=[0,6,0]
+                         ;; gives matrix: row0=[0,5,0] row1=[0,0,6] row2=[0,0,0]
+                         m (core/array [0.0 0.0 0.0
+                                        5.0 0.0 0.0
+                                        0.0 6.0 0.0] [3 3])
+                         d (core/get-diagonal m 1)]
+                     [(core/shape d) (core/->value d)]))]
+      (is (= [2] (first result)))
+      (let [vals (second result)]
+        (is (<= (Math/abs (- 5.0 (nth vals 0))) 0.001))
+        (is (<= (Math/abs (- 6.0 (nth vals 1))) 0.001))))))
+
+(deftest diagonal-roundtrip-test
+  (testing "get-diagonal(diagonal(v)) == v"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [v (core/array [4.0 5.0 6.0] [3])
+                         rt (core/get-diagonal (core/diagonal v))]
+                     (core/->value rt)))]
+      (is (<= (Math/abs (- 4.0 (nth result 0))) 0.001))
+      (is (<= (Math/abs (- 5.0 (nth result 1))) 0.001))
+      (is (<= (Math/abs (- 6.0 (nth result 2))) 0.001)))))
+
 (comment
   ;; Run tests in this namespace
   (run-tests)

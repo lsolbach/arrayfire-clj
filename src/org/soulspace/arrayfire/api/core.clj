@@ -685,6 +685,27 @@
    (assert-within-arrayfire! "identity-matrix")
    (data/identity [n n] (defs/resolve-dtype dtype))))
 
+(defn diagonal
+  "Create a diagonal matrix from a 1-D array.
+
+   Parameters:
+   - arr: 1-D input AFArray of values to place on the diagonal
+   - num: Diagonal offset (default 0 = main diagonal; positive = above, negative = below)
+
+   Returns:
+   Square AFArray diagonal matrix.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (diagonal (array [1.0 2.0 3.0] [3]))       ; 3×3 diagonal matrix
+   (diagonal (array [1.0 2.0 3.0] [3]) 1)     ; 3+1×3+1 matrix, offset +1 diagonal"
+  (^AFArray [^AFArray arr]
+   (assert-within-arrayfire! "diagonal")
+   (data/diag-create arr 0))
+  (^AFArray [^AFArray arr num]
+   (assert-within-arrayfire! "diagonal")
+   (data/diag-create arr num)))
+
 (defn ones-like
   "Array of ones with same shape and dtype as `arr`.
 
@@ -1217,42 +1238,27 @@
   (let [[d0 d1 d2 d3] (map int (concat order (clojure.core/range 4)))]
     (data/reorder arr d0 d1 d2 d3)))
 
-(defn diag
-  "Create a diagonal matrix from a 1-D array, or extract the diagonal of a 2-D array.
+; TODO rename to diagonal-of?
+(defn get-diagonal
+  "Extract the diagonal of a 2-D array as a 1-D vector.
 
    Parameters:
-   - arr: Input AFArray (1-D to create diagonal matrix, 2-D to extract diagonal)
-   - num: Diagonal index offset (default 0 = main diagonal)
-   - extract?: If true, extract diagonal from matrix; if false, create diagonal matrix.
-               Inferred from arr rank when not specified.
+   - arr: 2-D input AFArray
+   - num: Diagonal offset (default 0 = main diagonal; positive = above, negative = below)
 
    Returns:
-   AFArray diagonal matrix or diagonal vector.
+   1-D AFArray of diagonal elements.
    Requires an active `with-arrayfire` region.
 
    Example:
-   (diag (array [1.0 2.0 3.0] [3]))       ; 3×3 diagonal matrix
-   (diag (array [1.0 4.0 9.0 16.0] [4]))  ; 4×4 diagonal
-   (diag my-matrix)                         ; extract main diagonal"
+   (get-diagonal my-matrix)       ; extract main diagonal
+   (get-diagonal my-matrix 1)    ; extract superdiagonal"
   (^AFArray [^AFArray arr]
-   (assert-within-arrayfire! "diag")
-   (let [dims (array/get-dims arr)
-         extract? (> (clojure.core/count (filter #(> % 1) (take 2 dims))) 1)]
-     (if extract?
-       (data/diag-extract arr 0)
-       (data/diag-create arr 0))))
+   (assert-within-arrayfire! "get-diagonal")
+   (data/diag-extract arr 0))
   (^AFArray [^AFArray arr num]
-   (assert-within-arrayfire! "diag")
-   (let [dims (array/get-dims arr)
-         extract? (> (clojure.core/count (filter #(> % 1) (take 2 dims))) 1)]
-     (if extract?
-       (data/diag-extract arr num)
-       (data/diag-create arr num))))
-  (^AFArray [^AFArray arr num extract?]
-   (assert-within-arrayfire! "diag")
-   (if extract?
-     (data/diag-extract arr num)
-     (data/diag-create arr num))))
+   (assert-within-arrayfire! "get-diagonal")
+   (data/diag-extract arr num)))
 
 (defn lower-tri
   "Return the lower-triangular part of a matrix.
