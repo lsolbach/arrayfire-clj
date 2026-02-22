@@ -758,9 +758,9 @@
    - mean-weighted: Weighted mean
    - var-weighted: Weighted variance"
   ([^AFArray in ^AFArray weights]
-   (meanvar in weights defs/AF_VARIANCE_SAMPLE -1))
+   (meanvar in weights defs/AF_VARIANCE_SAMPLE 0))
   ([^AFArray in ^AFArray weights bias]
-   (meanvar in weights bias -1))
+   (meanvar in weights bias 0))
   ([^AFArray in ^AFArray weights bias dim]
    (let [mean-ptr (res/native-af-array-pointer)
          var-ptr (res/native-af-array-pointer)]
