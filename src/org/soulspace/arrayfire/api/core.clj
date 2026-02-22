@@ -25,7 +25,7 @@
    Clojure data structures) before they are returned from the region.
    This ensures that AFArray instances do not escape the resource management scope,
    preventing memory leaks and ensuring safe interoperability with Clojure code."
-  (:refer-clojure :exclude [+ - * / abs mod rem range])
+  (:refer-clojure :exclude [+ - * / abs mod rem range min max sort flatten not cast zero?])
   (:require [clojure.math]
             [tech.v3.resource :refer [stack-resource-context]]
             [org.soulspace.arrayfire.integration.base.definitions :as defs]
@@ -34,6 +34,8 @@
             [org.soulspace.arrayfire.integration.unified-api.array :as array]
             [org.soulspace.arrayfire.integration.unified-api.arith :as arith]
             [org.soulspace.arrayfire.integration.unified-api.algorithm :as algo]
+            [org.soulspace.arrayfire.integration.unified-api.blas :as blas]
+            [org.soulspace.arrayfire.integration.unified-api.complex :as complex]
             [org.soulspace.arrayfire.integration.unified-api.memory :as uamem]
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
@@ -451,7 +453,7 @@
    ;; are seqable but NOT sequential?, so `flatten` silently returns [].
    ;; Use `seq` instead for arrays, `flatten` only for nested Clojure sequences.
    (let [double-arr (cond
-                      (sequential? values) (double-array (flatten values))
+                      (sequential? values) (double-array (clojure.core/flatten values))
                       (seqable? values)    (double-array (seq values))
                       :else                values)]
      (array/create-array double-arr dims (defs/dtype-kw->const dtype)))))
@@ -662,6 +664,71 @@
    (let [shape (array/get-dims arr)
          dtype (or dtype (array/get-type arr))]
      (random-normal shape dtype))))
+
+(defn identity-matrix
+  "Create an identity matrix of the given size and dtype.
+
+   Parameters:
+   - n: Number of rows and columns (square matrix size)
+   - dtype: dtype keyword (default :f64)
+
+   Returns:
+   n×n identity AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (identity-matrix 3)       ; 3×3 float64 identity matrix
+   (identity-matrix 4 :f32)  ; 4×4 float32 identity matrix"
+  (^AFArray [n]
+   (identity-matrix n :f64))
+  (^AFArray [n dtype]
+   (assert-within-arrayfire! "identity-matrix")
+   (data/identity [n n] (defs/resolve-dtype dtype))))
+
+(defn ones-like
+  "Array of ones with same shape and dtype as `arr`.
+
+   Parameters:
+   - arr: Reference AFArray
+   - dtype: Optional override dtype keyword
+
+   Returns:
+   AFArray filled with ones.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (ones-like arr)        ; ones matching arr
+   (ones-like arr :f32)   ; ones in f32"
+  (^AFArray [^AFArray arr]
+   (ones-like arr nil))
+  (^AFArray [^AFArray arr dtype]
+   (assert-within-arrayfire! "ones-like")
+   (let [dims (array/get-dims arr)
+         dtype-const (if dtype (defs/resolve-dtype dtype) (array/get-type arr))]
+     (data/constant 1.0 (vec dims) dtype-const))))
+
+(defn constant-like
+  "Array filled with `value` having the same shape and dtype as `arr`.
+
+   Parameters:
+   - arr: Reference AFArray
+   - value: Fill value (Number)
+   - dtype: Optional override dtype keyword
+
+   Returns:
+   AFArray filled with `value`.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (constant-like arr 3.14)       ; same shape, same dtype, all 3.14
+   (constant-like arr 0.0 :f32)   ; same shape, f32 dtype, all 0.0"
+  (^AFArray [^AFArray arr value]
+   (constant-like arr value nil))
+  (^AFArray [^AFArray arr value dtype]
+   (assert-within-arrayfire! "constant-like")
+   (let [dims (array/get-dims arr)
+         dtype-const (if dtype (defs/resolve-dtype dtype) (array/get-type arr))]
+     (data/constant (double value) (vec dims) dtype-const))))
 
 ;;;
 ;;; Array information and metadata
@@ -971,7 +1038,7 @@
         ;; assign-gen requires ndims ≥ array rank so all addressed dimensions
         ;; have properly initialised indexers.
         arr-rank     (array/get-numdims arr)
-        assign-ndims (max (count specs) arr-rank)
+        assign-ndims (clojure.core/max (count specs) arr-rank)
         indexers     (index/create-indexers)]
     (try
       ;; Initialise all 4 indexers (avoid uninitialised memory).
@@ -979,6 +1046,796 @@
       (index/assign-gen arr-copy indexers assign-ndims new-values)
       (finally
         (index/release-indexers! indexers)))))
+
+;;;
+;;; Array shape manipulation
+;;;
+
+(defn reshape
+  "Reshape an array to different dimensions without changing its data.
+
+   The total number of elements must remain the same.
+
+   Parameters:
+   - arr: Input AFArray
+   - dims: New dimensions (vector, number, or nil for scalar)
+
+   Returns:
+   AFArray with new shape but same data.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (reshape (range 6) [2 3])  ; 1-D [0..5] → 2×3 matrix"
+  ^AFArray
+  [^AFArray arr dims]
+  (assert-within-arrayfire! "reshape")
+  (data/moddims arr (normalize-dims dims)))
+
+(defn flatten
+  "Flatten an array to a 1-D vector (all elements in column-major order).
+
+   Parameters:
+   - arr: Input AFArray
+
+   Returns:
+   1-D AFArray with all elements.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (flatten (array [[1 2] [3 4]] [2 2]))  ; => [1.0 3.0 2.0 4.0]  (column-major)"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "flatten")
+  (data/flat arr))
+
+(defn transpose
+  "Transpose a 2-D (or higher) array.
+
+   Parameters:
+   - arr: Input AFArray
+   - conjugate?: If true, applies complex conjugation (Hermitian transpose). Default false.
+
+   Returns:
+   Transposed AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (transpose m)        ; regular transpose
+   (transpose m true)   ; conjugate (Hermitian) transpose for complex arrays"
+  (^AFArray [^AFArray arr]
+   (transpose arr false))
+  (^AFArray [^AFArray arr conjugate?]
+   (assert-within-arrayfire! "transpose")
+   (blas/transpose arr conjugate?)))
+
+(defn join
+  "Concatenate arrays along a dimension.
+
+   Parameters:
+   - dim: Dimension along which to concatenate (0 = rows, 1 = cols, etc.)
+   - arrays: Two or more AFArrays to concatenate
+
+   Returns:
+   Concatenated AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (join 0 a b)        ; stack rows (vertical cat)
+   (join 1 a b c)      ; stack cols  (horizontal cat)"
+  ^AFArray
+  [dim & arrays]
+  (assert-within-arrayfire! "join")
+  (case (clojure.core/count arrays)
+    1 (first arrays)
+    2 (data/join dim (first arrays) (second arrays))
+    (data/join-many dim (vec arrays))))
+
+(defn flip
+  "Reverse elements along a dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension along which to flip (default 0)
+
+   Returns:
+   AFArray with elements reversed along the specified dimension.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (flip arr 0)  ; flip rows (vertical flip)
+   (flip arr 1)  ; flip cols (horizontal flip)"
+  (^AFArray [^AFArray arr]
+   (flip arr 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "flip")
+   (data/flip arr dim)))
+
+(defn shift
+  "Cyclically shift elements along dimensions.
+
+   Parameters:
+   - arr: Input AFArray
+   - shifts: Vector of shift amounts per dimension (up to 4 dimensions)
+
+   Returns:
+   AFArray with elements cyclically shifted.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (shift arr [1 0])  ; shift rows by 1"
+  ^AFArray
+  [^AFArray arr shifts]
+  (assert-within-arrayfire! "shift")
+  (let [[s0 s1 s2 s3] (map int (concat shifts (repeat 0)))]
+    (data/shift arr s0 s1 s2 s3)))
+
+(defn tile
+  "Tile (repeat) an array along each dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - repeats: Vector of repetition counts per dimension
+
+   Returns:
+   Tiled AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (tile arr [2 3])  ; tile 2× vertically and 3× horizontally"
+  ^AFArray
+  [^AFArray arr repeats]
+  (assert-within-arrayfire! "tile")
+  (let [[r0 r1 r2 r3] (map int (concat repeats (repeat 1)))]
+    (data/tile arr r0 r1 r2 r3)))
+
+(defn reorder
+  "Permute the dimensions of an array (generalised transpose).
+
+   Parameters:
+   - arr: Input AFArray
+   - order: Vector of 4 dimension indices specifying the new order
+
+   Returns:
+   AFArray with permuted dimensions.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (reorder arr [1 0 2 3])  ; swap rows and cols (same as transpose for 2-D)"
+  ^AFArray
+  [^AFArray arr order]
+  (assert-within-arrayfire! "reorder")
+  (let [[d0 d1 d2 d3] (map int (concat order (clojure.core/range 4)))]
+    (data/reorder arr d0 d1 d2 d3)))
+
+(defn diag
+  "Create a diagonal matrix from a 1-D array, or extract the diagonal of a 2-D array.
+
+   Parameters:
+   - arr: Input AFArray (1-D to create diagonal matrix, 2-D to extract diagonal)
+   - num: Diagonal index offset (default 0 = main diagonal)
+   - extract?: If true, extract diagonal from matrix; if false, create diagonal matrix.
+               Inferred from arr rank when not specified.
+
+   Returns:
+   AFArray diagonal matrix or diagonal vector.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (diag (array [1.0 2.0 3.0] [3]))       ; 3×3 diagonal matrix
+   (diag (array [1.0 4.0 9.0 16.0] [4]))  ; 4×4 diagonal
+   (diag my-matrix)                         ; extract main diagonal"
+  (^AFArray [^AFArray arr]
+   (assert-within-arrayfire! "diag")
+   (let [dims (array/get-dims arr)
+         extract? (> (clojure.core/count (filter #(> % 1) (take 2 dims))) 1)]
+     (if extract?
+       (data/diag-extract arr 0)
+       (data/diag-create arr 0))))
+  (^AFArray [^AFArray arr num]
+   (assert-within-arrayfire! "diag")
+   (let [dims (array/get-dims arr)
+         extract? (> (clojure.core/count (filter #(> % 1) (take 2 dims))) 1)]
+     (if extract?
+       (data/diag-extract arr num)
+       (data/diag-create arr num))))
+  (^AFArray [^AFArray arr num extract?]
+   (assert-within-arrayfire! "diag")
+   (if extract?
+     (data/diag-extract arr num)
+     (data/diag-create arr num))))
+
+(defn lower-tri
+  "Return the lower-triangular part of a matrix.
+
+   Parameters:
+   - arr: Input 2-D AFArray
+   - is-unit-diag?: If true, the diagonal is set to 1; if false, original values are kept (default false)
+
+   Returns:
+   Lower-triangular AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (lower-tri m)       ; lower triangle with original diagonal
+   (lower-tri m true)  ; lower triangle with unit diagonal"
+  (^AFArray [^AFArray arr]
+   (lower-tri arr false))
+  (^AFArray [^AFArray arr is-unit-diag?]
+   (assert-within-arrayfire! "lower-tri")
+   (data/lower arr is-unit-diag?)))
+
+(defn upper-tri
+  "Return the upper-triangular part of a matrix.
+
+   Parameters:
+   - arr: Input 2-D AFArray
+   - is-unit-diag?: If true, the diagonal is set to 1; if false, original values are kept (default false)
+
+   Returns:
+   Upper-triangular AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (upper-tri m)       ; upper triangle with original diagonal
+   (upper-tri m true)  ; upper triangle with unit diagonal"
+  (^AFArray [^AFArray arr]
+   (upper-tri arr false))
+  (^AFArray [^AFArray arr is-unit-diag?]
+   (assert-within-arrayfire! "upper-tri")
+   (data/upper arr is-unit-diag?)))
+
+(defn pad
+  "Pad an array with a border.
+
+   Parameters:
+   - arr: Input AFArray
+   - begin-dims: Vector of beginning pad sizes per dimension
+   - end-dims: Vector of ending pad sizes per dimension
+   - pad-type: Padding type keyword (:zero, :symmetric, :periodic, :clamp-to-edge) — default :zero
+
+   Returns:
+   Padded AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (pad arr [1 1 0 0] [1 1 0 0] :zero)  ; pad 1 on each side of first two dims"
+  (^AFArray [^AFArray arr begin-dims end-dims]
+   (pad arr begin-dims end-dims :zero))
+  (^AFArray [^AFArray arr begin-dims end-dims pad-type]
+   (assert-within-arrayfire! "pad")
+   (let [pad-kw->const {:zero 0 :symmetric 1 :periodic 2 :clamp-to-edge 3}
+         pad-const (get pad-kw->const pad-type 0)
+         [b0 b1 b2 b3] (map int (concat begin-dims (repeat 0)))
+         [e0 e1 e2 e3] (map int (concat end-dims (repeat 0)))]
+     (data/pad arr [b0 b1 b2 b3] [e0 e1 e2 e3] pad-const))))
+
+;;;
+;;; Reductions
+;;;
+
+(defn sum
+  "Sum elements along a dimension (default: all dimensions → scalar).
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension to reduce along (omit to reduce all elements to a scalar)
+
+   Returns:
+   AFArray with summed values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (sum arr)     ; total sum → scalar array
+   (sum arr 0)   ; column-wise sums of a 2-D array"
+  (^AFArray [^AFArray arr]
+   (assert-within-arrayfire! "sum")
+   (algo/sum (data/flat arr) 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "sum")
+   (algo/sum arr dim)))
+
+(defn product
+  "Product of elements along a dimension (default: all dimensions → scalar).
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension to reduce along (omit to reduce all elements to a scalar)
+
+   Returns:
+   AFArray with product values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (product arr)     ; total product → scalar array
+   (product arr 0)   ; column-wise product of a 2-D array"
+  (^AFArray [^AFArray arr]
+   (assert-within-arrayfire! "product")
+   (algo/product (data/flat arr) 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "product")
+   (algo/product arr dim)))
+
+(defn min
+  "Minimum of arrays along a dimension, element-wise, or scalar minimum.
+
+   Dispatch rules for 2-arity:
+   - (min arr dim)    — AFArray reduction along integer dim; dim=-1 reduces all
+   - (min arr1 arr2)  — element-wise minimum of two AFArrays
+   - (min n1  n2)     — falls through to `clojure.core/min`
+
+   Parameters (AFArray arity):
+   - a: Input AFArray
+   - b: Integer dimension OR second AFArray
+
+   Returns:
+   AFArray with minimum values, or Number.
+   Requires an active `with-arrayfire` region for AFArray inputs.
+
+   Example:
+   (min arr)        ; global minimum → scalar array
+   (min arr 0)      ; column-wise minimum of a 2-D array
+   (min a b)        ; element-wise minimum of two arrays
+   (min 3 5)        ; => 3  (Clojure numbers)"
+  ([a]
+   (if (instance? AFArray a)
+     (do (assert-within-arrayfire! "min")
+         (algo/min (data/flat a) 0))
+     (clojure.core/min a)))
+  ([a b]
+   (cond
+     (and (instance? AFArray a) (instance? AFArray b))
+     (do (assert-within-arrayfire! "min")
+         (arith/minof a b))
+     (and (instance? AFArray a) (integer? b))
+     (do (assert-within-arrayfire! "min")
+         (algo/min a b))
+     (instance? AFArray a)
+     (do (assert-within-arrayfire! "min")
+         (algo/min a (int b)))
+     :else
+     (clojure.core/min a b)))
+  ([a b & more]
+   (reduce min (min a b) more)))
+
+(defn max
+  "Maximum of arrays along a dimension, element-wise, or scalar maximum.
+
+   Dispatch rules for 2-arity:
+   - (max arr dim)    — AFArray reduction along integer dim; dim=-1 reduces all
+   - (max arr1 arr2)  — element-wise maximum of two AFArrays
+   - (max n1  n2)     — falls through to `clojure.core/max`
+
+   Parameters (AFArray arity):
+   - a: Input AFArray
+   - b: Integer dimension OR second AFArray
+
+   Returns:
+   AFArray with maximum values, or Number.
+   Requires an active `with-arrayfire` region for AFArray inputs.
+
+   Example:
+   (max arr)        ; global maximum → scalar array
+   (max arr 0)      ; column-wise maximum of a 2-D array
+   (max a b)        ; element-wise maximum of two arrays
+   (max 3 5)        ; => 5  (Clojure numbers)"
+  ([a]
+   (if (instance? AFArray a)
+     (do (assert-within-arrayfire! "max")
+         (algo/max (data/flat a) 0))
+     (clojure.core/max a)))
+  ([a b]
+   (cond
+     (and (instance? AFArray a) (instance? AFArray b))
+     (do (assert-within-arrayfire! "max")
+         (arith/maxof a b))
+     (and (instance? AFArray a) (integer? b))
+     (do (assert-within-arrayfire! "max")
+         (algo/max a b))
+     (instance? AFArray a)
+     (do (assert-within-arrayfire! "max")
+         (algo/max a (int b)))
+     :else
+     (clojure.core/max a b)))
+  ([a b & more]
+   (reduce max (max a b) more)))
+
+(defn all
+  "Test whether all elements are truthy (non-zero) along a dimension.
+
+   Parameters:
+   - arr: Input AFArray (typically b8 boolean array)
+   - dim: Dimension to reduce along (-1 for all, default -1)
+
+   Returns:
+   AFArray (b8) — true if all elements are non-zero.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (all (ge arr 0.0))   ; true if all elements are non-negative"
+  (^AFArray [^AFArray arr]
+   (assert-within-arrayfire! "all")
+   (algo/all-true (data/flat arr) 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "all")
+   (algo/all-true arr dim)))
+
+(defn any
+  "Test whether any element is truthy (non-zero) along a dimension.
+
+   Parameters:
+   - arr: Input AFArray (typically b8 boolean array)
+   - dim: Dimension to reduce along (-1 for all, default -1)
+
+   Returns:
+   AFArray (b8) — true if any element is non-zero.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (any (nan? arr))   ; true if any NaN is present"
+  (^AFArray [^AFArray arr]
+   (assert-within-arrayfire! "any")
+   (algo/any-true (data/flat arr) 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "any")
+   (algo/any-true arr dim)))
+
+(defn count-nonzero
+  "Count non-zero elements along a dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension to reduce along (-1 for all, default -1)
+
+   Returns:
+   AFArray with count of non-zero elements.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (count-nonzero (ne arr 0.0))   ; number of non-zero elements"
+  (^AFArray [^AFArray arr]
+   (assert-within-arrayfire! "count-nonzero")
+   (algo/count (data/flat arr) 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "count-nonzero")
+   (algo/count arr dim)))
+
+(defn where
+  "Return the linear indices of non-zero (true) elements.
+
+   Parameters:
+   - arr: Input AFArray (typically b8 boolean array)
+
+   Returns:
+   AFArray of linear indices where arr is non-zero.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (where (gt arr 0.0))   ; indices of positive elements"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "where")
+  (algo/where arr))
+
+(defn cumsum
+  "Compute inclusive prefix sum (running total) along a dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension along which to accumulate (default 0)
+
+   Returns:
+   AFArray with inclusive prefix sums.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (cumsum (array [1.0 2.0 3.0 4.0] [4]))  ; => [1.0 3.0 6.0 10.0]"
+  (^AFArray [^AFArray arr]
+   (cumsum arr 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "cumsum")
+   (algo/scan arr dim (get defs/binary-op-kw->const :add) true)))
+
+(defn scan
+  "General prefix scan along a dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension along which to scan (default 0)
+   - op: Binary operation keyword (:add, :mul, :min, :max)
+   - inclusive?: True for inclusive scan, false for exclusive (default true)
+
+   Returns:
+   AFArray with scanned values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (scan arr 0 :add)      ; inclusive prefix sum along dim 0
+   (scan arr 0 :mul true) ; inclusive prefix product"
+  (^AFArray [^AFArray arr dim op-kw]
+   (scan arr dim op-kw true))
+  (^AFArray [^AFArray arr dim op-kw inclusive?]
+   (assert-within-arrayfire! "scan")
+   (algo/scan arr dim (get defs/binary-op-kw->const op-kw 0) inclusive?)))
+
+;;;
+;;; Sorting
+;;;
+
+(defn sort
+  "Sort elements along a dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension to sort along (default 0)
+   - ascending?: True for ascending, false for descending (default true)
+
+   Returns:
+   Sorted AFArray.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (sort arr)              ; ascending sort along dim 0
+   (sort arr 0 false)      ; descending"
+  (^AFArray [^AFArray arr]
+   (sort arr 0 true))
+  (^AFArray [^AFArray arr dim]
+   (sort arr dim true))
+  (^AFArray [^AFArray arr dim ascending?]
+   (assert-within-arrayfire! "sort")
+   (algo/sort arr dim ascending?)))
+
+(defn argsort
+  "Sort and return both sorted values and sort-order indices.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension to sort along (default 0)
+   - ascending?: True for ascending, false for descending (default true)
+
+   Returns:
+   Vector of [sorted-values indices] as AFArrays.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (let [[vals idxs] (argsort arr)]
+     ...)"
+  ([^AFArray arr]
+   (argsort arr 0 true))
+  ([^AFArray arr dim]
+   (argsort arr dim true))
+  ([^AFArray arr dim ascending?]
+   (assert-within-arrayfire! "argsort")
+   (algo/sort-index arr dim ascending?)))
+
+;;;
+;;; Set operations
+;;;
+
+(defn unique
+  "Return the unique elements of an array (sorted).
+
+   Parameters:
+   - arr: Input AFArray
+   - is-sorted?: Hint that input is already sorted, enabling a faster path (default false)
+
+   Returns:
+   AFArray of unique elements in sorted order.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (unique (array [3.0 1.0 2.0 1.0 3.0] [5]))  ; => [1.0 2.0 3.0]"
+  (^AFArray [^AFArray arr]
+   (unique arr false))
+  (^AFArray [^AFArray arr is-sorted?]
+   (assert-within-arrayfire! "unique")
+   (algo/set-unique arr is-sorted?)))
+
+(defn array-union
+  "Set union of two arrays (all unique elements from either).
+
+   Parameters:
+   - a: First input AFArray
+   - b: Second input AFArray
+   - is-unique?: Hint that inputs already contain only unique elements (default false)
+
+   Returns:
+   AFArray of sorted union elements.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (array-union a b)"
+  (^AFArray [^AFArray a ^AFArray b]
+   (array-union a b false))
+  (^AFArray [^AFArray a ^AFArray b is-unique?]
+   (assert-within-arrayfire! "array-union")
+   (algo/set-union a b is-unique?)))
+
+(defn array-intersect
+  "Set intersection of two arrays (elements common to both).
+
+   Parameters:
+   - a: First input AFArray
+   - b: Second input AFArray
+   - is-unique?: Hint that inputs already contain only unique elements (default false)
+
+   Returns:
+   AFArray of sorted intersection elements.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (array-intersect a b)"
+  (^AFArray [^AFArray a ^AFArray b]
+   (array-intersect a b false))
+  (^AFArray [^AFArray a ^AFArray b is-unique?]
+   (assert-within-arrayfire! "array-intersect")
+   (algo/set-intersect a b is-unique?)))
+
+;;;
+;;; Type conversion
+;;;
+
+(defn cast
+  "Cast an array from one dtype to another.
+
+   Parameters:
+   - arr: Input AFArray
+   - dtype: Target dtype keyword (e.g. :f32, :f64, :s32)
+
+   Returns:
+   New AFArray with elements cast to target dtype.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (cast arr :f32)   ; downcast f64 → f32"
+  ^AFArray
+  [^AFArray arr dtype]
+  (assert-within-arrayfire! "cast")
+  (arith/cast arr (defs/resolve-dtype dtype)))
+
+(defn clamp
+  "Clamp each element of `arr` to the range [lo, hi].
+
+   Supports scalar or array bounds. Scalar bounds are broadcast automatically.
+
+   Parameters:
+   - arr: Input AFArray
+   - lo: Lower bound (Number or AFArray)
+   - hi: Upper bound (Number or AFArray)
+
+   Returns:
+   AFArray with values clamped to [lo, hi].
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (clamp arr 0.0 1.0)   ; clip to unit interval"
+  ^AFArray
+  [^AFArray arr lo hi]
+  (assert-within-arrayfire! "clamp")
+  (let [arr-type (array/get-type arr)
+        lo-arr (if (instance? AFArray lo) lo (scalar->array lo arr-type))
+        hi-arr (if (instance? AFArray hi) hi (scalar->array hi arr-type))
+        ;; Use batch=true to broadcast scalar bounds [1 1 1 1] across any arr shape
+        batch? (or (clojure.core/not (instance? AFArray lo))
+                   (clojure.core/not (instance? AFArray hi))
+                   (clojure.core/not= (array/get-dims arr) (array/get-dims lo-arr)))]
+    (arith/clamp arr lo-arr hi-arr batch?)))
+
+;;;
+;;; Complex numbers
+;;;
+
+(defn make-complex
+  "Create a complex array from real and (optionally) imaginary arrays.
+
+   Parameters:
+   - real: Real-part AFArray
+   - imag: (optional) Imaginary-part AFArray; defaults to zeros if not provided
+
+   Returns:
+   Complex AFArray (c32 or c64 depending on input dtype).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (make-complex re-arr im-arr)  ; [re+im*i ...]"
+  (^AFArray [^AFArray real]
+   (assert-within-arrayfire! "make-complex")
+   (complex/cplx2 real (zeros-like real)))
+  (^AFArray [^AFArray real ^AFArray imag]
+   (assert-within-arrayfire! "make-complex")
+   (complex/cplx2 real imag)))
+
+(defn real-part
+  "Extract the real part of a complex array.
+
+   Parameters:
+   - arr: Complex AFArray (c32 or c64)
+
+   Returns:
+   Real-part AFArray (f32 or f64).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (real-part complex-arr)  ; => f64 array of real parts"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "real-part")
+  (complex/real arr))
+
+(defn imag-part
+  "Extract the imaginary part of a complex array.
+
+   Parameters:
+   - arr: Complex AFArray (c32 or c64)
+
+   Returns:
+   Imaginary-part AFArray (f32 or f64).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (imag-part complex-arr)  ; => f64 array of imaginary parts"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "imag-part")
+  (complex/imag arr))
+
+(defn conjg
+  "Complex conjugate of each element (a + bi → a - bi).
+
+   Parameters:
+   - arr: Complex AFArray (c32 or c64)
+
+   Returns:
+   Complex AFArray with negated imaginary parts.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (conjg complex-arr)"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "conjg")
+  (complex/conjg arr))
+
+;;;
+;;; Linear algebra essentials
+;;;
+
+(defn matmul
+  "Matrix multiplication (dense or sparse-dense).
+
+   Computes lhs × rhs. Both arrays must be 2-D matrices with compatible shapes.
+
+   Parameters:
+   - lhs: Left-hand side AFArray (m × k)
+   - rhs: Right-hand side AFArray (k × n)
+
+   Returns:
+   Result AFArray (m × n).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (matmul A B)   ; A × B"
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "matmul")
+  (blas/matmul lhs rhs))
+
+(defn dot
+  "Dot (inner) product of two vectors, returning a scalar array.
+
+   Parameters:
+   - lhs: First vector AFArray
+   - rhs: Second vector AFArray (same length as lhs)
+
+   Returns:
+   Scalar AFArray with the dot product.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (dot u v)   ; u · v"
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "dot")
+  (blas/dot lhs rhs))
 
 ;;;
 ;;; Basic arithmetic functions
@@ -2227,27 +3084,533 @@
     :else
     (arith/ge (scalar->array lhs (array/get-type rhs)) rhs true)))
 
+;;;
+;;; Logical and bitwise operations
+;;;
+
+(defn not
+  "Element-wise logical NOT of a boolean array (b8 → b8).
+
+   Parameters:
+   - arr: Input AFArray (b8 boolean array)
+
+   Returns:
+   AFArray (b8) with each element negated.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (not (nan? arr))   ; marks non-NaN elements"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "not")
+  (arith/not arr))
+
+(defn logical-and
+  "Element-wise logical AND of two boolean arrays (b8).
+
+   Parameters:
+   - lhs: Left-hand AFArray (b8)
+   - rhs: Right-hand AFArray (b8)
+
+   Returns:
+   AFArray (b8) — true where both inputs are non-zero.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (logical-and (ge arr 0.0) (le arr 1.0))  ; elements in [0, 1]"
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "logical-and")
+  (arith/and lhs rhs))
+
+(defn logical-or
+  "Element-wise logical OR of two boolean arrays (b8).
+
+   Parameters:
+   - lhs: Left-hand AFArray (b8)
+   - rhs: Right-hand AFArray (b8)
+
+   Returns:
+   AFArray (b8) — true where either input is non-zero.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (logical-or (nan? arr) (inf? arr))  ; marks NaN or infinite elements"
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "logical-or")
+  (arith/or lhs rhs))
+
+(defn zero?
+  "Element-wise zero check. Returns a b8 boolean array.
+
+   Parameters:
+   - arr: Input AFArray
+
+   Returns:
+   AFArray (b8) — true (1) for zero elements, false (0) otherwise.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (zero? arr)  ; b8 array marking zero elements"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "zero?")
+  (arith/zero? arr))
+
+(defn bitnot
+  "Bitwise NOT of each element.
+
+   Supported integer types: b8 s32 u32 u8 s64 u64 s16 u16.
+
+   Parameters:
+   - a: Input AFArray (integer dtype)
+
+   Returns:
+   AFArray with bitwise NOT applied.
+   Requires an active `with-arrayfire` region."
+  ^AFArray
+  [^AFArray a]
+  (assert-within-arrayfire! "bitnot")
+  (arith/bitnot a))
+
+(defn bitand
+  "Element-wise bitwise AND.
+
+   Supported integer types: b8 s32 u32 u8 s64 u64 s16 u16.
+
+   Parameters:
+   - lhs: Left-hand AFArray (integer dtype)
+   - rhs: Right-hand AFArray (integer dtype)
+
+   Returns:
+   AFArray with bitwise AND applied.
+   Requires an active `with-arrayfire` region."
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "bitand")
+  (arith/bitand lhs rhs))
+
+(defn bitor
+  "Element-wise bitwise OR.
+
+   Supported integer types: b8 s32 u32 u8 s64 u64 s16 u16.
+
+   Parameters:
+   - lhs: Left-hand AFArray (integer dtype)
+   - rhs: Right-hand AFArray (integer dtype)
+
+   Returns:
+   AFArray with bitwise OR applied.
+   Requires an active `with-arrayfire` region."
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "bitor")
+  (arith/bitor lhs rhs))
+
+(defn bitxor
+  "Element-wise bitwise XOR.
+
+   Supported integer types: b8 s32 u32 u8 s64 u64 s16 u16.
+
+   Parameters:
+   - lhs: Left-hand AFArray (integer dtype)
+   - rhs: Right-hand AFArray (integer dtype)
+
+   Returns:
+   AFArray with bitwise XOR applied.
+   Requires an active `with-arrayfire` region."
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "bitxor")
+  (arith/bitxor lhs rhs))
+
+;;;
+;;; Extended math
+;;;
+
+(defn minof
+  "Element-wise minimum of two arrays.
+
+   Parameters:
+   - lhs: Left-hand AFArray
+   - rhs: Right-hand AFArray
+
+   Returns:
+   AFArray with element-wise minimum values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (minof arr1 arr2)"
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "minof")
+  (arith/minof lhs rhs))
+
+(defn maxof
+  "Element-wise maximum of two arrays.
+
+   Parameters:
+   - lhs: Left-hand AFArray
+   - rhs: Right-hand AFArray
+
+   Returns:
+   AFArray with element-wise maximum values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (maxof arr1 arr2)"
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "maxof")
+  (arith/maxof lhs rhs))
+
+(defn hypot
+  "Element-wise sqrt(lhs² + rhs²), numerically safe against overflow.
+
+   Parameters:
+   - lhs: Left-hand AFArray
+   - rhs: Right-hand AFArray
+
+   Returns:
+   AFArray with hypotenuse values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (hypot (array [3.0] [1]) (array [4.0] [1]))  ; => [5.0]"
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "hypot")
+  (arith/hypot lhs rhs))
+
+(defn root
+  "Element-wise nth root: nth-root(x) = x^(1/n).
+
+   Parameters:
+   - arr: Input AFArray
+   - n: Root degree (Number or AFArray)
+
+   Returns:
+   AFArray with nth roots.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (root arr 3.0)  ; cube root"
+  ^AFArray
+  [^AFArray arr n]
+  (assert-within-arrayfire! "root")
+  (let [scalar-n? (clojure.core/not (instance? AFArray n))
+        n-arr (if (instance? AFArray n) n (scalar->array n (array/get-type arr)))]
+    ;; arith/root: lhs = root order, rhs = values; use batch when n is a scalar
+    (arith/root n-arr arr scalar-n?)))
+
+;;;
+;;; Conditional selection
+;;;
+
+(defn select-where
+  "Select elements from `a` or `b` based on a boolean condition array.
+
+   Returns `a[i]` where `cond[i]` is non-zero, else `b[i]`.
+
+   Parameters:
+   - cond: Boolean AFArray (b8) used as selector
+   - a: AFArray for true positions (or scalar Number)
+   - b: AFArray for false positions (or scalar Number)
+
+   Returns:
+   AFArray with selected elements.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (select-where (ge arr 0.0) arr (neg arr))  ; abs value"
+  ^AFArray
+  [^AFArray condition a b]
+  (assert-within-arrayfire! "select-where")
+  (cond
+    (and (instance? AFArray a) (instance? AFArray b))
+    (data/select condition a b)
+    (instance? AFArray a)
+    (data/select-scalar-r condition a (double b))
+    (instance? AFArray b)
+    (data/select-scalar-l condition (double a) b)
+    :else
+    (data/select condition
+                 (constant (double a) (effective-shape condition) (datatype condition))
+                 (constant (double b) (effective-shape condition) (datatype condition)))))
+
+(defn replace-where!
+  "Replace elements in `arr` with values from `b` wherever `cond` is false (zero).
+
+   Modifies `arr` in-place. Use for mask-based value replacement.
+
+   Parameters:
+   - arr: Target AFArray (modified in-place)
+   - cond: Boolean AFArray (b8) — elements where cond=0 are replaced
+   - b: Replacement AFArray (or scalar Number)
+
+   Returns:
+   `arr` (modified in-place).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (replace-where! arr (ge arr 0.0) 0.0)  ; set negatives to zero"
+  ^AFArray
+  [^AFArray arr ^AFArray condition b]
+  (assert-within-arrayfire! "replace-where!")
+  (if (instance? AFArray b)
+    (data/replace! arr condition b)
+    (data/replace-scalar! arr condition (double b)))
+  arr)
+
+;;;
+;;; Array type predicates
+;;;
+
+(defn empty-array?
+  "Return true if `arr` has zero elements.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "empty-array?")
+  (array/empty? arr))
+
+(defn scalar-array?
+  "Return true if `arr` is a scalar (single-element) array.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "scalar-array?")
+  (array/scalar? arr))
+
+(defn row-array?
+  "Return true if `arr` is a row vector (1×n).
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "row-array?")
+  (array/row? arr))
+
+(defn column-array?
+  "Return true if `arr` is a column vector (n×1).
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "column-array?")
+  (array/column? arr))
+
+(defn vector-array?
+  "Return true if `arr` is a 1-D vector (row or column).
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "vector-array?")
+  (array/vector? arr))
+
+(defn complex-array?
+  "Return true if `arr` has a complex element type (c32 or c64).
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "complex-array?")
+  (array/complex? arr))
+
+(defn real-array?
+  "Return true if `arr` has a real (non-complex) element type.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "real-array?")
+  (array/real? arr))
+
+(defn double-array?
+  "Return true if `arr` has f64 (double-precision) element type.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "double-array?")
+  (array/double? arr))
+
+(defn single-array?
+  "Return true if `arr` has f32 (single-precision) element type.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "single-array?")
+  (array/single? arr))
+
+(defn half-array?
+  "Return true if `arr` has f16 (half-precision) element type.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "half-array?")
+  (array/half? arr))
+
+(defn integer-array?
+  "Return true if `arr` has an integer element type.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "integer-array?")
+  (array/integer? arr))
+
+(defn bool-array?
+  "Return true if `arr` has a b8 (boolean) element type.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "bool-array?")
+  (array/bool? arr))
+
+(defn sparse-array?
+  "Return true if `arr` is a sparse array.
+   Requires an active `with-arrayfire` region."
+  [^AFArray arr]
+  (assert-within-arrayfire! "sparse-array?")
+  (array/sparse? arr))
+
+;;;
+;;; Device introspection and evaluation
+;;;
+
+(defn device-count
+  "Number of available compute devices on the active backend.
+
+   Returns:
+   Integer number of devices.
+   Requires an active `with-arrayfire` region."
+  []
+  (assert-within-arrayfire! "device-count")
+  (device/get-device-count))
+
+(defn available-backends
+  "Set of available backend keywords (:cpu, :cuda, :opencl, :oneapi).
+
+   Returns:
+   Set of backend keywords for all available backends.
+   Requires an active `with-arrayfire` region."
+  []
+  (assert-within-arrayfire! "available-backends")
+  (let [bitmask (device/get-available-backends)]
+    (set (keep (fn [[k v]] (when (and (pos? k) (pos? (bit-and bitmask k))) v))
+               defs/backend-const->kw))))
+
+(defn backend-device-info
+  "Map of information about the currently active device.
+
+   Returns:
+   Map with device information.
+   Requires an active `with-arrayfire` region."
+  []
+  (assert-within-arrayfire! "backend-device-info")
+  (device/device-info))
+
+(defn eval!
+  "Force immediate GPU evaluation of a lazy array (JIT).
+
+   ArrayFire uses lazy evaluation by default; `eval!` forces
+   materialization of the computation graph for `arr`.
+
+   Parameters:
+   - arr: AFArray to evaluate
+
+   Returns:
+   `arr` (same object, now evaluated).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (eval! result-arr)  ; force GPU computation now"
+  ^AFArray
+  [^AFArray arr]
+  (assert-within-arrayfire! "eval!")
+  (device/eval-array! arr)
+  arr)
+
+;;;
+;;; Random seed management
+;;;
+
+(defn set-random-seed!
+  "Set the global random seed for reproducible results.
+
+   Parameters:
+   - seed: Long integer seed value
+
+   Returns:
+   nil.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (set-random-seed! 42)"
+  [seed]
+  (assert-within-arrayfire! "set-random-seed!")
+  (random/set-seed! seed))
+
+(defn get-random-seed
+  "Return the current global random seed.
+
+   Returns:
+   Long integer seed value.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (get-random-seed)"
+  []
+  (assert-within-arrayfire! "get-random-seed")
+  (random/get-seed))
+
+;;;
+;;; Debugging utilities
+;;;
+
+(defn print-array
+  "Print array contents to stdout. Useful for REPL debugging.
+
+   Parameters:
+   - arr: AFArray to print
+   - exp: (optional) Label string to display before the array
+
+   Returns:
+   nil.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (print-array arr \"my array\")"
+  ([^AFArray arr]
+   (assert-within-arrayfire! "print-array")
+   (device/info-string)
+   (println (->value arr)))
+  ([^AFArray arr exp]
+   (assert-within-arrayfire! "print-array")
+   (println (str exp ":"))
+   (println (->value arr))))
+
+(defn array->string
+  "Return a formatted string representation of an array.
+
+   Parameters:
+   - arr: AFArray to represent
+
+   Returns:
+   String representation of the array values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (array->string arr)"
+  [^AFArray arr]
+  (assert-within-arrayfire! "array->string")
+  (str (->value arr)))
+
 (comment
   ;; with-arrayfire REPL experiments
 
   ;; Basic usage — explicit host conversion (array returns AFArray)
   (with-arrayfire
     (let [a (array [1.0 2.0 3.0 4.0] [2 2])]
-      (vec (to-host a 4))))
+      (vec (array/array->host a 4))))
 
   ;; Empty opts map (valid — treated as no options)
   (with-arrayfire {}
-    (vec (to-host (array [1.0 2.0] [2]) 2)))
+    (vec (array/array->host (array [1.0 2.0] [2]) 2)))
 
   ;; With backend selection
   (with-arrayfire {:backend :cpu}
     (let [a (array [1.0 2.0 3.0] [3])]
-      (vec (to-host a 3))))
+      (vec (array/array->host a 3))))
 
   ;; With shared arena for multi-threaded body
   (with-arrayfire {:arena-type :shared}
     (let [f (future (array [1.0 2.0] [2]))]
-      (vec (to-host @f 2))))
+      (vec (array/array->host @f 2))))
 
   ;; Introspect the current backend/device frame from inside a switching region
   (with-arrayfire {:backend :cpu :device 0}
@@ -2269,7 +3632,7 @@
     (let [data (double-array [1.0 2.0 3.0 4.0 5.0 6.0])]
       (array data [2 3] :f64)))
 
-  ;; ── Indexing and manipulation ────────────────────────────────────────────────
+  ;; Indexing and manipulation
   ;; col-major 2×3:  col0=[1,2]  col1=[3,4]  col2=[5,6]
   ;; row0=[1,3,5]    row1=[2,4,6]     element[row,col] at [1,2] = 6.0
   (with-arrayfire {:backend :cpu :converter-fn ->value}

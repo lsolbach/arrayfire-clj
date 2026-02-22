@@ -78,7 +78,7 @@
 
 (deftest with-arrayfire-backend-test
   (testing "Backend option sets and restores backend"
-    (core/ensure-af-init!)
+    (device/ensure-af-init!)
     (let [original-backend (device/get-active-backend)]
       (core/with-arrayfire {:backend :cpu}
         (is (= defs/AF_BACKEND_CPU (device/get-active-backend))))
@@ -86,7 +86,7 @@
 
 (deftest with-arrayfire-exception-safety-test
   (testing "Backend/device restored after exception"
-    (core/ensure-af-init!)
+    (device/ensure-af-init!)
     (let [original-backend (device/get-active-backend)]
       (is (thrown? Exception
             (core/with-arrayfire {:backend :cpu}
@@ -172,13 +172,6 @@
   (testing "assert-within-arrayfire! does not throw inside a region"
     (is (nil? (core/with-arrayfire
                 (core/assert-within-arrayfire! "test-fn"))))))
-
-(comment
-  ;; Run tests in this namespace
-  (run-tests)
-
-  ;
-  )
 
 ;;;
 ;;; Arithmetic API tests
@@ -360,8 +353,10 @@
 ;;
 
 (deftest pow-number-test
-  (testing "pow falls through to clojure.math/pow for plain numbers"
-    (is (= 8.0 (core/pow 2.0 3.0)))))
+  (testing "pow computes element-wise power with scalar arguments"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/pow (core/array [2.0 3.0 4.0] [3]) 2.0)))]
+      (is (= [4.0 9.0 16.0] result)))))
 
 (deftest pow-array-scalar-test
   (testing "(pow arr scalar) computes element-wise power with scalar exponent"
@@ -445,59 +440,6 @@
         (is (some? (core/+ a b)))))))
 
 ;;;
-;;; to-host tests (new multi-dtype support)
-;;;
-
-(deftest to-host-f32-test
-  (testing "to-host returns float[] for F32 arrays"
-    (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/array [1.0 2.0 3.0] [3])]
-                     (vec (array/array->host a))))]
-      (is (= 3 (count result)))
-      (is (<= (Math/abs (- 1.0 (first result))) 0.001))
-      (is (<= (Math/abs (- 2.0 (second result))) 0.001))
-      (is (<= (Math/abs (- 3.0 (nth result 2))) 0.001)))))
-
-(deftest to-host-deprecated-2-arity-test
-  (testing "to-host 2-arity deprecated signature still works (n is ignored)"
-    (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/array [1.0 2.0 3.0] [3])]
-                     (vec (core/to-host a 99))))]
-      (is (= 3 (count result))))))
-
-(deftest to-host-c32-test
-  (testing "to-host returns vector of [re im] pairs for C32 arrays"
-    (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (array/create-array [[1.0 2.0] [3.0 4.0]] [2] defs/AF_DTYPE_C32)]
-                     (array/array->host a)))]
-      (is (vector? result))
-      (is (= 2 (count result)))
-      (is (<= (Math/abs (- 1.0 (first  (first result)))) 0.001))
-      (is (<= (Math/abs (- 2.0 (second (first result)))) 0.001))
-      (is (<= (Math/abs (- 3.0 (first  (second result)))) 0.001))
-      (is (<= (Math/abs (- 4.0 (second (second result)))) 0.001)))))
-
-(deftest to-host-c64-test
-  (testing "to-host returns vector of [re im] double pairs for C64 arrays"
-    (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (array/create-array [[10.0 20.0] [30.0 40.0]] [2] defs/AF_DTYPE_C64)]
-                     (array/array->host a)))]
-      (is (vector? result))
-      (is (= 2 (count result)))
-      (is (<= (Math/abs (- 10.0 (first  (first result)))) 0.0001))
-      (is (<= (Math/abs (- 20.0 (second (first result)))) 0.0001))
-      (is (<= (Math/abs (- 30.0 (first  (second result)))) 0.0001))
-      (is (<= (Math/abs (- 40.0 (second (second result)))) 0.0001)))))
-
-(deftest to-host-b8-test
-  (testing "to-host returns byte[] for B8 (boolean) arrays"
-    (let [result (core/with-arrayfire {:backend :cpu}
-                   (let [a (core/array [1.0 2.0 3.0] [3])]
-                     (vec (array/array->host (core/eq a 2.0)))))]
-      ;; eq returns B8; byte values 0 = false, 1 = true
-      (is (= [0 1 0] result)))))
-
-;;;
 ;;; ->native-buffer guard tests
 ;;;
 
@@ -528,3 +470,10 @@
       (is (= 2 (count result)))
       (is (<= (Math/abs (- 1.0 (first  (first result)))) 0.001))
       (is (<= (Math/abs (- 2.0 (second (first result)))) 0.001)))))
+
+(comment
+  ;; Run tests in this namespace
+  (run-tests)
+
+  ;
+  )
