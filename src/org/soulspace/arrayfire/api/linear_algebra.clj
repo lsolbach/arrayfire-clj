@@ -78,7 +78,11 @@
      conjugate? — (optional) if true, also conjugate elements; default false
 
    Returns:
-     New transposed AFArray."
+     New transposed AFArray.
+   
+   Example:
+     (transpose arr)  ; returns Aᵀ, the transpose of arr
+     (transpose arr true)  ; returns Aᴴ, the conjugate transpose of arr"
   (^AFArray [^AFArray arr]
    (core/transpose arr))
   (^AFArray [^AFArray arr conjugate?]
@@ -92,7 +96,11 @@
      conjugate? — (optional) if true, also conjugate elements; default false
 
    Returns:
-     The (mutated) `arr`."
+     The (mutated) `arr`.
+   
+   Example:
+     (transpose! arr)  ; in-place transpose of arr
+     (transpose! arr true)  ; in-place conjugate transpose of arr"
   (^AFArray [^AFArray arr]
    (transpose! arr false))
   (^AFArray [^AFArray arr conjugate?]
@@ -110,7 +118,10 @@
      arr — AFArray to conjugate-transpose
 
    Returns:
-     New conjugate-transposed AFArray."
+     New conjugate-transposed AFArray.
+   
+   Example:
+     (adjoint arr)  ; returns Aᴴ, the conjugate transpose of arr"
   ^AFArray [^AFArray arr]
   (core/transpose arr true))
 
@@ -125,7 +136,10 @@
      arr — square AFArray to conjugate-transpose in-place (mutated)
 
    Returns:
-     The (mutated) `arr`."
+     The (mutated) `arr`.
+   
+   Example:
+     (adjoint! arr)  ; in-place conjugate transpose of arr"
   ^AFArray [^AFArray arr]
   (transpose! arr true))
 
@@ -147,7 +161,12 @@
      beta  — scalar multiplier for accumulation (0.0 for no accumulation)
 
    Returns:
-     New AFArray result."
+     New AFArray result.
+   
+   Example:
+     (gemm :none :none 2.0 a b 0.0) ; computes 2.0 * A * B
+     (gemm :trans :none 1.0 a b 0.0) ; computes Aᵀ * B
+     (gemm :none :ctrans 1.0 a b 0.0) ; computes A * Bᴴ"
   ^AFArray [op-a op-b alpha ^AFArray a ^AFArray b beta]
   (assert-within-arrayfire! "gemm")
   (blas/gemm (defs/resolve-mat-prop op-a)
