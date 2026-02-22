@@ -72,50 +72,6 @@
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
-;;; Private keyword→integer constant resolution
-;;;
-
-(defn- resolve-conv-mode
-  "Resolve a convolution mode keyword to its integer constant."
-  [mode]
-  (if (keyword? mode)
-    (or (defs/conv-mode-kw->const mode)
-        (throw (ex-info (str "Unknown convolution mode keyword: " mode
-                             ". Valid keys: " (keys defs/conv-mode-kw->const))
-                        {:mode mode})))
-    (int mode)))
-
-(defn- resolve-conv-domain
-  "Resolve a convolution domain keyword to its integer constant."
-  [domain]
-  (if (keyword? domain)
-    (or (defs/conv-domain-kw->const domain)
-        (throw (ex-info (str "Unknown convolution domain keyword: " domain
-                             ". Valid keys: " (keys defs/conv-domain-kw->const))
-                        {:domain domain})))
-    (int domain)))
-
-(defn- resolve-interp
-  "Resolve an interpolation method keyword to its integer constant."
-  [method]
-  (if (keyword? method)
-    (or (defs/interp-kw->const method)
-        (throw (ex-info (str "Unknown interpolation method keyword: " method
-                             ". Valid keys: " (keys defs/interp-kw->const))
-                        {:method method})))
-    (int method)))
-
-(defn- resolve-edge-pad
-  "Resolve an edge padding keyword to its integer constant."
-  [edge-pad]
-  (if (keyword? edge-pad)
-    (or (defs/border-kw->const edge-pad)
-        (throw (ex-info (str "Unknown edge padding keyword: " edge-pad
-                             ". Valid keys: " (keys defs/border-kw->const))
-                        {:edge-pad edge-pad})))
-    (int edge-pad)))
-
-;;;
 ;;; Fast Fourier Transform (FFT) — Out-of-place
 ;;;
 
@@ -691,10 +647,10 @@
    (signal/convolve1 signal filter))
   (^AFArray [^AFArray signal ^AFArray filter mode]
    (assert-within-arrayfire! "convolve1")
-   (signal/convolve1 signal filter (resolve-conv-mode mode)))
+   (signal/convolve1 signal filter (defs/resolve-conv-mode mode)))
   (^AFArray [^AFArray signal ^AFArray filter mode domain]
    (assert-within-arrayfire! "convolve1")
-   (signal/convolve1 signal filter (resolve-conv-mode mode) (resolve-conv-domain domain))))
+   (signal/convolve1 signal filter (defs/resolve-conv-mode mode) (defs/resolve-conv-domain domain))))
 
 (defn convolve2
   "Compute 2D convolution of a signal with a filter kernel.
@@ -718,10 +674,10 @@
    (signal/convolve2 signal filter))
   (^AFArray [^AFArray signal ^AFArray filter mode]
    (assert-within-arrayfire! "convolve2")
-   (signal/convolve2 signal filter (resolve-conv-mode mode)))
+   (signal/convolve2 signal filter (defs/resolve-conv-mode mode)))
   (^AFArray [^AFArray signal ^AFArray filter mode domain]
    (assert-within-arrayfire! "convolve2")
-   (signal/convolve2 signal filter (resolve-conv-mode mode) (resolve-conv-domain domain))))
+   (signal/convolve2 signal filter (defs/resolve-conv-mode mode) (defs/resolve-conv-domain domain))))
 
 (defn convolve3
   "Compute 3D convolution of a signal with a filter kernel.
@@ -739,10 +695,10 @@
    (signal/convolve3 signal filter))
   (^AFArray [^AFArray signal ^AFArray filter mode]
    (assert-within-arrayfire! "convolve3")
-   (signal/convolve3 signal filter (resolve-conv-mode mode)))
+   (signal/convolve3 signal filter (defs/resolve-conv-mode mode)))
   (^AFArray [^AFArray signal ^AFArray filter mode domain]
    (assert-within-arrayfire! "convolve3")
-   (signal/convolve3 signal filter (resolve-conv-mode mode) (resolve-conv-domain domain))))
+   (signal/convolve3 signal filter (defs/resolve-conv-mode mode) (defs/resolve-conv-domain domain))))
 
 (defn convolve2-sep
   "Compute 2D separable convolution (faster for separable kernels).
@@ -767,7 +723,7 @@
    (signal/convolve2-sep col-filter row-filter signal))
   (^AFArray [^AFArray col-filter ^AFArray row-filter ^AFArray signal mode]
    (assert-within-arrayfire! "convolve2-sep")
-   (signal/convolve2-sep col-filter row-filter signal (resolve-conv-mode mode))))
+   (signal/convolve2-sep col-filter row-filter signal (defs/resolve-conv-mode mode))))
 
 (defn convolve2-nn
   "Compute 2D convolution optimized for neural networks.
@@ -817,7 +773,7 @@
    (signal/fft-convolve1 signal filter))
   (^AFArray [^AFArray signal ^AFArray filter mode]
    (assert-within-arrayfire! "fft-convolve1")
-   (signal/fft-convolve1 signal filter (resolve-conv-mode mode))))
+   (signal/fft-convolve1 signal filter (defs/resolve-conv-mode mode))))
 
 (defn fft-convolve2
   "Compute 2D convolution using FFT (frequency domain).
@@ -834,7 +790,7 @@
    (signal/fft-convolve2 signal filter))
   (^AFArray [^AFArray signal ^AFArray filter mode]
    (assert-within-arrayfire! "fft-convolve2")
-   (signal/fft-convolve2 signal filter (resolve-conv-mode mode))))
+   (signal/fft-convolve2 signal filter (defs/resolve-conv-mode mode))))
 
 (defn fft-convolve3
   "Compute 3D convolution using FFT (frequency domain).
@@ -851,7 +807,7 @@
    (signal/fft-convolve3 signal filter))
   (^AFArray [^AFArray signal ^AFArray filter mode]
    (assert-within-arrayfire! "fft-convolve3")
-   (signal/fft-convolve3 signal filter (resolve-conv-mode mode))))
+   (signal/fft-convolve3 signal filter (defs/resolve-conv-mode mode))))
 
 ;;;
 ;;; Digital Filters
@@ -908,7 +864,7 @@
    (signal/medfilt1 in (long window)))
   (^AFArray [^AFArray in window edge-pad]
    (assert-within-arrayfire! "median-filter1")
-   (signal/medfilt1 in (long window) (resolve-edge-pad edge-pad))))
+   (signal/medfilt1 in (long window) (defs/resolve-edge-pad edge-pad))))
 
 (defn median-filter2
   "Apply 2D median filter for noise reduction.
@@ -940,7 +896,7 @@
    (signal/medfilt in (long wind-length) (long wind-width)))
   (^AFArray [^AFArray in wind-length wind-width edge-pad]
    (assert-within-arrayfire! "median-filter2")
-   (signal/medfilt in (long wind-length) (long wind-width) (resolve-edge-pad edge-pad))))
+   (signal/medfilt in (long wind-length) (long wind-width) (defs/resolve-edge-pad edge-pad))))
 
 ;;;
 ;;; Interpolation / Approximation
@@ -969,10 +925,10 @@
    (signal/approx1 yi xo))
   (^AFArray [^AFArray yi ^AFArray xo method]
    (assert-within-arrayfire! "approx1")
-   (signal/approx1 yi xo (resolve-interp method)))
+   (signal/approx1 yi xo (defs/resolve-interp method)))
   (^AFArray [^AFArray yi ^AFArray xo method off-grid]
    (assert-within-arrayfire! "approx1")
-   (signal/approx1 yi xo (resolve-interp method) (float off-grid))))
+   (signal/approx1 yi xo (defs/resolve-interp method) (float off-grid))))
 
 (defn approx1-uniform
   "1D interpolation on a uniform grid.
@@ -1001,10 +957,10 @@
    (signal/approx1-uniform yi xo (int xdim) (double xi-beg) (double xi-step)))
   (^AFArray [^AFArray yi ^AFArray xo xdim xi-beg xi-step method]
    (assert-within-arrayfire! "approx1-uniform")
-   (signal/approx1-uniform yi xo (int xdim) (double xi-beg) (double xi-step) (resolve-interp method)))
+   (signal/approx1-uniform yi xo (int xdim) (double xi-beg) (double xi-step) (defs/resolve-interp method)))
   (^AFArray [^AFArray yi ^AFArray xo xdim xi-beg xi-step method off-grid]
    (assert-within-arrayfire! "approx1-uniform")
-   (signal/approx1-uniform yi xo (int xdim) (double xi-beg) (double xi-step) (resolve-interp method) (float off-grid))))
+   (signal/approx1-uniform yi xo (int xdim) (double xi-beg) (double xi-step) (defs/resolve-interp method) (float off-grid))))
 
 (defn approx2
   "2D interpolation at specified positions.
@@ -1029,10 +985,10 @@
    (signal/approx2 zi xo yo))
   (^AFArray [^AFArray zi ^AFArray xo ^AFArray yo method]
    (assert-within-arrayfire! "approx2")
-   (signal/approx2 zi xo yo (resolve-interp method)))
+   (signal/approx2 zi xo yo (defs/resolve-interp method)))
   (^AFArray [^AFArray zi ^AFArray xo ^AFArray yo method off-grid]
    (assert-within-arrayfire! "approx2")
-   (signal/approx2 zi xo yo (resolve-interp method) (float off-grid))))
+   (signal/approx2 zi xo yo (defs/resolve-interp method) (float off-grid))))
 
 (defn approx2-uniform
   "2D interpolation on a uniform grid.
@@ -1065,12 +1021,12 @@
    (assert-within-arrayfire! "approx2-uniform")
    (signal/approx2-uniform zi xo (int xdim) (double xi-beg) (double xi-step)
                             yo (int ydim) (double yi-beg) (double yi-step)
-                            (resolve-interp method)))
+                            (defs/resolve-interp method)))
   (^AFArray [^AFArray zi ^AFArray xo xdim xi-beg xi-step ^AFArray yo ydim yi-beg yi-step method off-grid]
    (assert-within-arrayfire! "approx2-uniform")
    (signal/approx2-uniform zi xo (int xdim) (double xi-beg) (double xi-step)
                             yo (int ydim) (double yi-beg) (double yi-step)
-                            (resolve-interp method) (float off-grid))))
+                            (defs/resolve-interp method) (float off-grid))))
 
 
 (comment

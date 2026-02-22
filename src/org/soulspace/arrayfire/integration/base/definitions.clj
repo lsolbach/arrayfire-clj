@@ -161,6 +161,16 @@
   (into {}
         (map (fn [[k v]] [v k]) interp-kw->const)))
 
+(defn resolve-interp
+  "Resolve an interpolation method keyword to its integer constant."
+  [method]
+  (if (keyword? method)
+    (or (interp-kw->const method)
+        (throw (ex-info (str "Unknown interpolation method keyword: " method
+                             ". Valid keys: " (keys interp-kw->const))
+                        {:method method})))
+    (int method)))
+
 (def border-kw->const
   "Mapping of border/padding type keywords to ArrayFire constants."
   {:zero          defs/AF_PAD_ZERO
@@ -172,6 +182,16 @@
   "Mapping of ArrayFire border/padding type constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) border-kw->const)))
+
+(defn resolve-edge-pad
+  "Resolve an edge padding keyword to its integer constant."
+  [edge-pad]
+  (if (keyword? edge-pad)
+    (or (border-kw->const edge-pad)
+        (throw (ex-info (str "Unknown edge padding keyword: " edge-pad
+                             ". Valid keys: " (keys border-kw->const))
+                        {:edge-pad edge-pad})))
+    (int edge-pad)))
 
 (def connectivity-kw->const
   "Mapping of connectivity keywords to ArrayFire constants."
@@ -193,6 +213,16 @@
   (into {}
         (map (fn [[k v]] [v k]) conv-mode-kw->const)))
 
+(defn resolve-conv-mode
+  "Resolve a convolution mode keyword to its integer constant."
+  [mode]
+  (if (keyword? mode)
+    (or (conv-mode-kw->const mode)
+        (throw (ex-info (str "Unknown convolution mode keyword: " mode
+                             ". Valid keys: " (keys conv-mode-kw->const))
+                        {:mode mode})))
+    (int mode)))
+
 (def conv-domain-kw->const
   "Mapping of convolution domain keywords to ArrayFire constants."
   {:auto    defs/AF_CONV_AUTO
@@ -203,6 +233,16 @@
   "Mapping of ArrayFire convolution domain constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) conv-domain-kw->const)))
+
+(defn resolve-conv-domain
+  "Resolve a convolution domain keyword to its integer constant."
+  [domain]
+  (if (keyword? domain)
+    (or (conv-domain-kw->const domain)
+        (throw (ex-info (str "Unknown convolution domain keyword: " domain
+                             ". Valid keys: " (keys conv-domain-kw->const))
+                        {:domain domain})))
+    (int domain)))
 
 (def match-type-kw->const
   "Mapping of match type keywords to ArrayFire constants."

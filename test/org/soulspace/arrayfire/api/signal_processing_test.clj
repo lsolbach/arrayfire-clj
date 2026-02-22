@@ -1,27 +1,14 @@
 (ns org.soulspace.arrayfire.api.signal-processing-test
   "Tests for the idiomatic Clojure signal processing API.
    All tests run inside (with-arrayfire ...) regions."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing run-tests]]
+            [org.soulspace.arrayfire.util.test :as util]
             [org.soulspace.arrayfire.api.core :as af]
             [org.soulspace.arrayfire.api.signal-processing :as sp]))
 
 ;;;
 ;;; Helpers
 ;;;
-
-(defn- approx=
-  "Returns true if a and b are within tol of each other."
-  ([a b] (approx= a b 1e-4))
-  ([a b tol]
-   (< (Math/abs (double (- a b))) (double tol))))
-
-(defn- seq-approx=
-  "Returns true if every element pair in two flat sequences is approximately equal."
-  ([xs ys] (seq-approx= xs ys 1e-3))
-  ([xs ys tol]
-   (and (= (count xs) (count ys))
-        (every? true? (map #(approx= %1 %2 tol) xs ys)))))
-
 (defn- complex->reals
   "Extract real parts from a complex ->value result.
    Complex results come back as [[real imag] ...] vectors."
@@ -159,7 +146,7 @@
                          back (sp/ifft freq 0.25)]
                      (af/->value back)))]
       ;; Result is complex: [[re im] ...], extract real parts
-      (is (seq-approx= (complex->reals result) original 1e-5)))))
+      (is (util/seq-approx= (complex->reals result) original 1e-5)))))
 
 ;;;
 ;;; Normalized FFT
@@ -245,7 +232,7 @@
                    (let [s (af/array [1.0 2.0 3.0 4.0 5.0] [5] :f64)
                          k (af/array [1.0] [1] :f64)]
                      (af/->value (sp/convolve1 s k))))]
-      (is (seq-approx= (flatten result) [1.0 2.0 3.0 4.0 5.0])))))
+      (is (util/seq-approx= (flatten result) [1.0 2.0 3.0 4.0 5.0])))))
 
 (deftest convolve1-expand-mode-test
   (testing "convolve1 :expand mode yields output-size = signal + filter - 1"
@@ -279,7 +266,7 @@
                                            0.0 1.0 0.0
                                            0.0 0.0 0.0] [3 3] :f64)]
                      (af/->value (sp/convolve2 img kernel))))]
-      (is (seq-approx= (flatten result) [1.0 3.0 2.0 4.0])))))
+      (is (util/seq-approx= (flatten result) [1.0 3.0 2.0 4.0])))))
 
 (deftest convolve2-expand-mode-test
   (testing "convolve2 :expand mode changes output dimensions"
@@ -325,7 +312,7 @@
                    (let [s (af/array [1.0 2.0 3.0 4.0] [4] :f64)
                          k (af/array [1.0] [1] :f64)]
                      (af/->value (sp/fft-convolve1 s k))))]
-      (is (seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
+      (is (util/seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
 
 (deftest fft-convolve2-basic-test
   (testing "fft-convolve2 produces correct output shape"
@@ -358,7 +345,7 @@
                          b (af/array [1.0] [1] :f64)
                          a (af/array [1.0] [1] :f64)]
                      (af/->value (sp/iir b a x))))]
-      (is (seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
+      (is (util/seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
 
 ;;;
 ;;; Median filter (requires :opencl backend — not supported on CPU)
@@ -405,7 +392,7 @@
                    (let [yi (af/array [0.0 1.0 2.0 3.0] [4] :f64)
                          xo (af/array [0.5 1.5 2.5] [3] :f64)]
                      (af/->value (sp/approx1 yi xo :linear))))]
-      (is (seq-approx= (flatten result) [0.5 1.5 2.5] 1e-3)))))
+      (is (util/seq-approx= (flatten result) [0.5 1.5 2.5] 1e-3)))))
 
 (deftest approx1-nearest-test
   (testing "approx1 nearest interpolation snaps to closest value"
@@ -414,7 +401,7 @@
                          xo (af/array [0.3 1.7 2.1] [3] :f64)]
                      (af/->value (sp/approx1 yi xo :nearest))))]
       ;; Nearest to 0.3 → idx 0 → 10.0, to 1.7 → idx 2 → 30.0, to 2.1 → idx 2 → 30.0
-      (is (seq-approx= (flatten result) [10.0 30.0 30.0] 1e-3)))))
+      (is (util/seq-approx= (flatten result) [10.0 30.0 30.0] 1e-3)))))
 
 (deftest approx1-off-grid-test
   (testing "approx1 returns off-grid value for out-of-bounds positions"
@@ -424,7 +411,7 @@
                      (af/->value (sp/approx1 yi xo :linear -1.0))))]
       ;; Position 5.0 is out of bounds for a 3-element array
       ;; Result is a scalar for a single-element output
-      (is (approx= (double result) -1.0 1e-3)))))
+      (is (util/approx= (double result) -1.0 1e-3)))))
 
 ;;;
 ;;; 2D Interpolation
@@ -461,6 +448,8 @@
 
 
 (comment
-  ;; Run the tests interactively
-  (require '[org.soulspace.arrayfire.api.signal-processing-test] :reload)
-  (clojure.test/run-tests 'org.soulspace.arrayfire.api.signal-processing-test))
+  ;; Run the tests
+  (run-tests)
+  
+  ;
+  )
