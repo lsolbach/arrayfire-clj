@@ -1089,7 +1089,7 @@
   (data/flat arr))
 
 (defn transpose
-  "Transpose a 2-D (or higher) array.
+  "Transpose a 2-D (or higher) array., optionally computing the conjugate (Hermitian) transpose.
 
    Parameters:
    - arr: Input AFArray
