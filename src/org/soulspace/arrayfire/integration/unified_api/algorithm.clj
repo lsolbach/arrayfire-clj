@@ -55,6 +55,62 @@
                  "af-sum-nan")
      (res/af-array-new (res/deref-af-array out)))))
 
+(defn product-nan
+  "Multiply elements along a dimension, treating NaN as a specified value.
+
+   Parameters:
+   - in: Input array (AFArray)
+   - dim: Dimension along which to multiply
+   - nan-val: Value to substitute for NaN before multiplication (default 1.0)
+
+   Returns:
+   AFArray with product values, NaN replaced by nan-val before multiplication."
+  ([^AFArray in dim]
+   (product-nan in dim 1.0))
+  ([^AFArray in dim nan-val]
+   (let [out (res/native-af-array-pointer)]
+     (check! (reduce/af-product-nan out (res/af-handle in) (int dim) (double nan-val))
+                 "af-product-nan")
+     (res/af-array-new (res/deref-af-array out)))))
+
+(defn argmin
+  "Find minimum values and their indices along a dimension.
+
+   Parameters:
+   - in: Input array (AFArray)
+   - dim: Dimension along which to find minima
+
+   Returns:
+   Vector of [values indices] where:
+   - values: AFArray with minimum values
+   - indices: AFArray of u32 indices where minima occur"
+  [^AFArray in dim]
+  (let [out (res/native-af-array-pointer)
+        idx (res/native-af-array-pointer)]
+    (check! (reduce/af-imin out idx (res/af-handle in) (int dim))
+                "af-imin")
+    [(res/af-array-new (res/deref-af-array out))
+     (res/af-array-new (res/deref-af-array idx))]))
+
+(defn argmax
+  "Find maximum values and their indices along a dimension.
+
+   Parameters:
+   - in: Input array (AFArray)
+   - dim: Dimension along which to find maxima
+
+   Returns:
+   Vector of [values indices] where:
+   - values: AFArray with maximum values
+   - indices: AFArray of u32 indices where maxima occur"
+  [^AFArray in dim]
+  (let [out (res/native-af-array-pointer)
+        idx (res/native-af-array-pointer)]
+    (check! (reduce/af-imax out idx (res/af-handle in) (int dim))
+                "af-imax")
+    [(res/af-array-new (res/deref-af-array out))
+     (res/af-array-new (res/deref-af-array idx))]))
+
 (defn product
   "Multiply elements along a dimension.
    
