@@ -801,6 +801,108 @@
                 (let [a (core/array [1.5 2.5 3.5] [3])]
                   (core/print-array-gen "test-weights" a 2)))))))
 
+;;;
+;;; with-random-engine macro tests
+;;;
+
+(deftest with-random-engine-default-nil-test
+  (testing "*random-engine* is nil outside any with-random-engine scope"
+    (is (nil? @#'core/*random-engine*))))
+
+(deftest with-random-engine-binds-engine-test
+  (testing "*random-engine* is non-nil inside the scope"
+    (let [engine-inside (core/with-arrayfire {:backend :cpu}
+                          (core/with-random-engine {:seed 1}
+                            @#'core/*random-engine*))]
+      (is (some? engine-inside)))))
+
+(deftest with-random-engine-restores-nil-test
+  (testing "*random-engine* is nil again after the scope exits normally"
+    (core/with-arrayfire {:backend :cpu}
+      (core/with-random-engine {:seed 1} :ok))
+    (is (nil? @#'core/*random-engine*))))
+
+(deftest with-random-engine-restores-nil-on-exception-test
+  (testing "*random-engine* is nil after scope exits via exception"
+    (try
+      (core/with-arrayfire {:backend :cpu}
+        (core/with-random-engine {:seed 1}
+          (throw (RuntimeException. "test"))))
+      (catch RuntimeException _))
+    (is (nil? @#'core/*random-engine*))))
+
+(deftest with-random-engine-uniform-reproducible-test
+  (testing "Same seed produces identical random-uniform results"
+    (let [run1 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:type :philox :seed 42}
+                   (core/->value (core/random-uniform [6] :f32))))
+          run2 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:type :philox :seed 42}
+                   (core/->value (core/random-uniform [6] :f32))))]
+      (is (= run1 run2)))))
+
+(deftest with-random-engine-normal-reproducible-test
+  (testing "Same seed produces identical random-normal results"
+    (let [run1 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:type :philox :seed 99}
+                   (core/->value (core/random-normal [6] :f32))))
+          run2 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:type :philox :seed 99}
+                   (core/->value (core/random-normal [6] :f32))))]
+      (is (= run1 run2)))))
+
+(deftest with-random-engine-different-seeds-differ-test
+  (testing "Different seeds produce different random-uniform results"
+    (let [run1 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:seed 1}
+                   (core/->value (core/random-uniform [8] :f64))))
+          run2 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:seed 2}
+                   (core/->value (core/random-uniform [8] :f64))))]
+      (is (not= run1 run2)))))
+
+(deftest with-random-engine-threefry-test
+  (testing ":threefry engine type works and is reproducible"
+    (let [run1 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:type :threefry :seed 7}
+                   (core/->value (core/random-uniform [4] :f32))))
+          run2 (core/with-arrayfire {:backend :cpu}
+                 (core/with-random-engine {:type :threefry :seed 7}
+                   (core/->value (core/random-uniform [4] :f32))))]
+      (is (= run1 run2)))))
+
+(deftest with-random-engine-nested-test
+  (testing "Nested with-random-engine scopes are each reproducible"
+    (let [[outer inner]
+          (core/with-arrayfire {:backend :cpu}
+            (core/with-random-engine {:seed 10}
+              (let [o (core/->value (core/random-uniform [3] :f32))]
+                (core/with-random-engine {:seed 20}
+                  (let [i (core/->value (core/random-uniform [3] :f32))]
+                    [o i])))))
+          [outer2 inner2]
+          (core/with-arrayfire {:backend :cpu}
+            (core/with-random-engine {:seed 10}
+              (let [o (core/->value (core/random-uniform [3] :f32))]
+                (core/with-random-engine {:seed 20}
+                  (let [i (core/->value (core/random-uniform [3] :f32))]
+                    [o i])))))]
+      (is (= outer outer2))
+      (is (= inner inner2)))))
+
+(deftest with-random-engine-requires-arrayfire-region-test
+  (testing "with-random-engine throws when not inside with-arrayfire"
+    (is (thrown? IllegalStateException
+          (core/with-random-engine {:seed 1}
+            :ok)))))
+
+(deftest random-uniform-uses-default-engine-without-scope-test
+  (testing "random-uniform still works with the default engine outside any with-random-engine scope"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/random-uniform [4] :f32)))]
+      (is (= 4 (count result)))
+      (is (every? #(and (>= % 0.0) (< % 1.0)) result)))))
+
 (comment
   ;; Run tests in this namespace
   (run-tests)

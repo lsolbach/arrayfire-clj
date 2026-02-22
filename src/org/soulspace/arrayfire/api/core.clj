@@ -153,6 +153,17 @@
    library code — do not read this var directly."
   false)
 
+(def ^:dynamic *random-engine*
+  "The random engine handle bound by `with-random-engine`, or `nil` when no
+   custom engine is active (ArrayFire's default engine is used in that case).
+
+   `random-uniform` and `random-normal` inspect this var at call-time: when
+   non-nil they delegate to the engine-qualified integration functions; when nil
+   they fall back to `randu`/`randn` (default engine).
+
+   Do not set this var directly — use the `with-random-engine` macro."
+  nil)
+
 (defn within-arrayfire?
   "Return `true` when called from code executing inside a `with-arrayfire`
    region; `false` otherwise.
@@ -307,6 +318,55 @@
                 (let [~result-sym (do ~@body)]
                   (device/sync!)
                   (result-convert ~converter ~result-sym))))))))))
+
+;;
+;; with-random-engine scoped random engine region
+;;
+(defmacro with-random-engine
+  "Execute body within a scoped random engine region.
+
+  Creates a custom ArrayFire random engine for the duration of the body,
+  binds it to `*random-engine*`, and releases it in a `finally` block.
+  `random-uniform` and `random-normal` called inside the body will
+  automatically use this engine instead of ArrayFire's default engine.
+
+  Must be called within an active `with-arrayfire` region.
+
+  Parameters:
+  - opts  — map of options (required):
+      - :type   keyword: :philox (default), :threefry, or :mersenne
+      - :seed   long integer seed value (default 0)
+  - body  — forms to execute within the engine scope
+
+  Returns:
+  The result of evaluating body (no automatic conversion — this is an inner
+  utility scope; rely on the enclosing `with-arrayfire` for conversion).
+
+  Examples:
+    ;; Reproducible uniform random array with Philox engine
+    (with-arrayfire {:backend :cpu}
+      (with-random-engine {:type :philox :seed 42}
+        (->value (random-uniform [4] :f32))))
+
+    ;; Two runs with the same seed produce identical results
+    (with-arrayfire {:backend :cpu}
+      (let [run1 (with-random-engine {:seed 7}
+                   (->value (random-uniform [3] :f32)))
+            run2 (with-random-engine {:seed 7}
+                   (->value (random-uniform [3] :f32)))]
+        (= run1 run2)))  ;; => true"
+  [opts & body]
+  (let [engine-type (get opts :type :philox)
+        seed        (get opts :seed 0)
+        engine-sym  (gensym "engine")]
+    `(do
+       (assert-within-arrayfire! "with-random-engine")
+       (let [~engine-sym (random/create-engine ~engine-type ~seed)]
+         (try
+           (binding [*random-engine* ~engine-sym]
+             ~@body)
+           (finally
+             (random/release-engine! ~engine-sym)))))))
 
 ;;;
 ;;; Helper functions
@@ -603,6 +663,10 @@
 (defn random-uniform
   "Create an ArrayFire array filled with uniformly distributed random values.
 
+   When called inside a `with-random-engine` scope, uses the bound custom
+   engine (for reproducible independent streams). Outside any such scope,
+   ArrayFire's default engine is used.
+
    Parameters:
    - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
    - dtype: (optional) keyword specifying the ArrayFire data type
@@ -620,11 +684,18 @@
    (random-uniform dims :f64))
   ([dims dtype]
    (assert-within-arrayfire! "random-uniform")
-   (random/randu (normalize-dims dims)
-                 (defs/resolve-dtype dtype))))
+   (let [ndims (normalize-dims dims)
+         dtype-const (defs/resolve-dtype dtype)]
+     (if *random-engine*
+       (random/random-uniform ndims dtype-const *random-engine*)
+       (random/randu ndims dtype-const)))))
 
 (defn random-normal
   "Create an ArrayFire array filled with normally distributed random values.
+
+   When called inside a `with-random-engine` scope, uses the bound custom
+   engine (for reproducible independent streams). Outside any such scope,
+   ArrayFire's default engine is used.
 
    Parameters:
    - dims: vector specifying the dimensions of the array (e.g. [] for scalar, [2 3] for a 2x3 array)
@@ -643,8 +714,11 @@
    (random-normal dims :f64))
   ([dims dtype]
    (assert-within-arrayfire! "random-normal")
-   (random/randn (normalize-dims dims)
-                 (defs/resolve-dtype dtype))))
+   (let [ndims (normalize-dims dims)
+         dtype-const (defs/resolve-dtype dtype)]
+     (if *random-engine*
+       (random/random-normal ndims dtype-const *random-engine*)
+       (random/randn ndims dtype-const)))))
 
 
 (defn zeros-like
