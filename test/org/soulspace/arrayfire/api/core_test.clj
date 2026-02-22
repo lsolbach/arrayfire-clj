@@ -536,6 +536,271 @@
       (is (<= (Math/abs (- 5.0 (nth result 1))) 0.001))
       (is (<= (Math/abs (- 6.0 (nth result 2))) 0.001)))))
 
+;;;
+;;; Bit-shift API tests
+;;;
+;;; Note: bitshiftl/bitshiftr require signed-integer arrays.
+;;; Since core/array passes data as doubles and ArrayFire performs no conversion
+;;; for integer dtypes, we must build int32 segments explicitly via
+;;; bmem/int-array->segment + array/create-array.
+;;;
+
+(deftest bitshiftl-test
+  (testing "bitshiftl performs element-wise left shift"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [vals-arr   (array/create-array
+                                      (bmem/int-array->segment (int-array [1 2 4]))
+                                      [3] defs/AF_DTYPE_S32)
+                         shifts-arr (array/create-array
+                                      (bmem/int-array->segment (int-array [2 1 0]))
+                                      [3] defs/AF_DTYPE_S32)]
+                     (core/->value (core/bitshiftl vals-arr shifts-arr))))]
+      ;; 1<<2=4, 2<<1=4, 4<<0=4
+      (is (= [4 4 4] result)))))
+
+(deftest bitshiftr-test
+  (testing "bitshiftr performs element-wise right shift"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [vals-arr   (array/create-array
+                                      (bmem/int-array->segment (int-array [32 16 8]))
+                                      [3] defs/AF_DTYPE_S32)
+                         shifts-arr (array/create-array
+                                      (bmem/int-array->segment (int-array [2 1 0]))
+                                      [3] defs/AF_DTYPE_S32)]
+                     (core/->value (core/bitshiftr vals-arr shifts-arr))))]
+      ;; 32>>2=8, 16>>1=8, 8>>0=8
+      (is (= [8 8 8] result)))))
+
+;;;
+;;; iota tests
+;;;
+
+(deftest iota-sequential-test
+  (testing "iota produces sequential values tiled across dimensions"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/iota [3] [2])))]
+      ;; [0 1 2] tiled twice → [0 1 2 0 1 2]
+      (is (= 6 (count result)))
+      (is (every? true?
+                  (map #(<= (Math/abs (- (float %1) (float %2))) 0.001)
+                       result [0.0 1.0 2.0 0.0 1.0 2.0]))))))
+
+(deftest iota-no-tile-test
+  (testing "iota with tile-factor 1 produces simple sequential values"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/iota [4] [1])))]
+      (is (= 4 (count result)))
+      (is (every? true?
+                  (map #(< (Math/abs (- (float %1) (float %2))) 0.001)
+                       result [0.0 1.0 2.0 3.0]))))))
+
+;;;
+;;; constant-complex tests
+;;;
+
+(deftest constant-complex-shape-test
+  (testing "constant-complex creates an array of the requested shape"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/shape (core/constant-complex 1.0 0.0 [3])))]
+      (is (= [3] result)))))
+
+(deftest constant-complex-values-test
+  (testing "constant-complex fills array with correct real and imaginary parts"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/constant-complex 2.0 3.0 [2])))]
+      ;; ->value for C32 returns [[real imag] ...]
+      (is (= 2 (count result)))
+      (is (<= (Math/abs (- 2.0 (first (first result))))  0.001))
+      (is (<= (Math/abs (- 3.0 (second (first result)))) 0.001)))))
+
+;;;
+;;; sum-nan / product-nan tests
+;;;
+;;; Reductions of a 1D array along dim 0 return a 0-dimensional scalar,
+;;; which ->value returns as a plain Double, not a vector.
+;;;
+
+(deftest sum-nan-basic-test
+  (testing "sum-nan sums elements along a dimension (no NaN present)"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/sum-nan (core/array [1.0 2.0 3.0] [3]) 0 0.0)))]
+      (is (<= (Math/abs (- 6.0 result)) 0.001)))))
+
+(deftest product-nan-basic-test
+  (testing "product-nan multiplies elements along a dimension (no NaN present)"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/product-nan (core/array [2.0 3.0 4.0] [3]) 0 1.0)))]
+      (is (<= (Math/abs (- 24.0 result)) 0.001)))))
+
+(deftest sum-nan-default-nan-val-test
+  (testing "sum-nan uses 0.0 as default NaN substitute"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/sum-nan (core/array [10.0 20.0 30.0] [3]) 0)))]
+      (is (<= (Math/abs (- 60.0 result)) 0.001)))))
+
+(deftest product-nan-default-nan-val-test
+  (testing "product-nan uses 1.0 as default NaN substitute"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (core/->value (core/product-nan (core/array [2.0 5.0] [2]) 0)))]
+      (is (<= (Math/abs (- 10.0 result)) 0.001)))))
+
+;;;
+;;; argmin / argmax tests
+;;;
+;;; Reductions along dim 0 of a 1D array return scalar outputs:
+;;; ->value returns a plain Double for values and a plain Long for indices.
+;;;
+
+(deftest argmin-values-and-indices-test
+  (testing "argmin returns minimum values and their indices"
+    (let [[val-result idx-result]
+          (core/with-arrayfire {:backend :cpu}
+            (let [a              (core/array [3.0 1.0 4.0 5.0 9.0] [5])
+                  [vals indices] (core/argmin a 0)]
+              [(core/->value vals) (core/->value indices)]))]
+      ;; Minimum is 1.0 at index 1
+      (is (<= (Math/abs (- 1.0 val-result)) 0.001))
+      (is (= 1 (int idx-result))))))
+
+(deftest argmax-values-and-indices-test
+  (testing "argmax returns maximum values and their indices"
+    (let [[val-result idx-result]
+          (core/with-arrayfire {:backend :cpu}
+            (let [a              (core/array [3.0 1.0 4.0 5.0 9.0] [5])
+                  [vals indices] (core/argmax a 0)]
+              [(core/->value vals) (core/->value indices)]))]
+      ;; Maximum is 9.0 at index 4
+      (is (<= (Math/abs (- 9.0 val-result)) 0.001))
+      (is (= 4 (int idx-result))))))
+
+;;;
+;;; diff1 / diff2 tests
+;;;
+
+(deftest diff1-position-to-velocity-test
+  (testing "diff1 computes first-order differences (position → velocity)"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   ;; [0 1 4 9 16] squares: diff1 → [1 3 5 7]
+                   (core/->value (core/diff1 (core/array [0.0 1.0 4.0 9.0 16.0] [5]))))]
+      (is (= 4 (count result)))
+      (is (every? true?
+                  (map #(<= (Math/abs (- %1 %2)) 0.001)
+                       result [1.0 3.0 5.0 7.0]))))))
+
+(deftest diff2-constant-acceleration-test
+  (testing "diff2 computes second-order differences (constant acceleration = 2)"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   ;; [0 1 4 9 16] squares: diff2 → [2 2 2]
+                   (core/->value (core/diff2 (core/array [0.0 1.0 4.0 9.0 16.0] [5]))))]
+      (is (= 3 (count result)))
+      (is (every? #(<= (Math/abs (- 2.0 %)) 0.001) result)))))
+
+;;;
+;;; Group-by reduction tests
+;;;
+;;; By-key reductions require integer key arrays.
+;;; We build s32 arrays explicitly via bmem/int-array->segment + array/create-array.
+;;;
+
+(deftest sum-by-key-test
+  (testing "sum-by-key sums values within each key group"
+    (let [[key-result val-result]
+          (core/with-arrayfire {:backend :cpu}
+            (let [keys (array/create-array
+                         (bmem/int-array->segment (int-array [1 1 1 2 2 3]))
+                         [6] defs/AF_DTYPE_S32)
+                  vals (core/array [10.0 20.0 30.0 40.0 50.0 60.0] [6])
+                  [k v] (core/sum-by-key keys vals)]
+              [(core/->value k) (core/->value v)]))]
+      ;; 3 distinct keys → 3 output elements
+      (is (= 3 (count key-result)))
+      (is (= 3 (count val-result)))
+      ;; sums: 10+20+30=60, 40+50=90, 60=60
+      (is (<= (Math/abs (- 60.0  (nth val-result 0))) 0.001))
+      (is (<= (Math/abs (- 90.0  (nth val-result 1))) 0.001))
+      (is (<= (Math/abs (- 60.0  (nth val-result 2))) 0.001)))))
+
+(deftest product-by-key-test
+  (testing "product-by-key multiplies values within each key group"
+    (let [[_key-result val-result]
+          (core/with-arrayfire {:backend :cpu}
+            (let [keys (array/create-array
+                         (bmem/int-array->segment (int-array [1 1 2 2]))
+                         [4] defs/AF_DTYPE_S32)
+                  vals (core/array [2.0 3.0 4.0 5.0] [4])
+                  [k v] (core/product-by-key keys vals)]
+              [(core/->value k) (core/->value v)]))]
+      (is (= 2 (count val-result)))
+      ;; 2*3=6, 4*5=20
+      (is (<= (Math/abs (- 6.0  (nth val-result 0))) 0.001))
+      (is (<= (Math/abs (- 20.0 (nth val-result 1))) 0.001)))))
+
+(deftest min-by-key-test
+  (testing "min-by-key finds minimum within each key group"
+    (let [[_keys val-result]
+          (core/with-arrayfire {:backend :cpu}
+            (let [keys (array/create-array
+                         (bmem/int-array->segment (int-array [1 1 2 2]))
+                         [4] defs/AF_DTYPE_S32)
+                  vals (core/array [5.0 2.0 8.0 1.0] [4])
+                  [k v] (core/min-by-key keys vals)]
+              [(core/->value k) (core/->value v)]))]
+      (is (= 2 (count val-result)))
+      (is (<= (Math/abs (- 2.0 (nth val-result 0))) 0.001))
+      (is (<= (Math/abs (- 1.0 (nth val-result 1))) 0.001)))))
+
+(deftest max-by-key-test
+  (testing "max-by-key finds maximum within each key group"
+    (let [[_keys val-result]
+          (core/with-arrayfire {:backend :cpu}
+            (let [keys (array/create-array
+                         (bmem/int-array->segment (int-array [1 1 2 2]))
+                         [4] defs/AF_DTYPE_S32)
+                  vals (core/array [5.0 2.0 8.0 1.0] [4])
+                  [k v] (core/max-by-key keys vals)]
+              [(core/->value k) (core/->value v)]))]
+      (is (= 2 (count val-result)))
+      (is (<= (Math/abs (- 5.0 (nth val-result 0))) 0.001))
+      (is (<= (Math/abs (- 8.0 (nth val-result 1))) 0.001)))))
+
+(deftest scan-by-key-inclusive-sum-test
+  (testing "scan-by-key performs inclusive prefix sum within key groups"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [keys (array/create-array
+                                (bmem/int-array->segment (int-array [1 1 2 2]))
+                                [4] defs/AF_DTYPE_S32)
+                         vals (core/array [1.0 2.0 3.0 4.0] [4])]
+                     (core/->value (core/scan-by-key keys vals 0 :add true))))]
+      ;; Group 1: cumulative sums of [1 2] → [1 3]
+      ;; Group 2: cumulative sums of [3 4] → [3 7]
+      (is (= 4 (count result)))
+      (is (<= (Math/abs (- 1.0 (nth result 0))) 0.001))
+      (is (<= (Math/abs (- 3.0 (nth result 1))) 0.001))
+      (is (<= (Math/abs (- 3.0 (nth result 2))) 0.001))
+      (is (<= (Math/abs (- 7.0 (nth result 3))) 0.001)))))
+
+;;;
+;;; eval-multiple! tests
+;;;
+
+(deftest eval-multiple!-returns-nil-test
+  (testing "eval-multiple! evaluates multiple arrays without error"
+    (let [result (core/with-arrayfire {:backend :cpu}
+                   (let [a (core/array [1.0 2.0 3.0] [3])
+                         b (core/array [4.0 5.0 6.0] [3])]
+                     (core/eval-multiple! [a b])))]
+      (is (nil? result)))))
+
+;;;
+;;; print-array-gen tests
+;;;
+
+(deftest print-array-gen-no-exception-test
+  (testing "print-array-gen runs without throwing exceptions"
+    (is (nil? (core/with-arrayfire {:backend :cpu}
+                (let [a (core/array [1.5 2.5 3.5] [3])]
+                  (core/print-array-gen "test-weights" a 2)))))))
+
 (comment
   ;; Run tests in this namespace
   (run-tests)

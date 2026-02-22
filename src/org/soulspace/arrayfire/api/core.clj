@@ -40,7 +40,8 @@
             [org.soulspace.arrayfire.integration.unified-api.device :as device]
             [org.soulspace.arrayfire.integration.unified-api.data :as data]
             [org.soulspace.arrayfire.integration.unified-api.index :as index]
-            [org.soulspace.arrayfire.integration.unified-api.random :as random])
+            [org.soulspace.arrayfire.integration.unified-api.random :as random]
+            [org.soulspace.arrayfire.integration.unified-api.util :as util])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
 ;;;
@@ -481,6 +482,28 @@
    (assert-within-arrayfire! "constant")
    (data/constant value (normalize-dims dims) (defs/resolve-dtype dtype))))
 
+(defn constant-complex
+  "Create an array filled with a complex constant value.
+
+   Parameters:
+   - real:  Real part of the constant (double)
+   - imag:  Imaginary part of the constant (double)
+   - dims:  Vector of dimensions, e.g. [4 4]
+   - dtype: Complex element type keyword :c32 or :c64 (default :c32)
+
+   Returns:
+   AFArray filled with the complex constant `real + imag*i`.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (constant-complex 0.0 1.0 [4])          ; [0+1i 0+1i 0+1i 0+1i] as c32
+   (constant-complex 1.0 0.0 [2 2] :c64)   ; 2×2 real-valued complex array"
+  (^AFArray [real imag dims]
+   (constant-complex real imag dims :c32))
+  (^AFArray [real imag dims dtype]
+   (assert-within-arrayfire! "constant-complex")
+   (data/constant-complex real imag (normalize-dims dims) (defs/resolve-dtype dtype))))
+
 (defn zeros
   "Create an ArrayFire array filled with zeros.
 
@@ -551,6 +574,31 @@
 
        :else
        (throw (ex-info "Invalid range argument" {:n n}))))))
+
+(defn iota
+  "Create an array with sequential values tiled across multiple dimensions.
+
+   Similar to `range` but supports independent per-dimension tiling via `tdims`.
+   Generates a flattened sequence [0, n-1] reshaped according to `dims` and
+   tiled `tdims` times along each dimension.
+
+   Parameters:
+   - dims:  Vector of output dimensions, e.g. [4 4]
+   - tdims: Vector of tiling counts per dimension, e.g. [1 2]
+   - dtype: Element type keyword (default :f32)
+
+   Returns:
+   AFArray with sequential values tiled as specified.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (iota [3] [2])      ; [0 1 2 0 1 2] — tiled twice along dim 0
+   (iota [2 2] [1 2])  ; 2×4 tiled matrix"
+  (^AFArray [dims tdims]
+   (iota dims tdims :f32))
+  (^AFArray [dims tdims dtype]
+   (assert-within-arrayfire! "iota")
+   (data/iota (normalize-dims dims) (normalize-dims tdims) (defs/resolve-dtype dtype))))
 
 (defn random-uniform
   "Create an ArrayFire array filled with uniformly distributed random values.
@@ -1371,6 +1419,48 @@
    (assert-within-arrayfire! "product")
    (algo/product arr dim)))
 
+(defn sum-nan
+  "Sum elements along a dimension, replacing NaN with a specified value.
+
+   Parameters:
+   - arr:     Input AFArray
+   - dim:     Dimension to reduce along
+   - nan-val: Value to substitute for NaN before summing (default 0.0)
+
+   Returns:
+   AFArray with summed values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (sum-nan arr 0)        ; sum along dim 0, NaN treated as 0.0
+   (sum-nan arr 0 -1.0)   ; sum along dim 0, NaN → -1.0"
+  (^AFArray [^AFArray arr dim]
+   (sum-nan arr dim 0.0))
+  (^AFArray [^AFArray arr dim nan-val]
+   (assert-within-arrayfire! "sum-nan")
+   (algo/sum-nan arr dim nan-val)))
+
+(defn product-nan
+  "Multiply elements along a dimension, replacing NaN with a specified value.
+
+   Parameters:
+   - arr:     Input AFArray
+   - dim:     Dimension to reduce along
+   - nan-val: Value to substitute for NaN before multiplying (default 1.0)
+
+   Returns:
+   AFArray with product values.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (product-nan arr 0)        ; product along dim 0, NaN treated as 1.0
+   (product-nan arr 0 0.0)    ; product along dim 0, NaN → 0.0"
+  (^AFArray [^AFArray arr dim]
+   (product-nan arr dim 1.0))
+  (^AFArray [^AFArray arr dim nan-val]
+   (assert-within-arrayfire! "product-nan")
+   (algo/product-nan arr dim nan-val)))
+
 (defn min
   "Minimum of arrays along a dimension, element-wise, or scalar minimum.
 
@@ -1454,6 +1544,46 @@
      (clojure.core/max a b)))
   ([a b & more]
    (reduce max (max a b) more)))
+
+(defn argmin
+  "Find minimum values and their indices along a dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension to reduce along
+
+   Returns:
+   Vector of [values indices] where:
+   - values:  AFArray with minimum values along dim
+   - indices: AFArray of u32 indices where minima occur
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (let [[mn-vals mn-idx] (argmin arr 0)]
+     ...)"
+  [^AFArray arr dim]
+  (assert-within-arrayfire! "argmin")
+  (algo/argmin arr dim))
+
+(defn argmax
+  "Find maximum values and their indices along a dimension.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension to reduce along
+
+   Returns:
+   Vector of [values indices] where:
+   - values:  AFArray with maximum values along dim
+   - indices: AFArray of u32 indices where maxima occur
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (let [[mx-vals mx-idx] (argmax arr 0)]
+     ...)"
+  [^AFArray arr dim]
+  (assert-within-arrayfire! "argmax")
+  (algo/argmax arr dim))
 
 (defn all
   "Test whether all elements are truthy (non-zero) along a dimension.
@@ -1572,6 +1702,203 @@
   (^AFArray [^AFArray arr dim op-kw inclusive?]
    (assert-within-arrayfire! "scan")
    (algo/scan arr dim (get defs/binary-op-kw->const op-kw 0) inclusive?)))
+
+;;;
+;;; Differences (Finite Differences)
+;;;
+
+(defn diff1
+  "Compute first-order differences along a dimension.
+
+   Computes successive differences: out[i] = in[i+1] - in[i].
+   Output size along the dimension is reduced by 1.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension along which to compute differences (default 0)
+
+   Returns:
+   AFArray with first-order differences.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (diff1 (array [0.0 1.0 4.0 9.0 16.0]))  ; => [1 3 5 7]  (velocity from position)"
+  (^AFArray [^AFArray arr]
+   (diff1 arr 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "diff1")
+   (algo/diff1 arr dim)))
+
+(defn diff2
+  "Compute second-order differences along a dimension.
+
+   Computes: out[i] = in[i+2] - 2*in[i+1] + in[i].
+   Output size along the dimension is reduced by 2.
+
+   Parameters:
+   - arr: Input AFArray
+   - dim: Dimension along which to compute differences (default 0)
+
+   Returns:
+   AFArray with second-order differences.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (diff2 (array [0.0 1.0 4.0 9.0 16.0]))  ; => [2 2 2]  (constant acceleration)"
+  (^AFArray [^AFArray arr]
+   (diff2 arr 0))
+  (^AFArray [^AFArray arr dim]
+   (assert-within-arrayfire! "diff2")
+   (algo/diff2 arr dim)))
+
+;;;
+;;; Group-by Reductions
+;;;
+
+(defn sum-by-key
+  "Sum values grouped by key along a dimension.
+
+   Parameters:
+   - keys: Key array (AFArray) — determines grouping
+   - vals: Values array (AFArray) — to be summed
+   - dim:  Dimension along which to reduce (default 0)
+
+   Returns:
+   Vector of [keys-out vals-out] as AFArrays.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (let [[k v] (sum-by-key (array [1 1 1 2 2 3] :s32) (array [10.0 20.0 30.0 40.0 50.0 60.0]))]
+     ...)"
+  ([^AFArray keys ^AFArray vals]
+   (sum-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (assert-within-arrayfire! "sum-by-key")
+   (algo/sum-by-key keys vals dim)))
+
+(defn product-by-key
+  "Multiply values grouped by key along a dimension.
+
+   Parameters:
+   - keys: Key array (AFArray) — determines grouping
+   - vals: Values array (AFArray) — to be multiplied
+   - dim:  Dimension along which to reduce (default 0)
+
+   Returns:
+   Vector of [keys-out vals-out] as AFArrays.
+   Requires an active `with-arrayfire` region."
+  ([^AFArray keys ^AFArray vals]
+   (product-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (assert-within-arrayfire! "product-by-key")
+   (algo/product-by-key keys vals dim)))
+
+(defn min-by-key
+  "Find minimum value per key group.
+
+   Parameters:
+   - keys: Key array (AFArray) — determines grouping
+   - vals: Values array (AFArray)
+   - dim:  Dimension along which to reduce (default 0)
+
+   Returns:
+   Vector of [keys-out vals-out] as AFArrays.
+   Requires an active `with-arrayfire` region."
+  ([^AFArray keys ^AFArray vals]
+   (min-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (assert-within-arrayfire! "min-by-key")
+   (algo/min-by-key keys vals dim)))
+
+(defn max-by-key
+  "Find maximum value per key group.
+
+   Parameters:
+   - keys: Key array (AFArray) — determines grouping
+   - vals: Values array (AFArray)
+   - dim:  Dimension along which to reduce (default 0)
+
+   Returns:
+   Vector of [keys-out vals-out] as AFArrays.
+   Requires an active `with-arrayfire` region."
+  ([^AFArray keys ^AFArray vals]
+   (max-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (assert-within-arrayfire! "max-by-key")
+   (algo/max-by-key keys vals dim)))
+
+(defn all-true-by-key
+  "Test whether all values are non-zero per key group (logical AND by group).
+
+   Parameters:
+   - keys: Key array (AFArray) — determines grouping
+   - vals: Values array (AFArray) — tested for non-zero
+   - dim:  Dimension along which to reduce (default 0)
+
+   Returns:
+   Vector of [keys-out vals-out] as AFArrays.
+   Requires an active `with-arrayfire` region."
+  ([^AFArray keys ^AFArray vals]
+   (all-true-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (assert-within-arrayfire! "all-true-by-key")
+   (algo/all-true-by-key keys vals dim)))
+
+(defn any-true-by-key
+  "Test whether any value is non-zero per key group (logical OR by group).
+
+   Parameters:
+   - keys: Key array (AFArray) — determines grouping
+   - vals: Values array (AFArray) — tested for non-zero
+   - dim:  Dimension along which to reduce (default 0)
+
+   Returns:
+   Vector of [keys-out vals-out] as AFArrays.
+   Requires an active `with-arrayfire` region."
+  ([^AFArray keys ^AFArray vals]
+   (any-true-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (assert-within-arrayfire! "any-true-by-key")
+   (algo/any-true-by-key keys vals dim)))
+
+(defn count-by-key
+  "Count non-zero values per key group.
+
+   Parameters:
+   - keys: Key array (AFArray) — determines grouping
+   - vals: Values array (AFArray) — counted if non-zero
+   - dim:  Dimension along which to reduce (default 0)
+
+   Returns:
+   Vector of [keys-out vals-out] as AFArrays.
+   Requires an active `with-arrayfire` region."
+  ([^AFArray keys ^AFArray vals]
+   (count-by-key keys vals 0))
+  ([^AFArray keys ^AFArray vals dim]
+   (assert-within-arrayfire! "count-by-key")
+   (algo/count-by-key keys vals dim)))
+
+(defn scan-by-key
+  "Prefix scan within groups defined by a key array.
+
+   Parameters:
+   - keys:       Key array (AFArray) — determines grouping
+   - arr:        Input values array (AFArray)
+   - dim:        Dimension along which to scan
+   - op-kw:      Binary operation keyword (:add, :mul, :min, :max)
+   - inclusive?: True for inclusive scan, false for exclusive (default true)
+
+   Returns:
+   AFArray with scanned values within each key group.
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (scan-by-key keys arr 0 :add)  ; cumulative sum per group"
+  (^AFArray [^AFArray keys ^AFArray arr dim op-kw]
+   (scan-by-key keys arr dim op-kw true))
+  (^AFArray [^AFArray keys ^AFArray arr dim op-kw inclusive?]
+   (assert-within-arrayfire! "scan-by-key")
+   (algo/scan-by-key keys arr dim (get defs/binary-op-kw->const op-kw 0) inclusive?)))
 
 ;;;
 ;;; Sorting
@@ -3277,6 +3604,46 @@
   (assert-within-arrayfire! "bitxor")
   (arith/bitxor lhs rhs))
 
+(defn bitshiftl
+  "Element-wise bitwise left shift.
+
+   Each element in `lhs` is shifted left by the corresponding element in `rhs`.
+   Equivalent to `lhs[i] << rhs[i]`.
+
+   Supported integer types: s32 u32 u8 s64 u64 s16 u16.
+
+   Parameters:
+   - lhs: Input AFArray (integer dtype) — values to shift
+   - rhs: Input AFArray (integer dtype) — shift amounts
+
+   Returns:
+   AFArray with left-shifted values.
+   Requires an active `with-arrayfire` region."
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "bitshiftl")
+  (arith/bitshiftl lhs rhs))
+
+(defn bitshiftr
+  "Element-wise bitwise right shift.
+
+   Each element in `lhs` is shifted right by the corresponding element in `rhs`.
+   Equivalent to `lhs[i] >> rhs[i]`.
+
+   Supported integer types: s32 u32 u8 s64 u64 s16 u16.
+
+   Parameters:
+   - lhs: Input AFArray (integer dtype) — values to shift
+   - rhs: Input AFArray (integer dtype) — shift amounts
+
+   Returns:
+   AFArray with right-shifted values.
+   Requires an active `with-arrayfire` region."
+  ^AFArray
+  [^AFArray lhs ^AFArray rhs]
+  (assert-within-arrayfire! "bitshiftr")
+  (arith/bitshiftr lhs rhs))
+
 ;;;
 ;;; Extended math
 ;;;
@@ -3567,6 +3934,27 @@
   (device/eval-array! arr)
   arr)
 
+(defn eval-multiple!
+  "Evaluate multiple arrays simultaneously for GPU efficiency.
+
+   More efficient than calling `eval!` on each array sequentially.
+   Allows the JIT compiler to optimise across all arrays in one pass.
+
+   Parameters:
+   - arrays: Collection of AFArray instances to evaluate
+
+   Returns:
+   nil (side-effecting).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (let [a (+ x y)
+         b (* x y)]
+     (eval-multiple! [a b]))"
+  [arrays]
+  (assert-within-arrayfire! "eval-multiple!")
+  (device/eval-multiple! arrays))
+
 ;;;
 ;;; Random seed management
 ;;;
@@ -3641,6 +4029,29 @@
   [^AFArray arr]
   (assert-within-arrayfire! "array->string")
   (str (->value arr)))
+
+(defn print-array-gen
+  "Print an array with a custom label and decimal precision.
+
+   More flexible than `print-array` — allows a descriptive name and
+   configurable number of decimal places.
+
+   Parameters:
+   - label:     String label displayed above the array
+   - arr:       AFArray to print
+   - precision: Number of decimal places, 0–16 (default 4)
+
+   Returns:
+   nil (prints to stdout).
+   Requires an active `with-arrayfire` region.
+
+   Example:
+   (print-array-gen \"weights\" w 6)"
+  ([label ^AFArray arr]
+   (print-array-gen label arr 4))
+  ([label ^AFArray arr precision]
+   (assert-within-arrayfire! "print-array-gen")
+   (util/print-array-gen label arr precision)))
 
 (comment
   ;; with-arrayfire REPL experiments
