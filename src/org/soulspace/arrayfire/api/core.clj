@@ -212,6 +212,7 @@
   Establishes:
   - ArrayFire initialization (once)
   - Optional backend/device switching (serialized via lock)
+  - Optional manual JIT evaluation mode
   - FFM Arena scope (deterministic cleanup)
   - tech.resource scope (AFArray lifecycle management)
   - Result conversion (AFArray → host data via deep walk)
@@ -240,6 +241,12 @@
                                  overhead.  Use when the body dispatches work
                                  to other threads and those threads allocate
                                  native memory through the arena.
+  - :manual-eval  boolean. When `true`, disables ArrayFire's automatic JIT
+                  kernel evaluation for the duration of the body — all deferred
+                  computations must be triggered explicitly via `eval!` or
+                  `eval-multiple!`. The previous flag value is restored in a
+                  `finally` block so the caller's evaluation mode is always
+                  preserved even if an exception is thrown.
 
   Returns:
   The result of evaluating body, with all AFArray instances converted to host data.
@@ -261,35 +268,48 @@
 
     ;; Skip auto-conversion when result is already host data
     (with-arrayfire {:converter-fn identity}
-      ...)"
+      ...)
+
+    ;; Defer all JIT evaluation until explicit eval! calls
+    (with-arrayfire {:manual-eval true}
+      (let [a (+ x y)
+            b (* x y)]
+        (eval-multiple! [a b])
+        ...))"
   [& args]
-  (let [known-opts   #{:backend :device :converter-fn :arena-type}
-        opts-map?    (and (map? (first args))
-                          (or (empty? (first args))
-                              (some known-opts (keys (first args)))))
-        [opts body]  (if opts-map?
-                       [(first args) (rest args)]
-                       [{} args])
-        converter    (or (:converter-fn opts) `->native-buffer)
-        arena-type   (get opts :arena-type :confined)
-        has-backend? (contains? opts :backend)
-        has-device?  (contains? opts :device)
-        prev-backend (gensym "prev-backend")
-        prev-device  (gensym "prev-device")
-        arena-sym    (gensym "arena")
-        result-sym   (gensym "result")]
+  (let [known-opts       #{:backend :device :converter-fn :arena-type :manual-eval}
+        opts-map?        (and (map? (first args))
+                              (or (empty? (first args))
+                                  (some known-opts (keys (first args)))))
+        [opts body]      (if opts-map?
+                           [(first args) (rest args)]
+                           [{} args])
+        converter        (or (:converter-fn opts) `->native-buffer)
+        arena-type       (get opts :arena-type :confined)
+        has-backend?     (contains? opts :backend)
+        has-device?      (contains? opts :device)
+        has-manual-eval? (contains? opts :manual-eval)
+        prev-backend     (gensym "prev-backend")
+        prev-device      (gensym "prev-device")
+        prev-manual-eval (gensym "prev-manual-eval")
+        arena-sym        (gensym "arena")
+        result-sym       (gensym "result")]
     (if (or has-backend? has-device?)
       ;; With backend/device switching — needs lock
       `(do
          (device/ensure-af-init!)
          (locking device/backend-lock
            (let [~prev-backend (device/get-active-backend)
-                 ~prev-device  (device/get-device)]
+                 ~prev-device  (device/get-device)
+                 ~@(when has-manual-eval?
+                     [prev-manual-eval `(device/get-manual-eval-flag)])]
              (try
                ~(when has-backend?
                   `(device/set-backend! (defs/resolve-backend ~(:backend opts))))
                ~(when has-device?
                   `(device/set-device! ~(:device opts)))
+               ~(when has-manual-eval?
+                  `(device/set-manual-eval-flag! ~(:manual-eval opts)))
                ;; Push an introspection frame onto the per-thread stack.
                ;; `binding` unwinds automatically — no explicit pop needed.
                (binding [device/*backend-device-stack*
@@ -304,20 +324,40 @@
                         (device/sync!)
                         (result-convert ~converter ~result-sym))))))
                (finally
+                 ~(when has-manual-eval?
+                    `(device/set-manual-eval-flag! ~prev-manual-eval))
                  ~(when has-device?
                     `(device/set-device! ~prev-device))
                  ~(when has-backend?
                     `(device/set-backend! ~prev-backend)))))))
       ;; No backend/device switching — no lock needed
-      `(do
-         (device/ensure-af-init!)
-         (binding [*within-arrayfire?* true]
-           (with-open [~arena-sym (bmem/open-arena ~arena-type)]
-             (binding [bmem/*af-arena* ~arena-sym]
-               (stack-resource-context
-                (let [~result-sym (do ~@body)]
-                  (device/sync!)
-                  (result-convert ~converter ~result-sym))))))))))
+      (if has-manual-eval?
+        ;; manual-eval requires save/restore via try/finally
+        `(do
+           (device/ensure-af-init!)
+           (let [~prev-manual-eval (device/get-manual-eval-flag)]
+             (try
+               (device/set-manual-eval-flag! ~(:manual-eval opts))
+               (binding [*within-arrayfire?* true]
+                 (with-open [~arena-sym (bmem/open-arena ~arena-type)]
+                   (binding [bmem/*af-arena* ~arena-sym]
+                     (stack-resource-context
+                      (let [~result-sym (do ~@body)]
+                        (device/sync!)
+                        (result-convert ~converter ~result-sym))))))
+               (finally
+                 (device/set-manual-eval-flag! ~prev-manual-eval)))))
+        ;; No backend/device/manual-eval switching — no lock or try/finally needed
+        `(do
+           (device/ensure-af-init!)
+           (binding [*within-arrayfire?* true]
+             (with-open [~arena-sym (bmem/open-arena ~arena-type)]
+               (binding [bmem/*af-arena* ~arena-sym]
+                 (stack-resource-context
+                  (let [~result-sym (do ~@body)]
+                    (device/sync!)
+                    (result-convert ~converter ~result-sym)))))))))))
+
 
 ;;
 ;; with-random-engine scoped random engine region

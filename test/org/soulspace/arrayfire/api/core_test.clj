@@ -127,6 +127,48 @@
                    {:x 1 :y 2})]
       (is (= {:x 1 :y 2} result)))))
 
+(deftest with-arrayfire-manual-eval-sets-flag-test
+  (testing ":manual-eval true enables manual evaluation inside the region"
+    (device/ensure-af-init!)
+    (let [flag-inside (core/with-arrayfire {:manual-eval true}
+                        (device/get-manual-eval-flag))]
+      (is (true? flag-inside)))))
+
+(deftest with-arrayfire-manual-eval-restores-flag-test
+  (testing ":manual-eval true restores the flag to false after the region"
+    (device/ensure-af-init!)
+    (core/with-arrayfire {:manual-eval true} nil)
+    (is (false? (device/get-manual-eval-flag)))))
+
+(deftest with-arrayfire-manual-eval-restores-on-exception-test
+  (testing ":manual-eval flag is restored even when body throws"
+    (device/ensure-af-init!)
+    (is (thrown? Exception
+          (core/with-arrayfire {:manual-eval true}
+            (throw (Exception. "test error")))))
+    (is (false? (device/get-manual-eval-flag)))))
+
+(deftest with-arrayfire-manual-eval-false-sets-flag-test
+  (testing ":manual-eval false leaves the flag as false inside the region"
+    (device/ensure-af-init!)
+    (let [flag-inside (core/with-arrayfire {:manual-eval false}
+                        (device/get-manual-eval-flag))]
+      (is (false? flag-inside)))))
+
+(deftest with-arrayfire-manual-eval-with-backend-test
+  (testing ":manual-eval combined with :backend sets and restores both"
+    (device/ensure-af-init!)
+    (let [flag-inside (core/with-arrayfire {:backend :cpu :manual-eval true}
+                        (device/get-manual-eval-flag))]
+      (is (true? flag-inside))
+      (is (false? (device/get-manual-eval-flag))))))
+
+(deftest with-arrayfire-manual-eval-map-option-recognized-test
+  (testing ":manual-eval key is recognized as an option — not treated as body"
+    (let [result (core/with-arrayfire {:manual-eval true}
+                   :ok)]
+      (is (= :ok result)))))
+
 ;;;
 ;;; within-arrayfire? and assert-within-arrayfire! tests
 ;;;
