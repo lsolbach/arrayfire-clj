@@ -47,35 +47,43 @@
 
 (defn make-seq
   "Create an ArrayFire sequence (af_seq) for indexing.
-   
-   A sequence represents a range with optional step: begin:end:step
-   
+
+   af_seq is a plain C struct { double begin, end, step } = 24 bytes.
+   We construct it in pure Clojure (alloc + write-double) to avoid the
+   broken af_make_seq FFI binding, which cannot correctly capture a struct
+   returned by value via XMM registers as a ::mem/pointer.
+
    Parameters:
    - begin: Start index (double)
-   - end: End index (double), inclusive
-   - step: Step size (double), default 1.0
-   
+   - end:   End index (double), inclusive; -1.0 means 'last element'
+   - step:  Step size (double), default 1.0
+
    Returns:
-   MemorySegment containing af_seq structure
-   
+   24-byte MemorySegment containing a valid af_seq struct
+
    Examples:
    ```clojure
-   ;; Select all elements
-   (make-seq 0 -1 1)  ; 0:end:1
-   
+   ;; Select all elements (0 to last, step 1)
+   (make-seq 0 -1 1)
+
    ;; Select first 10 elements
-   (make-seq 0 9 1)   ; 0:9:1
-   
+   (make-seq 0 9 1)
+
    ;; Select every other element
-   (make-seq 0 -1 2)  ; 0:end:2
-   
-   ;; Reverse order
-   (make-seq -1 0 -1) ; end:0:-1
+   (make-seq 0 -1 2)
+
+   ;; Single element at index 3
+   (make-seq 3 3 1)
    ```"
   ([begin end]
    (make-seq begin end 1.0))
   ([begin end step]
-   (index-ffi/af-make-seq (double begin) (double end) (double step))))
+   ;; af_seq layout: { double begin; double end; double step; } — 24 bytes
+   (let [seg (mem/alloc 24)]
+     (mem/write-double seg 0  (double begin))
+     (mem/write-double seg 8  (double end))
+     (mem/write-double seg 16 (double step))
+     seg)))
 
 ;;;
 ;;; Basic Indexing
@@ -106,13 +114,17 @@
      (index arr [s0 s1]))
    ```"
   [^AFArray in seqs]
-  (let [out (res/native-af-array-pointer)
-        ndims (count seqs)
-        ;; Create array of af_seq pointers
-        seqs-array (mem/alloc (* ndims 8))] ; Assuming 8 bytes per pointer
-    ;; Write sequence pointers to array
-    (doseq [[i seq-ptr] (map-indexed vector seqs)]
-      (mem/write-long seqs-array (* i 8) (.address seq-ptr)))
+  (let [out        (res/native-af-array-pointer)
+        ndims      (count seqs)
+        ;; af_index expects `const af_seq* indices` — a contiguous C array of
+        ;; af_seq structs, each 24 bytes ({ double begin, end, step }) inline.
+        ;; We must NOT write pointer addresses here; we copy the 24-byte struct
+        ;; bytes from each seq MemorySegment into the flat array.
+        seqs-array (mem/alloc (* ndims 24))]
+    (doseq [[i seq-seg] (map-indexed vector seqs)]
+      ;; Slice a 24-byte window in seqs-array at the correct offset, then
+      ;; copy-segment from the seq MemorySegment into that window.
+      (mem/copy-segment (mem/slice seqs-array (* i 24) 24) seq-seg))
     (check! (index-ffi/af-index out (res/af-handle in) (int ndims) seqs-array)
                 "af-index")
     (res/af-array-new (res/deref-af-array out))))

@@ -51,8 +51,21 @@
   "af_index_gen" [::mem/pointer ::mem/pointer ::mem/long ::mem/pointer] ::mem/int)
 
 ;; af_seq af_make_seq(double begin, double end, double step)
+;;
+;; NOTE: This FFI binding is intentionally NOT used by the integration layer.
+;;
+;; af_make_seq returns an af_seq struct BY VALUE (3 doubles = 24 bytes).
+;; On x86-64 SysV ABI, floating-point struct members are returned in XMM
+;; registers (XMM0/XMM1/XMM2 for three doubles).  Coffi's ::mem/pointer
+;; return type reads the RAX/pointer register instead — yielding a
+;; zero-length MemorySegment at a garbage address.
+;;
+;; Use the integration-layer make-seq instead, which allocates 24 bytes and
+;; writes the three doubles directly without any FFI call.
 (defcfn af-make-seq
-  "Create an af_seq sequence object.
+  "[BROKEN — do NOT call directly; use the integration layer make-seq]
+  af_make_seq returns af_seq by value via XMM registers; ::mem/pointer
+  captures the wrong register and produces a zero-length garbage segment.
   
   Parameters:
   begin - start value of sequence
@@ -60,7 +73,7 @@
   step - step size
   
   Returns:
-  af_seq struct (returned by value)"
+  Broken — zero-length MemorySegment at undefined address."
   "af_make_seq" [::mem/double ::mem/double ::mem/double] ::mem/pointer)
 
 ;; Indexer management functions

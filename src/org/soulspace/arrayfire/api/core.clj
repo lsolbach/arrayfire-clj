@@ -710,58 +710,279 @@
 ;;;
 ;;; Array indexing and manipulation
 ;;;
-#_(defn slice
-  "Slice an AFArray using start, end, and step parameters for each dimension.
+
+;; ── Internal helpers ──────────────────────────────────────────────────────────
+
+(defn- normalize-range-spec
+  "Coerce a range spec to [begin end step] as doubles.
+
+   Accepted forms:
+   - nil              → [0.0 -1.0 1.0]  (select all, -1 = ArrayFire 'last' sentinel)
+   - n (Number)       → [n n 1.0]       (single element at index n)
+   - [start end]      → [start end 1.0] (inclusive range, step 1)
+   - [start end step] → as given"
+  [spec]
+  (cond
+    (nil? spec)
+    [0.0 -1.0 1.0]
+
+    (number? spec)
+    [(double spec) (double spec) 1.0]
+
+    (and (sequential? spec) (= 2 (count spec)))
+    [(double (first spec)) (double (second spec)) 1.0]
+
+    (and (sequential? spec) (= 3 (count spec)))
+    [(double (first spec)) (double (second spec)) (double (nth spec 2))]
+
+    :else
+    (throw (ex-info "Invalid range spec — expected nil, number, [start end] or [start end step]"
+                    {:spec spec}))))
+
+(defn- configure-indexers!
+  "Set seq-param indexers for all 4 dimensions.
+   Range specs beyond what is given default to nil (= 'all elements').
+   Always returns 4 (ArrayFire requires all dims initialised when using index-gen)."
+  [indexers range-specs]
+  (dotimes [dim 4]
+    (let [spec             (nth range-specs dim nil)
+          [begin end step] (normalize-range-spec spec)]
+      (index/set-seq-param-indexer! indexers begin end step dim false)))
+  4)
+
+(defn- range-map->range-specs
+  "Expand a map {:rows … :cols … :depth … :batch …} to an ordered vector of
+   specs for dims 0–3. Dimensions between the first and last explicitly set
+   that are missing from the map default to nil (= 'all elements')."
+  [range-map]
+  (let [dim-keys [:rows :cols :depth :batch]
+        max-dim  (reduce (fn [acc [i k]]
+                           (if (contains? range-map k) i acc))
+                         -1
+                         (map-indexed vector dim-keys))]
+    (if (neg? max-dim)
+      []
+      (mapv #(get range-map %) (take (inc max-dim) dim-keys)))))
+
+;; ── Public API ────────────────────────────────────────────────────────────────
+
+(defn slice
+  "Extract a subarray using range-based (sequence) indexing.
+
+   Supports two calling forms:
+
+   **Vector form** — positional range per dimension:
+     (slice arr range-specs)
+
+   **Map form** — named ranges for named dimensions:
+     (slice arr {:rows … :cols … :depth … :batch …})
+
+   Each range spec can be:
+   - `nil`              — all elements along that dimension
+   - `n` (integer)      — single element at index n
+   - `[start end]`      — indices start..end inclusive, step 1
+   - `[start end step]` — with given step (-1 as end → last element)
 
    Parameters:
-   - arr: AFArray instance
-   - slices: vector of slice specifications, one per dimension. Each slice is a map with keys :start, :end, and optional :step.
+   - arr:         AFArray to index
+   - range-specs: vector of range specs, one per dimension; OR a map with
+                  keys :rows (dim 0), :cols (dim 1), :depth (dim 2), :batch (dim 3)
 
    Returns:
-   AFArray instance containing the sliced subset of the original array.
+   Subarray AFArray.
 
-   Example:
-   (slice my-array [{:start 0 :end 2} {:start 1 :end 3}]) ; slices rows 0-1 and columns 1-2"
+   Examples:
+   ;; Select all columns of row 0
+   (slice arr [0 nil])
+
+   ;; Rows 2–5, columns 1–3
+   (slice arr [[2 5] [1 3]])
+
+   ;; Every other row, all columns
+   (slice arr [[0 -1 2] nil])
+
+   ;; Map form — rows 0–4, all columns
+   (slice arr {:rows [0 4]})"
   ^AFArray
-  [^AFArray arr slices]
+  [^AFArray arr range-specs]
   (assert-within-arrayfire! "slice")
-  ; TODO convert slice specifications to the format expected by the integration layer
-  (index/slice arr slices))
+  (let [specs    (if (map? range-specs)
+                   (range-map->range-specs range-specs)
+                   (vec range-specs))
+        indexers (index/create-indexers)]
+    (try
+      (let [ndims (configure-indexers! indexers specs)]
+        (index/index-gen arr indexers ndims))
+      (finally
+        (index/release-indexers! indexers)))))
 
-
-#_(defn index
-  "Index into an AFArray using a vector of indices for each dimension.
+(defn at
+  "Select a single element by exact indices per dimension.
 
    Parameters:
-   - arr: AFArray instance
-   - indices: vector of index vectors, one per dimension. Each index vector can contain integers or ranges.
+   - arr:     AFArray to index
+   - indices: vector of integer indices, one per dimension
 
    Returns:
-   AFArray instance containing the indexed subset of the original array.
+   A 1-element AFArray at the specified position.
 
    Example:
-   (index my-array [[0 1] [1 2]]) ; indexes rows 0 and 1, columns 1 and 2"
+   (at arr [1 2])  ; element at row 1, column 2"
   ^AFArray
   [^AFArray arr indices]
-  (assert-within-arrayfire! "index")
-  (array/index arr indices))
+  (assert-within-arrayfire! "at")
+  (let [specs    (mapv (fn [i] [(double i) (double i) 1.0]) indices)
+        indexers (index/create-indexers)]
+    (try
+      (dotimes [dim 4]
+        (let [[begin end step] (if (< dim (count specs))
+                                 (nth specs dim)
+                                 [0.0 -1.0 1.0])]
+          (index/set-seq-param-indexer! indexers begin end step dim false)))
+      (index/index-gen arr indexers 4)
+      (finally
+        (index/release-indexers! indexers)))))
 
-#_(defn reshape
-  "Reshape an AFArray to new dimensions.
+(defn row
+  "Select a single row (dimension 0) of a 2-D (or higher) array.
 
    Parameters:
-   - arr: AFArray instance
-   - new-dims: vector specifying the new dimensions (e.g. [6] to flatten a 2x3 array)
+   - arr: AFArray
+   - i:   row index (integer)
 
    Returns:
-   AFArray instance with the same data but reshaped to the new dimensions.
+   AFArray with row i selected (size 1 along dim 0).
 
    Example:
-   (reshape my-array [6]) ; reshapes a 2x3 array into a 1D array with 6 elements"
+   (row arr 0)  ; first row"
   ^AFArray
-  [^AFArray arr new-dims]
-  (assert-within-arrayfire! "reshape")
-  (array/reshape arr new-dims))
+  [^AFArray arr i]
+  (assert-within-arrayfire! "row")
+  (slice arr [(double i) nil]))
+
+(defn col
+  "Select a single column (dimension 1) of a 2-D (or higher) array.
+
+   Parameters:
+   - arr: AFArray
+   - j:   column index (integer)
+
+   Returns:
+   AFArray with column j selected (size 1 along dim 1).
+
+   Example:
+   (col arr 2)  ; third column"
+  ^AFArray
+  [^AFArray arr j]
+  (assert-within-arrayfire! "col")
+  (slice arr [nil (double j)]))
+
+(defn rows
+  "Select a contiguous range of rows (dimension 0).
+
+   Parameters:
+   - arr:   AFArray
+   - start: first row index (integer, inclusive)
+   - end:   last row index (integer, inclusive)
+
+   Returns:
+   AFArray with rows start..end.
+
+   Example:
+   (rows arr 2 5)  ; rows 2, 3, 4, 5"
+  ^AFArray
+  [^AFArray arr start end]
+  (assert-within-arrayfire! "rows")
+  (slice arr [[start end] nil]))
+
+(defn cols
+  "Select a contiguous range of columns (dimension 1).
+
+   Parameters:
+   - arr:   AFArray
+   - start: first column index (integer, inclusive)
+   - end:   last column index (integer, inclusive)
+
+   Returns:
+   AFArray with columns start..end.
+
+   Example:
+   (cols arr 1 3)  ; columns 1, 2, 3"
+  ^AFArray
+  [^AFArray arr start end]
+  (assert-within-arrayfire! "cols")
+  (slice arr [nil [start end]]))
+
+(defn select
+  "Fancy indexing: select elements by an integer index array along one dimension.
+
+   Parameters:
+   - arr:     AFArray to index
+   - indices: Clojure vector of integer indices, or an AFArray of integer dtype
+   - dim:     (optional) dimension along which to index, default 0
+
+   Returns:
+   AFArray with the selected elements.
+
+   Examples:
+   ;; Select elements at positions 0, 2, 4 along dim 0
+   (select arr [0 2 4])
+
+   ;; Select columns 1 and 3
+   (select arr [1 3] 1)"
+  (^AFArray [^AFArray arr indices]
+   (select arr indices 0))
+  (^AFArray [^AFArray arr indices dim]
+   (assert-within-arrayfire! "select")
+   (let [idx-arr (if (instance? AFArray indices)
+                   indices
+                   (array/create-array (int-array indices)
+                                       [(count indices)]
+                                       (defs/dtype-kw->const :s32)))]
+     (index/lookup arr idx-arr (int dim)))))
+
+(defn assign
+  "Functional (copy-on-write) assignment: return a new array with values from
+   `new-values` written into the region specified by `range-specs`.
+
+   The original array is not modified — a new array is returned.
+
+   Parameters:
+   - arr:         AFArray (destination, not mutated)
+   - range-specs: same format as `slice` (vector of range specs or map)
+   - new-values:  AFArray of values to write into the selected region
+
+   Returns:
+   New AFArray with the assignment applied.
+
+   Examples:
+   ;; Zero out row 0 of a 4×3 array
+   (assign arr [0 nil] (zeros [1 3]))
+
+   ;; Replace column 2 with a constant
+   (assign arr [nil 2] (constant 99.0 [4 1]))
+
+   ;; Map form
+   (assign arr {:rows [0 4]} new-block)"
+  ^AFArray
+  [^AFArray arr range-specs ^AFArray new-values]
+  (assert-within-arrayfire! "assign")
+  (let [specs        (if (map? range-specs)
+                       (range-map->range-specs range-specs)
+                       (vec range-specs))
+        ;; af_assign_gen modifies lhs in-place; copy first to preserve functional semantics.
+        arr-copy     (array/copy-array arr)
+        ;; assign-gen requires ndims ≥ array rank so all addressed dimensions
+        ;; have properly initialised indexers.
+        arr-rank     (array/get-numdims arr)
+        assign-ndims (max (count specs) arr-rank)
+        indexers     (index/create-indexers)]
+    (try
+      ;; Initialise all 4 indexers (avoid uninitialised memory).
+      (configure-indexers! indexers specs)
+      (index/assign-gen arr-copy indexers assign-ndims new-values)
+      (finally
+        (index/release-indexers! indexers)))))
 
 ;;;
 ;;; Basic arithmetic functions
@@ -2051,6 +2272,40 @@
                    :converter-fn ->value}
     (let [data (double-array [1.0 2.0 3.0 4.0 5.0 6.0])]
       (array data [2 3] :f64)))
+
+  ;; ── Indexing and manipulation ────────────────────────────────────────────────
+  ;; col-major 2×3:  col0=[1,2]  col1=[3,4]  col2=[5,6]
+  ;; row0=[1,3,5]    row1=[2,4,6]     element[row,col] at [1,2] = 6.0
+  (with-arrayfire {:backend :cpu :converter-fn ->value}
+    (let [m (array [1.0 2.0 3.0 4.0 5.0 6.0] [2 3])]
+
+      ;; slice — select row 0 (vector form)
+      (->value (slice m [0 nil]))               ; => [[1.0][3.0][5.0]]
+
+      ;; slice — select col 1 (vector form)
+      (->value (slice m [nil 1]))               ; => [3.0 4.0]
+
+      ;; slice — rows 0-0, cols 1-2 (map form)
+      (->value (slice m {:rows 0 :cols [1 2]})) ; => [[3.0][5.0]]
+
+      ;; at — single element
+      (->value (at m [1 2]))                    ; => 6.0
+
+      ;; row / col shortcuts
+      (->value (row m 0))                       ; => [[1.0][3.0][5.0]]
+      (->value (col m 2))                       ; => [5.0 6.0]
+
+      ;; rows / cols range shortcuts
+      (->value (rows m 0 1))                    ; => all rows
+      (->value (cols m 0 1))                    ; => [[1.0 2.0][3.0 4.0]]
+
+      ;; select — fancy indexing by integer index array
+      (->value (select m [0 2] 1))              ; cols 0 and 2: [[1.0 2.0][5.0 6.0]]
+
+      ;; assign — functional (original unchanged)
+      (let [res (assign m [0 nil] (array [99.0 98.0 97.0] [1 3]))]
+        [(->value res)                          ; row 0 replaced
+         (->value (row m 0))])))               ; original row 0 unchanged
 
   ;
   )
