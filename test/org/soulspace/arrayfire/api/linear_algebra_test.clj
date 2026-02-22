@@ -41,7 +41,7 @@
     (let [result (af/with-arrayfire
                    (let [a (af/array [1.0 4.0 2.0 5.0 3.0 6.0] [2 3] :f64)]
                      (af/shape (la/transpose a))))]
-      (is (= [3 2 1 1] result))))
+      (is (= [3 2] result))))
   (testing "Transpose of a 2×2 matrix is correct"
     ;; A = [[1 2][3 4]]; col-major: [1 3 2 4]; A^T col-major: [1 2 3 4] → [[1 3][2 4]]
     (let [result (af/with-arrayfire
@@ -50,29 +50,29 @@
       (is (seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
 
 ;;;
-;;; Conjugate transpose
+;;; Conjugate transpose (adjoint)
 ;;;
 
-(deftest transpose-conjugate-test
+(deftest adjoint-test
   (testing "Conjugate-transpose of a real 2×3 matrix equals regular transpose (imag=0)"
     ;; For real arrays conjugation is a no-op, so result = regular transpose
     (let [shape-result (af/with-arrayfire
                          (let [a (af/array [1.0 4.0 2.0 5.0 3.0 6.0] [2 3] :f64)]
-                           (af/shape (la/transpose-conjugate a))))]
-      (is (= [3 2 1 1] shape-result))))
+                           (af/shape (la/adjoint a))))]
+      (is (= [3 2] shape-result))))
   (testing "Conjugate-transpose of a real 2×2 matrix has same values as regular transpose"
     ;; A = [[1 2][3 4]] col-major: [1 3 2 4]
     (let [result (af/with-arrayfire
                    (let [a (af/array [1.0 3.0 2.0 4.0] [2 2] :f64)]
-                     (af/->value (la/transpose-conjugate a))))]
+                     (af/->value (la/adjoint a))))]
       (is (seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
 
-(deftest transpose-conjugate!-test
+(deftest adjoint!-test
   (testing "In-place conjugate-transpose of a square real matrix has same values as transpose"
     ;; A = [[1 2][3 4]] col-major: [1 3 2 4] — square, so in-place is valid
     (let [result (af/with-arrayfire
                    (let [a (af/array [1.0 3.0 2.0 4.0] [2 2] :f64)]
-                     (af/->value (la/transpose-conjugate! a))))]
+                     (af/->value (la/adjoint! a))))]
       (is (seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
 
 ;;;
@@ -99,15 +99,15 @@
       (is (seq-approx= (flatten result) [1.0 2.0 3.0 4.0])))))
 
 ;;;
-;;; dot-all
+;;; dot-scalar
 ;;;
 
-(deftest dot-all-test
+(deftest dot-scalar-test
   (testing "dot product of [1 2 3] and [4 5 6] = 32"
     (let [result (af/with-arrayfire
                    (let [u (af/array [1.0 2.0 3.0] [3] :f64)
                          v (af/array [4.0 5.0 6.0] [3] :f64)]
-                     (la/dot-all u v)))]
+                     (la/dot-scalar u v)))]
       (is (approx= result 32.0)))))
 
 ;;;
@@ -129,8 +129,8 @@
                          {:keys [lower upper]} (la/lu a)]
                      {:lower-shape (af/shape lower)
                       :upper-shape (af/shape upper)}))]
-      (is (= [2 2 1 1] (:lower-shape result)))
-      (is (= [2 2 1 1] (:upper-shape result))))))
+      (is (= [2 2] (:lower-shape result)))
+      (is (= [2 2] (:upper-shape result))))))
 
 ;;;
 ;;; QR decomposition
@@ -231,11 +231,11 @@
 ;;; Pseudo-inverse
 ;;;
 
-(deftest pinverse-test
+(deftest pseudo-inverse-test
   (testing "Pseudo-inverse of a 2×3 matrix has shape [3 2]"
     (let [result (af/with-arrayfire
                    (let [a (af/array [1.0 4.0 2.0 5.0 3.0 6.0] [2 3] :f64)]
-                     (af/shape (la/pinverse a))))]
+                     (af/shape (la/pseudo-inverse a))))]
       (is (= 3 (first result)))
       (is (= 2 (second result))))))
 
@@ -243,16 +243,16 @@
 ;;; Determinant
 ;;;
 
-(deftest det-test
+(deftest determinant-test
   (testing "det([[1 2][3 4]]) = -2"
     (let [result (af/with-arrayfire
                    (let [a (af/array [1.0 3.0 2.0 4.0] [2 2] :f64)]
-                     (la/det a)))]
+                     (la/determinant a)))]
       (is (approx= result -2.0))))
   (testing "det of identity matrix = 1.0"
     (let [result (af/with-arrayfire
                    (let [i (af/array [1.0 0.0 0.0 1.0] [2 2] :f64)]
-                     (la/det i)))]
+                     (la/determinant i)))]
       (is (approx= result 1.0)))))
 
 ;;;

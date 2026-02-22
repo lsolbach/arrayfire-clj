@@ -5,9 +5,9 @@
 
    BLAS operations:
    - General matrix multiply with scalars: `gemm`
-   - Matrix multiply variants: `matmul-nt`, `matmul-tn`, `matmul-tt`, `matmul3`, `matmul4`
-   - Dot product with immediate result: `dot-all`
-   - Transpose: `transpose`, `transpose!`, `transpose-conjugate`, `transpose-conjugate!`
+   - Matrix multiply (2 or more matrices): `matmul` (from core)
+   - Dot product with immediate scalar result: `dot-scalar`
+   - Transpose: `transpose`, `transpose!`, `adjoint`, `adjoint!`
 
    Matrix decompositions (LAPACK):
    - LU factorization:    `lu`, `lu!`
@@ -20,7 +20,7 @@
    - `solve-lu`  — Ax = b using pre-factored LU
 
    Matrix properties:
-   - `inverse`, `pinverse`, `det`, `matrix-rank`, `norm`
+   - `inverse`, `pseudo-inverse`, `determinant`, `matrix-rank`, `norm`
 
    Utilities:
    - `lapack-available?`
@@ -57,7 +57,7 @@
   "Return true if LAPACK is available on the current ArrayFire backend.
 
    LAPACK is required by: `lu`, `qr`, `svd`, `cholesky`, `solve`, `inverse`,
-   `pinverse`, `det`, `matrix-rank`, `norm`.
+   `pseudo-inverse`, `determinant`, `matrix-rank`, `norm`.
 
    Returns:
      `true` if LAPACK is available, `false` otherwise."
@@ -99,11 +99,12 @@
    (assert-within-arrayfire! "transpose!")
    (blas/transpose! arr conjugate?)))
 
-(defn transpose-conjugate
+(defn adjoint
   "Compute the conjugate (Hermitian) transpose Aᴴ of a matrix.
 
    For complex matrices this transposes and conjugates each element (Aᴴ).
    For real matrices this is equivalent to a plain `transpose`.
+   Also known as the Hermitian transpose or conjugate transpose.
 
    Parameters:
      arr — AFArray to conjugate-transpose
@@ -113,7 +114,7 @@
   ^AFArray [^AFArray arr]
   (core/transpose arr true))
 
-(defn transpose-conjugate!
+(defn adjoint!
   "Compute the conjugate (Hermitian) transpose Aᴴ of a matrix in-place.
 
    For complex matrices transposes and conjugates each element in-place.
@@ -128,6 +129,7 @@
   ^AFArray [^AFArray arr]
   (transpose! arr true))
 
+; TODO use clojure name for gemm, e.g. general-matrix-multiply, or just matmul with options for alpha/beta/op?
 (defn gemm
   "General matrix multiply: result = alpha * op(A) * op(B) + beta * result.
 
@@ -155,81 +157,15 @@
              b
              (double beta)))
 
-(defn matmul-nt
-  "Matrix multiplication A × Bᵀ (B transposed).
+;; matmul-nt, matmul-tn, matmul-tt, matmul3, matmul4 have been removed.
+;; Use core/matmul (variadic) with core/transpose for the transposed variants:
+;;   (matmul a (transpose b))   ; A × Bᵀ
+;;   (matmul (transpose a) b)   ; Aᵀ × B
+;;   (matmul a b c d)           ; chain multiply
 
-   Convenience wrapper for matmul with the second matrix transposed.
-
-   Parameters:
-     lhs — left-hand AFArray matrix A [m×k]
-     rhs — right-hand AFArray matrix B [n×k], will be transposed to [k×n]
-
-   Returns:
-     New AFArray result [m×n]."
-  ^AFArray [^AFArray lhs ^AFArray rhs]
-  (assert-within-arrayfire! "matmul-nt")
-  (blas/matmul-nt lhs rhs))
-
-(defn matmul-tn
-  "Matrix multiplication Aᵀ × B (A transposed).
-
-   Convenience wrapper for matmul with the first matrix transposed.
-
-   Parameters:
-     lhs — left-hand AFArray matrix A [k×m], will be transposed to [m×k]
-     rhs — right-hand AFArray matrix B [k×n]
-
-   Returns:
-     New AFArray result [m×n]."
-  ^AFArray [^AFArray lhs ^AFArray rhs]
-  (assert-within-arrayfire! "matmul-tn")
-  (blas/matmul-tn lhs rhs))
-
-(defn matmul-tt
-  "Matrix multiplication Aᵀ × Bᵀ (both transposed).
-
-   Convenience wrapper for matmul with both matrices transposed.
-
-   Parameters:
-     lhs — left-hand AFArray matrix A [k×m], will be transposed
-     rhs — right-hand AFArray matrix B [n×k], will be transposed
-
-   Returns:
-     New AFArray result [m×n]."
-  ^AFArray [^AFArray lhs ^AFArray rhs]
-  (assert-within-arrayfire! "matmul-tt")
-  (blas/matmul-tt lhs rhs))
-
-(defn matmul3
-  "Chain matrix multiplication of three matrices: (A × B) × C.
-
-   Parameters:
-     a — first AFArray matrix [m×k]
-     b — second AFArray matrix [k×n]
-     c — third AFArray matrix [n×p]
-
-   Returns:
-     New AFArray result [m×p]."
-  ^AFArray [^AFArray a ^AFArray b ^AFArray c]
-  (assert-within-arrayfire! "matmul3")
-  (blas/matmul3 a b c))
-
-(defn matmul4
-  "Chain matrix multiplication of four matrices: ((A × B) × C) × D.
-
-   Parameters:
-     a — first AFArray matrix [m×k]
-     b — second AFArray matrix [k×n]
-     c — third AFArray matrix [n×p]
-     d — fourth AFArray matrix [p×q]
-
-   Returns:
-     New AFArray result [m×q]."
-  ^AFArray [^AFArray a ^AFArray b ^AFArray c ^AFArray d]
-  (assert-within-arrayfire! "matmul4")
-  (blas/matmul4 a b c d))
-
-(defn dot-all
+; TODO rename to inner-product, check with overlap with core/dot,
+;      and consider supporting non-vector inputs with appropriate broadcasting rules.
+(defn dot-scalar
   "Dot (inner) product of two vectors, returning the scalar result directly.
 
    For real arrays returns a `double`. For complex arrays returns `[real imag]`.
@@ -246,9 +182,9 @@
      For real inputs: a `double`.
      For complex inputs: `[real imag]` vector."
   ([^AFArray lhs ^AFArray rhs]
-   (dot-all lhs rhs :none :none))
+   (dot-scalar lhs rhs :none :none))
   ([^AFArray lhs ^AFArray rhs opt-lhs opt-rhs]
-   (assert-within-arrayfire! "dot-all")
+   (assert-within-arrayfire! "dot-scalar")
    (blas/dot-all lhs rhs (defs/resolve-mat-prop opt-lhs) (defs/resolve-mat-prop opt-rhs))))
 
 ;;;
@@ -275,22 +211,22 @@
     {:lower lower :upper upper :pivot pivot}))
 
 (defn lu!
-  "LU decomposition of `in` in-place; overwrites `in` with combined L+U data.
+  "LU decomposition of `arr` in-place; overwrites `arr` with combined L+U data.
 
    More memory-efficient than `lu` for large matrices, at the cost of
    destroying the original matrix contents.
 
    Parameters:
-     in            — AFArray to factorize in-place (mutated)
+     arr           — AFArray to factorize in-place (mutated)
      lapack-pivot? — (optional) use LAPACK-style pivot indexing; default false
 
    Returns:
      Pivot AFArray."
-  (^AFArray [^AFArray in]
-   (lu! in false))
-  (^AFArray [^AFArray in lapack-pivot?]
+  (^AFArray [^AFArray arr]
+   (lu! arr false))
+  (^AFArray [^AFArray arr lapack-pivot?]
    (assert-within-arrayfire! "lu!")
-   (lapack/lu! in lapack-pivot?)))
+   (lapack/lu! arr lapack-pivot?)))
 
 (defn qr
   "QR decomposition of matrix `a`.
@@ -311,16 +247,16 @@
     {:q q :r r :tau tau}))
 
 (defn qr!
-  "QR decomposition of `in` in-place (overwrites `in` with packed QR form).
+  "QR decomposition of `arr` in-place (overwrites `arr` with packed QR form).
 
    Parameters:
-     in — AFArray matrix to factorize in-place (mutated)
+     arr — AFArray matrix to factorize in-place (mutated)
 
    Returns:
      tau AFArray (Householder reflector scalars)."
-  ^AFArray [^AFArray in]
+  ^AFArray [^AFArray arr]
   (assert-within-arrayfire! "qr!")
-  (lapack/qr! in))
+  (lapack/qr! arr))
 
 (defn svd
   "Singular Value Decomposition of matrix `a`.
@@ -341,27 +277,27 @@
     {:u u :s s :vt vt}))
 
 (defn svd!
-  "SVD of `in` in-place; destroys `in` during computation (more memory-efficient).
+  "SVD of `arr` in-place; destroys `arr` during computation (more memory-efficient).
 
    Parameters:
-     in — AFArray matrix (will be overwritten/destroyed)
+     arr — AFArray matrix (will be overwritten/destroyed)
 
    Returns:
      Map {:u U :s S :vt VT} where U, S, and VT are AFArrays."
-  [^AFArray in]
+  [^AFArray arr]
   (assert-within-arrayfire! "svd!")
-  (let [[u s vt] (lapack/svd! in)]
+  (let [[u s vt] (lapack/svd! arr)]
     {:u u :s s :vt vt}))
 
 (defn cholesky
-  "Cholesky decomposition of symmetric positive-definite matrix `in`.
+  "Cholesky decomposition of symmetric positive-definite matrix `a`.
 
    Factors A into:
    - L × Lᴴ  when `upper?` is false (default) — lower triangular L
    - Uᴴ × U  when `upper?` is true — upper triangular U
 
    Parameters:
-     in     — symmetric positive-definite AFArray matrix
+     a      — symmetric positive-definite AFArray matrix
      upper? — (optional) compute upper triangular factor; default false (lower)
 
    Returns:
@@ -369,27 +305,27 @@
      where `factor` is the triangular AFArray and `info` is 0 on success.
      A positive `info` indicates the matrix is not positive-definite at that
      leading minor."
-  ([^AFArray in]
-   (cholesky in false))
-  ([^AFArray in upper?]
+  ([^AFArray a]
+   (cholesky a false))
+  ([^AFArray a upper?]
    (assert-within-arrayfire! "cholesky")
-   (let [{:keys [result info]} (lapack/cholesky in (boolean upper?))]
+   (let [{:keys [result info]} (lapack/cholesky a (boolean upper?))]
      {:result result :info info :upper? (boolean upper?)})))
 
 (defn cholesky!
-  "Cholesky decomposition of `in` in-place (overwrites `in` with triangular factor).
+  "Cholesky decomposition of `a` in-place (overwrites `a` with triangular factor).
 
    Parameters:
-     in     — symmetric positive-definite AFArray matrix (mutated)
+     a      — symmetric positive-definite AFArray matrix (mutated)
      upper? — (optional) compute upper triangular factor; default false (lower)
 
    Returns:
-     Map {:result in :info info :upper? up?} where `result` is the mutated `in`."
-  ([^AFArray in]
-   (cholesky! in false))
-  ([^AFArray in upper?]
+     Map {:result a :info info :upper? up?} where `result` is the mutated `a`."
+  ([^AFArray a]
+   (cholesky! a false))
+  ([^AFArray a upper?]
    (assert-within-arrayfire! "cholesky!")
-   (let [{:keys [result info]} (lapack/cholesky! in (boolean upper?))]
+   (let [{:keys [result info]} (lapack/cholesky! a (boolean upper?))]
      {:result result :info info :upper? (boolean upper?)})))
 
 ;;;
@@ -448,18 +384,18 @@
   "Compute the inverse of a square non-singular matrix.
 
    Computed using LU decomposition with partial pivoting.
-   For rectangular or singular matrices, use `pinverse`.
+   For rectangular or singular matrices, use `pseudo-inverse`.
 
    Parameters:
-     in — square non-singular AFArray matrix
+     a — square non-singular AFArray matrix
 
    Returns:
      Inverse AFArray A⁻¹ such that A × A⁻¹ ≈ I."
-  ^AFArray [^AFArray in]
+  ^AFArray [^AFArray a]
   (assert-within-arrayfire! "inverse")
-  (lapack/inverse in {}))
+  (lapack/inverse a {}))
 
-(defn pinverse
+(defn pseudo-inverse
   "Compute the Moore-Penrose pseudo-inverse of a matrix.
 
    Works for rectangular or singular matrices. Uses SVD internally.
@@ -467,31 +403,31 @@
    are treated as zero, stabilising the inversion.
 
    Parameters:
-     in  — AFArray matrix (any shape, real or complex)
+     arr — AFArray matrix (any shape, real or complex)
      tol — (optional) singular-value truncation tolerance; default 1e-6
 
    Returns:
      Pseudo-inverse AFArray."
-  (^AFArray [^AFArray in]
-   (pinverse in 1e-6))
-  (^AFArray [^AFArray in tol]
-   (assert-within-arrayfire! "pinverse")
-   (lapack/pinverse in (double tol) {})))
+  (^AFArray [^AFArray arr]
+   (pseudo-inverse arr 1e-6))
+  (^AFArray [^AFArray arr tol]
+   (assert-within-arrayfire! "pseudo-inverse")
+   (lapack/pinverse arr (double tol) {})))
 
-(defn det
+(defn determinant
   "Compute the determinant of a square matrix.
 
    Computed via LU decomposition.
 
    Parameters:
-     in — square AFArray matrix
+     a — square AFArray matrix
 
    Returns:
      For real matrices: a `double`.
      For complex matrices: a vector `[real imag]` of doubles."
-  [^AFArray in]
-  (assert-within-arrayfire! "det")
-  (lapack/det in))
+  [^AFArray a]
+  (assert-within-arrayfire! "determinant")
+  (lapack/det a))
 
 (defn matrix-rank
   "Compute the numerical rank of a matrix.
@@ -580,11 +516,11 @@
       (af/->value (gemm :none :none 2.0 a b 0.0))))
   ;; => [[2.0 4.0] [6.0 8.0]]
 
-  ;; --- dot-all ---
+  ;; --- dot-scalar ---
   (af/with-arrayfire
     (let [u (af/array [1.0 2.0 3.0] [3] :f64)
           v (af/array [4.0 5.0 6.0] [3] :f64)]
-      (dot-all u v)))
+      (dot-scalar u v)))
   ;; => 32.0
 
   ;; --- LU decomposition ---
@@ -645,14 +581,14 @@
   ;; A = [[1 2 3][4 5 6]] (2×3) col-major: [1 4 2 5 3 6]
   (af/with-arrayfire
     (let [a (af/array [1.0 4.0 2.0 5.0 3.0 6.0] [2 3] :f64)]
-      (af/shape (pinverse a))))
-  ;; => [3 2 1 1] — pseudo-inverse of a 2×3 is 3×2
+      (af/shape (pseudo-inverse a))))
+  ;; => [3 2] — pseudo-inverse of a 2×3 is 3×2
 
   ;; --- Determinant ---
   ;; A = [[1 2][3 4]] col-major: [1 3 2 4]
   (af/with-arrayfire
     (let [a (af/array [1.0 3.0 2.0 4.0] [2 2] :f64)]
-      (det a)))
+      (determinant a)))
   ;; => -2.0
 
   ;; --- Matrix rank ---
