@@ -1,5 +1,5 @@
 (ns org.soulspace.arrayfire.api.core
-  "Core API namespace for arrayfire-clj.
+  "Idiomatic Clojure core API for arrayfire-clj.
   
    This namespace is intended to be the main public API for users of arrayfire-clj.
    It abstracts away low-level details and provides a clean, idiomatic Clojure
@@ -25,7 +25,7 @@
    Clojure data structures) before they are returned from the region.
    This ensures that AFArray instances do not escape the resource management scope,
    preventing memory leaks and ensuring safe interoperability with Clojure code."
-  (:refer-clojure :exclude [+ - * / abs mod rem range min max sort flatten not cast zero?])
+  (:refer-clojure :exclude [+ - * / abs mod rem range min max sort flatten not cast])
   (:require [clojure.math]
             [tech.v3.resource :refer [stack-resource-context]]
             [org.soulspace.arrayfire.integration.base.definitions :as defs]
@@ -749,35 +749,43 @@
   (get defs/dtype-const->kw (array/get-type arr) :unknown))
 
 (defn shape
-  "Get the shape (dimensions) of an AFArray as a vector of integers.
+  "Get the effective shape (dimensions) of an AFArray, stripping trailing size-1 dimensions.
+
+   ArrayFire internally always stores 4 dimensions, padding unused dimensions with 1.
+   This function strips those trailing ones, returning the logical shape.
+   Use `raw-shape` to get the padded 4-element dimension vector.
 
    Parameters:
    - arr: AFArray instance
 
    Returns:
-   Vector of dimensions. For example, a 2x3 array returns [2 3]. A scalar returns [].
+   Vector of effective dimensions. A 2×3 array returns [2 3].
+   A 1-D array of length 5 returns [5]. A scalar returns [].
 
    Example:
-   (shape my-array) ; => [2 3]"
+   (shape my-array) ; => [2 3] for a 2×3 matrix"
   [^AFArray arr]
   (assert-within-arrayfire! "shape")
-  (vec (array/get-dims arr)))
+  (let [all-dims (array/get-dims arr)]
+    (vec (reverse (drop-while #(= 1 %) (reverse all-dims))))))
 
-(defn effective-shape
-  "Get the effective shape of an AFArray by stripping trailing size-1 dimensions.
+(defn raw-shape
+  "Get the raw ArrayFire dimension vector of an AFArray (always 4 elements, padded with 1s).
+
+   ArrayFire internally uses 4-dimensional indexing. Dimensions beyond the logical
+   rank of the array are set to 1. Use `shape` for the logical (stripped) shape.
 
    Parameters:
    - arr: AFArray instance
 
    Returns:
-   Vector of effective dimensions. For example, an array with dims [2 3 1 1] returns [2 3]. A scalar returns [].
+   Vector of 4 integers, e.g. [2 3 1 1] for a 2×3 matrix.
 
    Example:
-   (effective-shape my-array) ; => [2 3] for an array with dims [2 3 1 1]"
+   (raw-shape my-array) ; => [2 3 1 1] for a 2×3 matrix"
   [^AFArray arr]
-  (assert-within-arrayfire! "effective-shape")
-  (let [all-dims (array/get-dims arr)]
-    (vec (reverse (drop-while #(= 1 %) (reverse all-dims))))))
+  (assert-within-arrayfire! "raw-shape")
+  (vec (array/get-dims arr)))
 
 (defn size
   "Get the size of an AFArray along a specific dimension.
@@ -795,19 +803,20 @@
   (assert-within-arrayfire! "size")
   (nth (array/get-dims arr) dim ))
 
-(defn rank
-  "Get the rank (number of dimensions) of an AFArray.
+(defn ndim
+  "Get the number of dimensions of an AFArray.
 
    Parameters:
    - arr: AFArray instance
 
    Returns:
-   Integer representing the rank. For example, a 2D array returns 2, a scalar returns 0.
+   Integer representing the number of dimensions.
+   For example, a 2-D array returns 2, a scalar returns 0.
 
    Example:
-   (rank my-array) ; => 2 for a 2D array"
+   (ndim my-array) ; => 2 for a 2-D array"
   [^AFArray arr]
-  (assert-within-arrayfire! "rank")
+  (assert-within-arrayfire! "ndim")
   (array/get-numdims arr))
 
 (defn element-count
@@ -1004,11 +1013,12 @@
                                        (defs/dtype-kw->const :s32)))]
      (index/lookup arr idx-arr (int dim)))))
 
-(defn assign
+(defn assoc-slice
   "Functional (copy-on-write) assignment: return a new array with values from
    `new-values` written into the region specified by `range-specs`.
 
    The original array is not modified — a new array is returned.
+   Analogous to `clojure.core/assoc` for maps, but addressing array slices.
 
    Parameters:
    - arr:         AFArray (destination, not mutated)
@@ -1016,29 +1026,29 @@
    - new-values:  AFArray of values to write into the selected region
 
    Returns:
-   New AFArray with the assignment applied.
+   New AFArray with the slice replaced.
 
    Examples:
    ;; Zero out row 0 of a 4×3 array
-   (assign arr [0 nil] (zeros [1 3]))
+   (assoc-slice arr [0 nil] (zeros [1 3]))
 
    ;; Replace column 2 with a constant
-   (assign arr [nil 2] (constant 99.0 [4 1]))
+   (assoc-slice arr [nil 2] (constant 99.0 [4 1]))
 
    ;; Map form
-   (assign arr {:rows [0 4]} new-block)"
+   (assoc-slice arr {:rows [0 4]} new-block)"
   ^AFArray
   [^AFArray arr range-specs ^AFArray new-values]
-  (assert-within-arrayfire! "assign")
+  (assert-within-arrayfire! "assoc-slice")
   (let [specs        (if (map? range-specs)
                        (range-map->range-specs range-specs)
                        (vec range-specs))
         ;; af_assign_gen modifies lhs in-place; copy first to preserve functional semantics.
         arr-copy     (array/copy-array arr)
-        ;; assign-gen requires ndims ≥ array rank so all addressed dimensions
+        ;; assign-gen requires ndims ≥ array ndim so all addressed dimensions
         ;; have properly initialised indexers.
-        arr-rank     (array/get-numdims arr)
-        assign-ndims (clojure.core/max (count specs) arr-rank)
+        arr-ndim     (array/get-numdims arr)
+        assign-ndims (clojure.core/max (count specs) arr-ndim)
         indexers     (index/create-indexers)]
     (try
       ;; Initialise all 4 indexers (avoid uninitialised memory).
@@ -1471,7 +1481,7 @@
    Requires an active `with-arrayfire` region.
 
    Example:
-   (any (nan? arr))   ; true if any NaN is present"
+   (any (nan-mask arr))   ; true if any NaN is present"
   (^AFArray [^AFArray arr]
    (assert-within-arrayfire! "any")
    (algo/any-true (data/flat arr) 0))
@@ -1724,7 +1734,7 @@
 ;;; Complex numbers
 ;;;
 
-(defn make-complex
+(defn complex
   "Create a complex array from real and (optionally) imaginary arrays.
 
    Parameters:
@@ -1736,12 +1746,12 @@
    Requires an active `with-arrayfire` region.
 
    Example:
-   (make-complex re-arr im-arr)  ; [re+im*i ...]"
+   (complex re-arr im-arr)  ; [re+im*i ...]"
   (^AFArray [^AFArray real]
-   (assert-within-arrayfire! "make-complex")
+   (assert-within-arrayfire! "complex")
    (complex/cplx2 real (zeros-like real)))
   (^AFArray [^AFArray real ^AFArray imag]
-   (assert-within-arrayfire! "make-complex")
+   (assert-within-arrayfire! "complex")
    (complex/cplx2 real imag)))
 
 (defn real-part
@@ -1799,25 +1809,33 @@
 ;;; Linear algebra essentials
 ;;;
 
+; TODO rename to matrix-multiply
 (defn matmul
-  "Matrix multiplication (dense or sparse-dense).
+  "Matrix multiplication (dense or sparse-dense), accepting 2 or more matrices.
 
-   Computes lhs × rhs. Both arrays must be 2-D matrices with compatible shapes.
+   With 2 arguments computes lhs × rhs.
+   With 3 or more arguments chains left-associatively: (A × B) × C × …
+
+   All arrays must be 2-D matrices with compatible shapes.
 
    Parameters:
-   - lhs: Left-hand side AFArray (m × k)
-   - rhs: Right-hand side AFArray (k × n)
+   - lhs:  Left-hand side AFArray (m × k)
+   - rhs:  Right-hand side AFArray (k × n)
+   - more: Additional AFArrays to chain multiply (optional)
 
    Returns:
-   Result AFArray (m × n).
+   Result AFArray.
    Requires an active `with-arrayfire` region.
 
-   Example:
-   (matmul A B)   ; A × B"
-  ^AFArray
-  [^AFArray lhs ^AFArray rhs]
-  (assert-within-arrayfire! "matmul")
-  (blas/matmul lhs rhs))
+   Examples:
+   (matmul A B)         ; A × B
+   (matmul A B C)       ; (A × B) × C
+   (reduce matmul [A B C D])  ; same"
+  (^AFArray [^AFArray lhs ^AFArray rhs]
+   (assert-within-arrayfire! "matmul")
+   (blas/matmul lhs rhs))
+  (^AFArray [^AFArray lhs ^AFArray rhs & more]
+   (reduce matmul (matmul lhs rhs) more)))
 
 (defn dot
   "Dot (inner) product of two vectors, returning a scalar array.
@@ -2470,6 +2488,7 @@
 
    Note: ArrayFire's af_sign returns 1 for negative values and 0 for non-negative values
    (i.e. it is the sign bit, not the mathematical signum).
+   Use `signum` for the mathematical -1/0/+1 result.
 
    Supported types: f32, f64, s32, s64
 
@@ -2485,6 +2504,30 @@
   [^AFArray a]
   (assert-within-arrayfire! "sign-bit")
   (arith/sign a))
+
+; TODO should support more types (e.g. integers)
+(defn signum
+  "Element-wise mathematical signum: -1.0 for negatives, 0.0 for zero, +1.0 for positives.
+
+   Differs from `sign-bit`, which returns 1 for negative and 0 otherwise (IEEE sign bit).
+   Computed as: 1*(x > 0) - 1*(x < 0)
+
+   Supported types: f32, f64
+
+   Parameters:
+   - a: input array (AFArray)
+
+   Returns:
+   AFArray with element-wise signum values. Requires an active `with-arrayfire` region.
+
+   Example:
+   (signum (array [-3.0 0.0 5.0] [3])) ; => [-1.0 0.0 1.0]"
+  ^AFArray
+  [^AFArray a]
+  (assert-within-arrayfire! "signum")
+  (let [pos (arith/cast (arith/gt a (scalar->array 0.0 (array/get-type a))) (array/get-type a))
+        neg (arith/cast (arith/lt a (scalar->array 0.0 (array/get-type a))) (array/get-type a))]
+    (arith/sub pos neg)))
 
 ;;
 ;; Trigonometry — named as in clojure.math
@@ -2878,10 +2921,11 @@
   (arith/arg a))
 
 ;;
-;; Predicates
+;; Element-wise masks (return boolean arrays, not scalar predicates)
 ;;
-(defn nan?
-  "Element-wise NaN check. Returns a boolean array (b8) indicating NaN elements.
+(defn nan-mask
+  "Element-wise NaN check. Returns a b8 boolean array — not a scalar boolean.
+   Use `(any (nan-mask arr))` to test whether any element is NaN.
 
    Supported types: f32, f64, c32, c64
 
@@ -2889,18 +2933,19 @@
    - a: input array (AFArray)
 
    Returns:
-   AFArray of b8 (boolean) where true (1) marks NaN positions.
+   AFArray of b8 where 1 marks NaN positions, 0 otherwise.
    Requires an active `with-arrayfire` region.
 
    Example:
-   (nan? (array [1.0 Double/NaN 3.0] [3])) ; => [0 1 0]"
+   (nan-mask (array [1.0 Double/NaN 3.0] [3])) ; => [0 1 0]"
   ^AFArray
   [^AFArray a]
-  (assert-within-arrayfire! "nan?")
+  (assert-within-arrayfire! "nan-mask")
   (arith/nan? a))
 
-(defn inf?
-  "Element-wise infinity check. Returns a boolean array (b8) indicating infinite elements.
+(defn inf-mask
+  "Element-wise infinity check. Returns a b8 boolean array — not a scalar boolean.
+   Use `(any (inf-mask arr))` to test whether any element is infinite.
 
    Supported types: f32, f64, c32, c64
 
@@ -2908,14 +2953,14 @@
    - a: input array (AFArray)
 
    Returns:
-   AFArray of b8 (boolean) where true (1) marks infinite positions.
+   AFArray of b8 where 1 marks infinite positions, 0 otherwise.
    Requires an active `with-arrayfire` region.
 
    Example:
-   (inf? (array [1.0 Double/POSITIVE_INFINITY 3.0] [3])) ; => [0 1 0]"
+   (inf-mask (array [1.0 Double/POSITIVE_INFINITY 3.0] [3])) ; => [0 1 0]"
   ^AFArray
   [^AFArray a]
-  (assert-within-arrayfire! "inf?")
+  (assert-within-arrayfire! "inf-mask")
   (arith/inf? a))
 
 ;;
@@ -3099,7 +3144,7 @@
    Requires an active `with-arrayfire` region.
 
    Example:
-   (not (nan? arr))   ; marks non-NaN elements"
+   (not (nan-mask arr))   ; marks non-NaN elements"
   ^AFArray
   [^AFArray arr]
   (assert-within-arrayfire! "not")
@@ -3135,27 +3180,28 @@
    Requires an active `with-arrayfire` region.
 
    Example:
-   (logical-or (nan? arr) (inf? arr))  ; marks NaN or infinite elements"
+   (logical-or (nan-mask arr) (inf-mask arr))  ; marks NaN or infinite elements"
   ^AFArray
   [^AFArray lhs ^AFArray rhs]
   (assert-within-arrayfire! "logical-or")
   (arith/or lhs rhs))
 
-(defn zero?
-  "Element-wise zero check. Returns a b8 boolean array.
+(defn zero-mask
+  "Element-wise zero check. Returns a b8 boolean array — not a scalar boolean.
+   Use `(any (zero-mask arr))` to test whether any element is zero.
 
    Parameters:
    - arr: Input AFArray
 
    Returns:
-   AFArray (b8) — true (1) for zero elements, false (0) otherwise.
+   AFArray (b8) — 1 for zero elements, 0 otherwise.
    Requires an active `with-arrayfire` region.
 
    Example:
-   (zero? arr)  ; b8 array marking zero elements"
+   (zero-mask arr)  ; b8 array marking zero elements"
   ^AFArray
   [^AFArray arr]
-  (assert-within-arrayfire! "zero?")
+  (assert-within-arrayfire! "zero-mask")
   (arith/zero? arr))
 
 (defn bitnot
@@ -3336,8 +3382,8 @@
     (data/select-scalar-l condition (double a) b)
     :else
     (data/select condition
-                 (constant (double a) (effective-shape condition) (datatype condition))
-                 (constant (double b) (effective-shape condition) (datatype condition)))))
+                 (constant (double a) (shape condition) (datatype condition))
+                 (constant (double b) (shape condition) (datatype condition)))))
 
 (defn replace-where!
   "Replace elements in `arr` with values from `b` wherever `cond` is false (zero).
@@ -3661,8 +3707,8 @@
       ;; select — fancy indexing by integer index array
       (->value (select m [0 2] 1))              ; cols 0 and 2: [[1.0 2.0][5.0 6.0]]
 
-      ;; assign — functional (original unchanged)
-      (let [res (assign m [0 nil] (array [99.0 98.0 97.0] [1 3]))]
+      ;; assoc-slice — functional (original unchanged)
+      (let [res (assoc-slice m [0 nil] (array [99.0 98.0 97.0] [1 3]))]
         [(->value res)                          ; row 0 replaced
          (->value (row m 0))])))               ; original row 0 unchanged
 
