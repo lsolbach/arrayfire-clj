@@ -2,19 +2,15 @@
 
 ## General
 * decide where to add parameter checks (integration/API layer)?
-* check for current memory allocation consistency
 
 ## FFI Layer
 * define aliases for typedefs/structs
 
 ## Integration Layer
-* move functions from core to integration layer?
-  * dtype-next integration, array-from-tensor, array conversions
-* move Arena handling mechanism from core to integration layer
-  * make sure, the configured arena is used for all memory allocations
 
 ## API Layer
-* add API functions and specs for API functions
+* add API functions for computer vision
+* add specs for API functions
 
 ## Notebooks
 
@@ -22,4 +18,3 @@
 * update examples to use Clojure API
 
 ## AGENTS.md
-* update Clojure API layer guidelines
