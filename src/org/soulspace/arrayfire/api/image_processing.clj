@@ -160,7 +160,8 @@
 ;;; Private keyword→integer constant resolvers
 ;;;
 
-(defn- resolve-interp
+;; TODO move to definitions namespace
+(defn resolve-interp
   "Resolve an interpolation method keyword to its integer constant.
    Defaults to `:nearest` if not specified."
   [method]
@@ -171,7 +172,7 @@
                         {:method method})))
     (int method)))
 
-(defn- resolve-edge-pad
+(defn resolve-edge-pad
   "Resolve an edge padding keyword to its integer constant.
    Defaults to `:zero` if not specified."
   [edge-pad]
@@ -182,7 +183,7 @@
                         {:edge-pad edge-pad})))
     (int edge-pad)))
 
-(defn- resolve-canny-threshold
+(defn resolve-canny-threshold
   "Resolve a Canny threshold type keyword to its integer constant."
   [threshold-type]
   (if (keyword? threshold-type)
@@ -192,7 +193,7 @@
                         {:threshold-type threshold-type})))
     (int threshold-type)))
 
-(defn- resolve-flux-fn
+(defn resolve-flux-fn
   "Resolve a flux function keyword to its integer constant."
   [flux-fn]
   (if (keyword? flux-fn)
@@ -202,7 +203,7 @@
                         {:flux-fn flux-fn})))
     (int flux-fn)))
 
-(defn- resolve-diffusion-eq
+(defn resolve-diffusion-eq
   "Resolve a diffusion equation keyword to its integer constant."
   [diffusion-eq]
   (if (keyword? diffusion-eq)
@@ -212,7 +213,7 @@
                         {:diffusion-eq diffusion-eq})))
     (int diffusion-eq)))
 
-(defn- resolve-iterative-deconv-algo
+(defn resolve-iterative-deconv-algo
   "Resolve an iterative deconvolution algorithm keyword to its integer constant."
   [algo]
   (if (keyword? algo)
@@ -222,7 +223,7 @@
                         {:algo algo})))
     (int algo)))
 
-(defn- resolve-inverse-deconv-algo
+(defn resolve-inverse-deconv-algo
   "Resolve an inverse deconvolution algorithm keyword to its integer constant."
   [algo]
   (if (keyword? algo)
@@ -232,7 +233,7 @@
                         {:algo algo})))
     (int algo)))
 
-(defn- resolve-connectivity
+(defn resolve-connectivity
   "Resolve a connectivity keyword to its integer constant."
   [connectivity]
   (if (keyword? connectivity)
@@ -242,7 +243,7 @@
                         {:connectivity connectivity})))
     (int connectivity)))
 
-(defn- resolve-color-space
+(defn resolve-color-space
   "Resolve a color space keyword to its integer constant."
   [color-space]
   (if (keyword? color-space)
@@ -252,7 +253,7 @@
                         {:color-space color-space})))
     (int color-space)))
 
-(defn- resolve-ycc-std
+(defn resolve-ycc-std
   "Resolve a YCbCr standard keyword to its integer constant."
   [standard]
   (if (keyword? standard)
@@ -262,7 +263,8 @@
                         {:standard standard})))
     (int standard)))
 
-(defn- resolve-moment-type
+; TODO use defs mapping for moment types as well
+(defn resolve-moment-type
   "Resolve a moment type keyword to its integer constant."
   [moment-type]
   (moments/moment-type->int moment-type))
