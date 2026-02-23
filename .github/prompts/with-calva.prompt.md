@@ -4,4 +4,5 @@ Use the Joyride human-intelligence tool to discuss design decisions with me.
 
 If you experience braket issues or corrupted files, ask me to fix them with the human-intelligence tool.
 
-If you want to use the REPL and it is not started, ask me with the human-intelligence tool to start the REPL.
+If you want to use the REPL and it is not started, ask me with the human-intelligence or askQuestions tool to start the REPL.
+
