@@ -2181,6 +2181,7 @@
 ;;; Complex numbers
 ;;;
 
+; TODO add handling of numbers, too (e.g. (complex 1.0 2.0) → c64 scalar array)
 (defn complex
   "Create a complex array from real and (optionally) imaginary arrays.
 
