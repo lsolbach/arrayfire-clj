@@ -1,6 +1,7 @@
 (ns org.soulspace.arrayfire.integration.base.error
   "Base error handling utilities for ArrayFire integration."
-  )
+  (:require [org.soulspace.arrayfire.ffi.c-api.error :as c-error]
+            [org.soulspace.arrayfire.integration.base.memory :as memory]))
 
 ;;;
 ;;; Error handling
@@ -15,4 +16,6 @@
    Throws an exception with error code and location if rc is non-zero."
   [rc where]
   (when-not (zero? rc)
-    (throw (ex-info (str "ArrayFire error at " where) {:code rc :where where}))))
+    (let [msg (memory/c-string->string (c-error/af-err-to-string (int rc)))]
+      (throw (ex-info (str "ArrayFire error at " where ": " msg)
+                      {:code rc :where where :message msg})))))
