@@ -40,8 +40,12 @@
    Returns:
    ArrayFire dtype constant (integer)."
   [dtype]
-  (or (dtype-kw->const dtype)
-      (throw (ex-info "Unsupported dtype" {:dtype dtype}))))
+  (if (keyword? dtype)
+    (or (dtype-kw->const dtype)
+        (throw (ex-info (str "Unknown dtype keyword: " dtype
+                             ". Valid keys: " (keys dtype-kw->const))
+                        {:dtype dtype})))
+    (int dtype)))
 
 (def dtype-kw->size
   "Mapping of Clojure keywords to sizes in bytes for each ArrayFire dtype."
@@ -91,6 +95,17 @@
   (into {}
         (map (fn [[k v]] [v k]) return-kw->const)))
 
+(defn resolve-return
+  "Resolve an ArrayFire return code integer to a keyword.
+   
+   Parameters:
+   - code: integer return code from an ArrayFire function call
+   
+   Returns:
+   Keyword representing the return status (e.g. :success, :err-no-mem)."
+  [code]
+  (get return-const->return-kw (int code) :err-unknown))
+
 (def backend-kw->const
   "Mapping of backend keywords to ArrayFire backend constants."
   {:default defs/AF_BACKEND_DEFAULT
@@ -132,6 +147,21 @@
   (into {}
         (map (fn [[k v]] [v k]) random-engine-kw->const)))
 
+(defn resolve-random-engine
+  "Resolve a random engine keyword or integer to an ArrayFire random engine constant.
+   
+   Parameters:
+   - engine: keyword (:philox, :threefry, :mersenne, :default) or integer constant
+   
+   Returns:
+   ArrayFire random engine constant (integer)."
+  [engine]
+  (if (keyword? engine)
+    (or (get random-engine-kw->const engine)
+        (throw (ex-info (str "Unknown random engine: " engine)
+                        {:engine engine
+                         :valid-engines (keys random-engine-kw->const)})))
+    (int engine)))
 
 (def source-kw->const
   "Mapping of source keywords to ArrayFire source constants."
@@ -142,6 +172,22 @@
   "Mapping of ArrayFire source constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) source-kw->const)))
+
+(defn resolve-source
+  "Resolve a source keyword or integer to an ArrayFire source constant.
+   
+   Parameters:
+   - source: keyword (:device, :host) or integer constant
+   
+   Returns:
+   ArrayFire source constant (integer)."
+  [source]
+  (if (keyword? source)
+    (or (get source-kw->const source)
+        (throw (ex-info (str "Unknown source: " source)
+                        {:source source
+                         :valid-sources (keys source-kw->const)})))
+    (int source)))
 
 (def interp-kw->const
   "Mapping of interpolation type keywords to ArrayFire constants."
@@ -162,10 +208,10 @@
         (map (fn [[k v]] [v k]) interp-kw->const)))
 
 (defn resolve-interp
-  "Resolve an interpolation method keyword to its integer constant."
+  "Resolve an interpolation method keyword or integer to an ArrayFire interpolation constant."
   [method]
   (if (keyword? method)
-    (or (interp-kw->const method)
+    (or (get interp-kw->const method)
         (throw (ex-info (str "Unknown interpolation method keyword: " method
                              ". Valid keys: " (keys interp-kw->const))
                         {:method method})))
@@ -184,7 +230,7 @@
         (map (fn [[k v]] [v k]) border-kw->const)))
 
 (defn resolve-edge-pad
-  "Resolve an edge padding keyword to its integer constant."
+  "Resolve an edge padding keyword or integer to an ArrayFire border constant."
   [edge-pad]
   (if (keyword? edge-pad)
     (or (border-kw->const edge-pad)
@@ -192,6 +238,11 @@
                              ". Valid keys: " (keys border-kw->const))
                         {:edge-pad edge-pad})))
     (int edge-pad)))
+
+(def resolve-border
+  "Resolve a border type keyword or integer to an ArrayFire border constant.
+   This is an alias for resolve-edge-pad since border and edge padding types are the same."
+  resolve-edge-pad)
 
 (def connectivity-kw->const
   "Mapping of connectivity keywords to ArrayFire constants."
@@ -202,6 +253,16 @@
   "Mapping of ArrayFire connectivity constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) connectivity-kw->const)))
+
+(defn resolve-connectivity
+  "Resolve a connectivity keyword or integer to an ArrayFire connectivity constant."
+  [connectivity]
+  (if (keyword? connectivity)
+    (or (connectivity-kw->const connectivity)
+        (throw (ex-info (str "Unknown connectivity keyword: " connectivity
+                             ". Valid keys: " (keys connectivity-kw->const))
+                        {:connectivity connectivity})))
+    (int connectivity)))
 
 (def conv-mode-kw->const
   "Mapping of convolution mode keywords to ArrayFire constants."
@@ -214,7 +275,7 @@
         (map (fn [[k v]] [v k]) conv-mode-kw->const)))
 
 (defn resolve-conv-mode
-  "Resolve a convolution mode keyword to its integer constant."
+  "Resolve a convolution mode keyword or integer to an ArrayFire convolution mode constant."
   [mode]
   (if (keyword? mode)
     (or (conv-mode-kw->const mode)
@@ -235,7 +296,7 @@
         (map (fn [[k v]] [v k]) conv-domain-kw->const)))
 
 (defn resolve-conv-domain
-  "Resolve a convolution domain keyword to its integer constant."
+  "Resolve a convolution domain keyword or integer to an ArrayFire convolution domain constant."
   [domain]
   (if (keyword? domain)
     (or (conv-domain-kw->const domain)
@@ -261,6 +322,16 @@
   (into {}
         (map (fn [[k v]] [v k]) match-type-kw->const)))
 
+(defn resolve-match-type
+  "Resolve a match type keyword or integer to an ArrayFire match type constant."
+  [match-type]
+  (if (keyword? match-type)
+    (or (match-type-kw->const match-type)
+        (throw (ex-info (str "Unknown match type keyword: " match-type
+                             ". Valid keys: " (keys match-type-kw->const))
+                        {:match-type match-type})))
+    (int match-type)))
+
 (def ycc-std-kw->const
   "Mapping of YCC standard keywords to ArrayFire constants."
   {:bt601  defs/AF_YCC_601
@@ -271,6 +342,16 @@
   "Mapping of ArrayFire YCC standard constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) ycc-std-kw->const)))
+
+(defn resolve-ycc-std
+  "Resolve a YCC standard keyword or integer to an ArrayFire YCC standard constant."
+  [ycc-std]
+  (if (keyword? ycc-std)
+    (or (ycc-std-kw->const ycc-std)
+        (throw (ex-info (str "Unknown YCC standard keyword: " ycc-std
+                             ". Valid keys: " (keys ycc-std-kw->const))
+                        {:ycc-std ycc-std})))
+    (int ycc-std)))
 
 (def colorspace-kw->const
   "Mapping of color space keywords to ArrayFire constants."
@@ -283,6 +364,16 @@
   "Mapping of ArrayFire color space constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) colorspace-kw->const)))
+
+(defn resolve-colorspace
+  "Resolve a color space keyword or integer to an ArrayFire color space constant."
+  [colorspace]
+  (if (keyword? colorspace)
+    (or (colorspace-kw->const colorspace)
+        (throw (ex-info (str "Unknown color space keyword: " colorspace
+                             ". Valid keys: " (keys colorspace-kw->const))
+                        {:colorspace colorspace})))
+    (int colorspace)))
 
 (def mat-prop-kw->const
   "Mapping of matrix property keywords to ArrayFire constants.
@@ -306,12 +397,15 @@
         (map (fn [[k v]] [v k]) mat-prop-kw->const)))
 
 (defn resolve-mat-prop
-  "Resolve a keyword or int mat-prop to its integer constant.
-   Falls back to 0 (AF_MAT_NONE) for unknown keywords."
-  [k]
-  (if (keyword? k)
-    (get mat-prop-kw->const k 0)
-    (int k)))
+  "Resolve a matrix property keyword or integer to an ArrayFire matrix property constant.
+   This function can handle combined properties using bit flags."
+  [prop]
+  (if (keyword? prop)
+    (or (mat-prop-kw->const prop)
+        (throw (ex-info (str "Unknown matrix property keyword: " prop
+                             ". Valid keys: " (keys mat-prop-kw->const))
+                        {:mat-prop prop})))
+    (int prop)))
 
 (def norm-type-kw->const
   "Mapping of norm type keywords to ArrayFire constants."
@@ -331,7 +425,7 @@
         (map (fn [[k v]] [v k]) norm-type-kw->const)))
 
 (defn resolve-norm-type
-  "Resolve a keyword or int norm-type to its integer constant.
+  "Resolve a norm type keyword or integer to an ArrayFire norm type constant.
    Falls back to 2 (AF_NORM_VECTOR_2 / L2) for unknown keywords."
   [k]
   (if (keyword? k)
@@ -359,6 +453,16 @@
   (into {}
         (map (fn [[k v]] [v k]) image-format-kw->const)))
 
+(defn resolve-image-format
+  "Resolve an image format keyword or integer to an ArrayFire image format constant."
+  [format]
+  (if (keyword? format)
+    (or (image-format-kw->const format)
+        (throw (ex-info (str "Unknown image format keyword: " format
+                             ". Valid keys: " (keys image-format-kw->const))
+                        {:format format})))
+    (int format)))
+
 (def moment-type-kw->const
   "Mapping of moment type keywords to ArrayFire constants.
    :first-order is a composite of :m00 :m01 :m10 :m11 combined with bit-or."
@@ -373,6 +477,17 @@
   (into {}
         (map (fn [[k v]] [v k]) moment-type-kw->const)))
 
+(defn resolve-moment-type
+  "Resolve a moment type keyword or integer to an ArrayFire moment type constant.
+   This function can handle combined moment types using bit flags."
+  [moment-type]
+  (if (keyword? moment-type)
+    (or (moment-type-kw->const moment-type)
+        (throw (ex-info (str "Unknown moment type keyword: " moment-type
+                             ". Valid keys: " (keys moment-type-kw->const))
+                        {:moment-type moment-type})))
+    (int moment-type)))
+
 (def homography-type-kw->const
   "Mapping of homography type keywords to ArrayFire constants."
   {:ransac defs/AF_HOMOGRAPHY_RANSAC
@@ -382,6 +497,16 @@
   "Mapping of ArrayFire homography type constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) homography-type-kw->const)))
+
+(defn resolve-homography-type
+  "Resolve a homography type keyword or integer to an ArrayFire homography type constant."
+  [homography-type]
+  (if (keyword? homography-type)
+    (or (homography-type-kw->const homography-type)
+        (throw (ex-info (str "Unknown homography type keyword: " homography-type
+                             ". Valid keys: " (keys homography-type-kw->const))
+                        {:homography-type homography-type})))
+    (int homography-type)))
 
 (def binary-op-kw->const
   "Mapping of binary operator keywords to ArrayFire constants."
@@ -395,6 +520,16 @@
   (into {}
         (map (fn [[k v]] [v k]) binary-op-kw->const)))
 
+(defn resolve-binary-op
+  "Resolve a binary operator keyword or integer to an ArrayFire binary operator constant."
+  [op]
+  (if (keyword? op)
+    (or (binary-op-kw->const op)
+        (throw (ex-info (str "Unknown binary operator keyword: " op
+                             ". Valid keys: " (keys binary-op-kw->const))
+                        {:binary-op op})))
+    (int op)))
+
 (def storage-kw->const
   "Mapping of sparse storage type keywords to ArrayFire constants."
   {:dense defs/AF_STORAGE_DENSE
@@ -407,6 +542,16 @@
   (into {}
         (map (fn [[k v]] [v k]) storage-kw->const)))
 
+(defn resolve-storage
+  "Resolve a sparse storage type keyword or integer to an ArrayFire storage constant."
+  [storage]
+  (if (keyword? storage)
+    (or (storage-kw->const storage)
+        (throw (ex-info (str "Unknown storage type keyword: " storage
+                             ". Valid keys: " (keys storage-kw->const))
+                        {:storage storage})))
+    (int storage)))
+
 (def flux-fn-kw->const
   "Mapping of flux function keywords to ArrayFire constants."
   {:quadratic   defs/AF_FLUX_QUADRATIC
@@ -418,6 +563,16 @@
   (into {}
         (map (fn [[k v]] [v k]) flux-fn-kw->const)))
 
+(defn resolve-flux-fn
+  "Resolve a flux function keyword or integer to an ArrayFire flux function constant."
+  [flux-fn]
+  (if (keyword? flux-fn)
+    (or (flux-fn-kw->const flux-fn)
+        (throw (ex-info (str "Unknown flux function keyword: " flux-fn
+                             ". Valid keys: " (keys flux-fn-kw->const))
+                        {:flux-fn flux-fn})))
+    (int flux-fn)))
+
 (def diffusion-eq-kw->const
   "Mapping of diffusion equation keywords to ArrayFire constants."
   {:grad    defs/AF_DIFFUSION_GRAD
@@ -428,6 +583,16 @@
   "Mapping of ArrayFire diffusion equation constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) diffusion-eq-kw->const)))
+
+(defn resolve-diffusion-eq
+  "Resolve a diffusion equation keyword or integer to an ArrayFire diffusion equation constant."
+  [diffusion-eq]
+  (if (keyword? diffusion-eq)
+    (or (diffusion-eq-kw->const diffusion-eq)
+        (throw (ex-info (str "Unknown diffusion equation keyword: " diffusion-eq
+                             ". Valid keys: " (keys diffusion-eq-kw->const))
+                        {:diffusion-eq diffusion-eq})))
+    (int diffusion-eq)))
 
 (def topk-fn-kw->const
   "Mapping of top-k function keywords to ArrayFire constants.
@@ -444,6 +609,17 @@
   (into {}
         (map (fn [[k v]] [v k]) topk-fn-kw->const)))
 
+(defn resolve-topk-fn
+  "Resolve a top-k function keyword or integer to an ArrayFire top-k function constant.
+   This function can handle combined stable min/max options using bit flags."
+  [topk-fn]
+  (if (keyword? topk-fn)
+    (or (topk-fn-kw->const topk-fn)
+        (throw (ex-info (str "Unknown top-k function keyword: " topk-fn
+                             ". Valid keys: " (keys topk-fn-kw->const))
+                        {:topk-fn topk-fn})))
+    (int topk-fn)))
+
 (def variance-bias-kw->const
   "Mapping of variance bias keywords to ArrayFire constants."
   {:default    defs/AF_VARIANCE_DEFAULT
@@ -454,6 +630,16 @@
   "Mapping of ArrayFire variance bias constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) variance-bias-kw->const)))
+
+(defn resolve-variance-bias
+  "Resolve a variance bias keyword or integer to an ArrayFire variance bias constant."
+  [bias]
+  (if (keyword? bias)
+    (or (variance-bias-kw->const bias)
+        (throw (ex-info (str "Unknown variance bias keyword: " bias
+                             ". Valid keys: " (keys variance-bias-kw->const))
+                        {:variance-bias bias})))
+    (int bias)))
 
 (def iterative-deconv-algo-kw->const
   "Mapping of iterative deconvolution algorithm keywords to ArrayFire constants."
@@ -466,6 +652,16 @@
   (into {}
         (map (fn [[k v]] [v k]) iterative-deconv-algo-kw->const)))
 
+(defn resolve-iterative-deconv-algo
+  "Resolve an iterative deconvolution algorithm keyword or integer to an ArrayFire constant."
+  [algo]
+  (if (keyword? algo)
+    (or (iterative-deconv-algo-kw->const algo)
+        (throw (ex-info (str "Unknown iterative deconvolution algorithm keyword: " algo
+                             ". Valid keys: " (keys iterative-deconv-algo-kw->const))
+                        {:iterative-deconv-algo algo})))
+    (int algo)))
+
 (def inverse-deconv-algo-kw->const
   "Mapping of inverse deconvolution algorithm keywords to ArrayFire constants."
   {:tikhonov defs/AF_INVERSE_DECONV_TIKHONOV
@@ -475,6 +671,16 @@
   "Mapping of ArrayFire inverse deconvolution algorithm constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) inverse-deconv-algo-kw->const)))
+
+(defn resolve-inverse-deconv-algo
+  "Resolve an inverse deconvolution algorithm keyword or integer to an ArrayFire constant."
+  [algo]
+  (if (keyword? algo)
+    (or (inverse-deconv-algo-kw->const algo)
+        (throw (ex-info (str "Unknown inverse deconvolution algorithm keyword: " algo
+                             ". Valid keys: " (keys inverse-deconv-algo-kw->const))
+                        {:inverse-deconv-algo algo})))
+    (int algo)))
 
 (def conv-gradient-kw->const
   "Mapping of convolution gradient type keywords to ArrayFire constants."
@@ -487,6 +693,16 @@
   "Mapping of ArrayFire convolution gradient type constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) conv-gradient-kw->const)))
+
+(defn resolve-conv-gradient
+  "Resolve a convolution gradient type keyword or integer to an ArrayFire constant."
+  [conv-gradient]
+  (if (keyword? conv-gradient)
+    (or (conv-gradient-kw->const conv-gradient)
+        (throw (ex-info (str "Unknown convolution gradient type keyword: " conv-gradient
+                             ". Valid keys: " (keys conv-gradient-kw->const))
+                        {:conv-gradient conv-gradient})))
+    (int conv-gradient)))
 
 (def colormap-kw->const
   "Mapping of colormap keywords to ArrayFire constants."
@@ -507,6 +723,16 @@
   (into {}
         (map (fn [[k v]] [v k]) colormap-kw->const)))
 
+(defn resolve-colormap
+  "Resolve a colormap keyword or integer to an ArrayFire colormap constant."
+  [colormap]
+  (if (keyword? colormap)
+    (or (colormap-kw->const colormap)
+        (throw (ex-info (str "Unknown colormap keyword: " colormap
+                             ". Valid keys: " (keys colormap-kw->const))
+                        {:colormap colormap})))
+    (int colormap)))
+
 (def marker-type-kw->const
   "Mapping of marker type keywords to ArrayFire constants."
   {:none     defs/AF_MARKER_NONE
@@ -523,6 +749,16 @@
   (into {}
         (map (fn [[k v]] [v k]) marker-type-kw->const)))
 
+(defn resolve-marker-type
+  "Resolve a marker type keyword or integer to an ArrayFire marker type constant."
+  [marker-type]
+  (if (keyword? marker-type)
+    (or (marker-type-kw->const marker-type)
+        (throw (ex-info (str "Unknown marker type keyword: " marker-type
+                             ". Valid keys: " (keys marker-type-kw->const))
+                        {:marker-type marker-type})))
+    (int marker-type)))
+
 (def canny-threshold-kw->const
   "Mapping of canny threshold type keywords to ArrayFire constants."
   {:manual    defs/AF_CANNY_THRESHOLD_MANUAL
@@ -532,3 +768,13 @@
   "Mapping of ArrayFire canny threshold type constants to keywords."
   (into {}
         (map (fn [[k v]] [v k]) canny-threshold-kw->const)))
+
+(defn resolve-canny-threshold
+  "Resolve a canny threshold type keyword or integer to an ArrayFire constant."
+  [threshold-type]
+  (if (keyword? threshold-type)
+    (or (canny-threshold-kw->const threshold-type)
+        (throw (ex-info (str "Unknown canny threshold type keyword: " threshold-type
+                             ". Valid keys: " (keys canny-threshold-kw->const))
+                        {:canny-threshold-type threshold-type})))
+    (int threshold-type)))
