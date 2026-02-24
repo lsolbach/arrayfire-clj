@@ -65,7 +65,7 @@
   - dx: Output array for horizontal (x-direction) derivative
   - dy: Output array for vertical (y-direction) derivative
   - img: Input image array
-  - ker-size: Sobel kernel size (currently only 3 is supported)
+  - kernel-size: Sobel kernel size (currently only 3 is supported)
 
   Returns:
   Error code indicating success or failure.

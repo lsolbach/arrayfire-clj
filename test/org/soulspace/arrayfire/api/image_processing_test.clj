@@ -73,7 +73,7 @@
     (let [result (af/with-arrayfire {:backend :opencl}
                    (let [img (af/array (double-array (range 1.0 10.0))
                                        [3 3] :f64)
-                         [dx dy] (ip/sobel img 3)]
+                         [dx dy] (ip/sobel img :kernel-size 3)]
                      {:dx-shape (af/shape dx)
                       :dy-shape (af/shape dy)}))]
       (is (= [3 3] (:dx-shape result)))
@@ -88,7 +88,7 @@
                                                       0 1 1 1 0
                                                       0 0 0 0 0])
                                        [5 5] :f64)
-                         edges (ip/canny img :manual 0.1 0.9)]
+                         edges (ip/canny img :threshold-type :manual :low-threshold 0.1 :high-threshold 0.9)]
                      (af/shape edges)))]
       (is (= [5 5] result)))))
 
@@ -108,7 +108,7 @@
   (testing "resize with bilinear interpolation"
     (let [result (af/with-arrayfire
                    (let [img (af/array (double-array [1 2 3 4]) [2 2] :f64)
-                         resized (ip/resize img 4 4 :bilinear)]
+                         resized (ip/resize img 4 4 :method :bilinear)]
                      (af/shape resized)))]
       (is (= [4 4] result)))))
 
@@ -291,7 +291,7 @@
 (deftest gaussian-kernel-custom-sigma-test
   (testing "gaussian-kernel with custom sigma"
     (let [result (af/with-arrayfire
-                   (let [k (ip/gaussian-kernel 3 3 1.0 1.0)]
+                   (let [k (ip/gaussian-kernel 3 3 :sigma-r 1.0 :sigma-c 1.0)]
                      (af/shape k)))]
       (is (= [3 3] result)))))
 
@@ -317,8 +317,10 @@
                                                      0 1 1 1 0
                                                      0 0 0 0 0])
                                        [5 5] :f32)
-                         filtered (ip/anisotropic-diffusion img 0.1 0.05 5
-                                                            :exponential :grad)]
+                         filtered (ip/anisotropic-diffusion img :dt 0.1 :k 0.05
+                                                            :iterations 5
+                                                            :flux-fn :exponential
+                                                            :diffusion-eq :grad)]
                      (af/shape filtered)))]
       (is (= [5 5] result)))))
 
@@ -449,7 +451,7 @@
     (let [result (af/with-arrayfire {:backend :opencl}
                    (let [img (af/array (double-array (range 1.0 17.0))
                                        [4 4] :f64)
-                         patches (ip/unwrap img 3 3 1 1 1 1 true)]
+                         patches (ip/unwrap img 3 3 1 1 :px 1 :py 1 :column? true)]
                      (af/shape patches)))]
       ;; 9 elements per patch, more patches due to stride=1+padding
       (is (= 9 (first result))))))
@@ -504,7 +506,9 @@
                                        [3 3] :f32)
                          psf (af/array (float-array [0 0 0 0 1 0 0 0 0])
                                        [3 3] :f32)
-                         result (ip/iterative-deconv img psf 10 1.0 :richardson-lucy)]
+                         result (ip/iterative-deconv img psf 10
+                                                     :relax-factor 1.0
+                                                     :algo :richardson-lucy)]
                      (af/shape result)))]
       (is (= [3 3] result)))))
 
@@ -538,7 +542,7 @@
     (let [result (af/with-arrayfire {:backend :opencl}
                    (let [img (af/array (double-array [1 2 3 4 5 6 7 8 9])
                                        [3 3] :f64)]
-                     (ip/moments-all img :m00)))]
+                     (ip/moments-all img :moment-type :m00)))]
       (is (map? result))
       (is (util/approx= (:M00 result) 45.0)))))
 

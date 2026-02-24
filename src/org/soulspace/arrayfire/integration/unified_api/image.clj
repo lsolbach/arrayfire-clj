@@ -84,7 +84,7 @@
    
    Parameters:
    - img: Input image (AFArray)
-   - ker-size: Kernel size (default 3), must be odd
+   - kernel-size: Kernel size (default 3), must be odd
    
    Returns:
    Vector of [dx dy] where:
@@ -98,10 +98,10 @@
    ```"
   ([^AFArray img]
    (sobel img 3))
-  ([^AFArray img ker-size]
+  ([^AFArray img kernel-size]
    (let [dx (res/native-af-array-pointer)
          dy (res/native-af-array-pointer)]
-     (check! (sobel/af-sobel-operator dx dy (res/af-handle img) (int ker-size))
+     (check! (sobel/af-sobel-operator dx dy (res/af-handle img) (int kernel-size))
                  "af-sobel-operator")
      [(res/af-array-new (res/deref-af-array dx))
       (res/af-array-new (res/deref-af-array dy))])))

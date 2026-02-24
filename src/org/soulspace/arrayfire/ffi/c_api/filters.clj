@@ -641,7 +641,7 @@
    - dx: out pointer for X gradient (horizontal edges)
    - dy: out pointer for Y gradient (vertical edges)
    - img: input image array
-   - ker-size: Sobel kernel size (3, 5, 7, etc. - must be odd)
+   - kernel-size: Sobel kernel size (3, 5, 7, etc. - must be odd)
    
    Standard 3×3 Sobel Kernels:
    
@@ -688,8 +688,8 @@
    (let [img (create-array img-data [512 512])
          dx-ptr (mem/alloc-pointer ::mem/pointer)
          dy-ptr (mem/alloc-pointer ::mem/pointer)
-         ker-size 3]
-     (af-sobel-operator dx-ptr dy-ptr img ker-size)
+         kernel-size 3]
+     (af-sobel-operator dx-ptr dy-ptr img kernel-size)
      (let [dx (mem/read-pointer dx-ptr ::mem/pointer)
            dy (mem/read-pointer dy-ptr ::mem/pointer)]
        ;; Compute magnitude: mag = sqrt(dx² + dy²)

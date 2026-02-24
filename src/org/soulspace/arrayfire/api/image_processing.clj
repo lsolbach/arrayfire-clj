@@ -156,14 +156,6 @@
             [org.soulspace.arrayfire.integration.unified-api.moments :as moments])
   (:import (org.soulspace.arrayfire.integration.base.resource AFArray)))
 
-;;; TODO refactor arguments of image processing functions to use 
-;;;      positional args for required parameters (e.g. image array) and
-;;;      keyword args / arg-maps (with :or defaults) for optional parameters
-
-;;;
-;;; TODO return image from functions returning nil (e.g. save-image) for chaining
-;;;
-
 ;;;
 ;;; Edge and Gradient Detection
 ;;;
@@ -195,7 +187,7 @@
 
    Parameters:
    - img      — input grayscale image (AFArray)
-   - ker-size — (optional) kernel size, must be odd; default 3
+   - kernel-size — (optional) kernel size, must be odd; default 3
 
    Returns:
    Vector `[dx dy]` where dx and dy are Sobel gradient AFArrays.
@@ -204,11 +196,9 @@
    (let [[dx dy] (sobel img)]
      ;; combine into edge magnitude
      )"
-  ([^AFArray img]
-   (sobel img 3))
-  ([^AFArray img ker-size]
-   (assert-within-arrayfire! "sobel")
-   (image/sobel img (int ker-size))))
+  [^AFArray img & {:keys [kernel-size] :or {kernel-size 3}}]
+  (assert-within-arrayfire! "sobel")
+  (image/sobel img (int kernel-size)))
 
 (defn canny
   "Canny edge detection.
@@ -228,19 +218,17 @@
    Binary edge map (AFArray) where edges are 1.
 
    Example:
-   (canny img)                          ; auto defaults
-   (canny img :auto-otsu)               ; automatic thresholds
-   (canny img :manual 0.05 0.15 3 true) ; full control"
-  ([^AFArray in]
-   (canny in :manual 0.1 0.3 3 true))
-  ([^AFArray in threshold-type]
-   (canny in threshold-type 0.1 0.3 3 true))
-  ([^AFArray in threshold-type low-threshold high-threshold]
-   (canny in threshold-type low-threshold high-threshold 3 true))
-  ([^AFArray in threshold-type low-threshold high-threshold sobel-window fast?]
-   (assert-within-arrayfire! "canny")
-   (image/canny in (defs/resolve-canny-threshold threshold-type)
-                low-threshold high-threshold sobel-window fast?)))
+   (canny img)                                              ; auto defaults
+   (canny img :threshold-type :auto-otsu)                  ; automatic thresholds
+   (canny img :threshold-type :manual :low-threshold 0.05  ; full control
+             :high-threshold 0.15 :sobel-window 3 :fast? true)"
+  [^AFArray in
+   & {:keys [threshold-type low-threshold high-threshold sobel-window fast?]
+      :or {threshold-type :manual low-threshold 0.1 high-threshold 0.3
+           sobel-window 3 fast? true}}]
+  (assert-within-arrayfire! "canny")
+  (image/canny in (defs/resolve-canny-threshold threshold-type)
+               low-threshold high-threshold sobel-window fast?))
 
 ;;;
 ;;; Image I/O
@@ -261,11 +249,9 @@
    Example:
    (load-image \"photo.jpg\")
    (load-image \"photo.jpg\" false) ; grayscale"
-  ([filename]
-   (load-image filename true))
-  ([filename color?]
-   (assert-within-arrayfire! "load-image")
-   (image/load-image filename color?)))
+  [filename & {:keys [color?] :or {color? true}}]
+  (assert-within-arrayfire! "load-image")
+  (image/load-image filename color?))
 
 (defn save-image
   "Save an image to file.
@@ -277,13 +263,14 @@
    - img      — image to save (AFArray)
 
    Returns:
-     nil
+   The input image (AFArray) for chaining.
 
    Example:
    (save-image \"output.png\" processed-img)"
   [filename ^AFArray img]
   (assert-within-arrayfire! "save-image")
-  (image/save-image filename img))
+  (image/save-image filename img)
+  img)
 
 (defn load-image-native
   "Load an image in its native format without conversion.
@@ -305,10 +292,11 @@
    - img      — image to save (AFArray)
 
    Returns:
-   nil"
+   The input image (AFArray) for chaining."
   [filename ^AFArray img]
   (assert-within-arrayfire! "save-image-native")
-  (image/save-image-native filename img))
+  (image/save-image-native filename img)
+  img)
 
 ;;;
 ;;; Geometric Transformations
@@ -328,12 +316,10 @@
 
    Example:
    (resize img 512 512)
-   (resize img 256 256 :bilinear)"
-  ([^AFArray img height width]
-   (resize img height width :nearest))
-  ([^AFArray img height width method]
-   (assert-within-arrayfire! "resize")
-   (image/resize img (long height) (long width) (defs/resolve-interp method))))
+   (resize img 256 256 :method :bilinear)"
+  [^AFArray img height width & {:keys [method] :or {method :nearest}}]
+  (assert-within-arrayfire! "resize")
+  (image/resize img (long height) (long width) (defs/resolve-interp method)))
 
 (defn rotate
   "Rotate an image by an angle.
@@ -348,15 +334,11 @@
    Rotated image (AFArray).
 
    Example:
-   (rotate img (/ Math/PI 4))              ; 45° rotation
-   (rotate img (/ Math/PI 2) false :linear) ; 90° without crop"
-  ([^AFArray img theta]
-   (rotate img theta true :nearest))
-  ([^AFArray img theta crop?]
-   (rotate img theta crop? :nearest))
-  ([^AFArray img theta crop? method]
-   (assert-within-arrayfire! "rotate")
-   (image/rotate img (float theta) crop? (defs/resolve-interp method))))
+   (rotate img (/ Math/PI 4))                        ; 45° rotation
+   (rotate img (/ Math/PI 2) :crop? false :method :linear) ; 90° without crop"
+  [^AFArray img theta & {:keys [crop? method] :or {crop? true method :nearest}}]
+  (assert-within-arrayfire! "rotate")
+  (image/rotate img (float theta) crop? (defs/resolve-interp method)))
 
 (defn translate
   "Translate (shift) an image.
@@ -371,14 +353,11 @@
 
    Returns:
    Translated image (AFArray)."
-  ([^AFArray img trans0 trans1]
-   (translate img trans0 trans1 0 0 :nearest))
-  ([^AFArray img trans0 trans1 height width]
-   (translate img trans0 trans1 height width :nearest))
-  ([^AFArray img trans0 trans1 height width method]
-   (assert-within-arrayfire! "translate")
-   (image/translate img (float trans0) (float trans1)
-                    (long height) (long width) (defs/resolve-interp method))))
+  [^AFArray img trans0 trans1
+   & {:keys [height width method] :or {height 0 width 0 method :nearest}}]
+  (assert-within-arrayfire! "translate")
+  (image/translate img (float trans0) (float trans1)
+                   (long height) (long width) (defs/resolve-interp method)))
 
 (defn scale
   "Scale an image by factors.
@@ -393,14 +372,11 @@
 
    Returns:
    Scaled image (AFArray)."
-  ([^AFArray img scale0 scale1]
-   (scale img scale0 scale1 0 0 :nearest))
-  ([^AFArray img scale0 scale1 height width]
-   (scale img scale0 scale1 height width :nearest))
-  ([^AFArray img scale0 scale1 height width method]
-   (assert-within-arrayfire! "scale")
-   (image/scale img (float scale0) (float scale1)
-                (long height) (long width) (defs/resolve-interp method))))
+  [^AFArray img scale0 scale1
+   & {:keys [height width method] :or {height 0 width 0 method :nearest}}]
+  (assert-within-arrayfire! "scale")
+  (image/scale img (float scale0) (float scale1)
+               (long height) (long width) (defs/resolve-interp method)))
 
 (defn skew
   "Skew an image.
@@ -416,14 +392,12 @@
 
    Returns:
    Skewed image (AFArray)."
-  ([^AFArray img skew0 skew1]
-   (skew img skew0 skew1 0 0 :nearest false))
-  ([^AFArray img skew0 skew1 height width]
-   (skew img skew0 skew1 height width :nearest false))
-  ([^AFArray img skew0 skew1 height width method inverse?]
-   (assert-within-arrayfire! "skew")
-   (image/skew img (float skew0) (float skew1)
-               (long height) (long width) (defs/resolve-interp method) inverse?)))
+  [^AFArray img skew0 skew1
+   & {:keys [height width method inverse?]
+      :or {height 0 width 0 method :nearest inverse? false}}]
+  (assert-within-arrayfire! "skew")
+  (image/skew img (float skew0) (float skew1)
+              (long height) (long width) (defs/resolve-interp method) inverse?))
 
 (defn transform
   "Apply a general affine transformation to an image.
@@ -438,12 +412,11 @@
 
    Returns:
    Transformed image (AFArray)."
-  ([^AFArray img ^AFArray transform-matrix height width]
-   (transform img transform-matrix height width :nearest true))
-  ([^AFArray img ^AFArray transform-matrix height width method inverse?]
-   (assert-within-arrayfire! "transform")
-   (image/transform img transform-matrix (long height) (long width)
-                    (defs/resolve-interp method) inverse?)))
+  [^AFArray img ^AFArray transform-matrix height width
+   & {:keys [method inverse?] :or {method :nearest inverse? true}}]
+  (assert-within-arrayfire! "transform")
+  (image/transform img transform-matrix (long height) (long width)
+                   (defs/resolve-interp method) inverse?))
 
 (defn transform-coordinates
   "Transform coordinates using a transformation matrix.
@@ -548,12 +521,11 @@
 
    Example:
    (bilateral noisy-img 5.0 25.0)
-   (bilateral noisy-color-img 5.0 25.0 true)"
-  ([^AFArray img spatial-sigma chromatic-sigma]
-   (bilateral img spatial-sigma chromatic-sigma false))
-  ([^AFArray img spatial-sigma chromatic-sigma color?]
-   (assert-within-arrayfire! "bilateral")
-   (image/bilateral img (float spatial-sigma) (float chromatic-sigma) color?)))
+   (bilateral noisy-color-img 5.0 25.0 :color? true)"
+  [^AFArray img spatial-sigma chromatic-sigma
+   & {:keys [color?] :or {color? false}}]
+  (assert-within-arrayfire! "bilateral")
+  (image/bilateral img (float spatial-sigma) (float chromatic-sigma) color?))
 
 (defn mean-shift
   "Mean shift filter for edge-preserving smoothing and segmentation.
@@ -567,12 +539,11 @@
 
    Returns:
    Filtered image (AFArray)."
-  ([^AFArray img spatial-sigma chromatic-sigma]
-   (mean-shift img spatial-sigma chromatic-sigma 10 false))
-  ([^AFArray img spatial-sigma chromatic-sigma iterations color?]
-   (assert-within-arrayfire! "mean-shift")
-   (image/mean-shift img (float spatial-sigma) (float chromatic-sigma)
-                     (int iterations) color?)))
+  [^AFArray img spatial-sigma chromatic-sigma
+   & {:keys [iterations color?] :or {iterations 10 color? false}}]
+  (assert-within-arrayfire! "mean-shift")
+  (image/mean-shift img (float spatial-sigma) (float chromatic-sigma)
+                    (int iterations) color?))
 
 (defn min-filter
   "Minimum filter.
@@ -587,13 +558,10 @@
 
    Returns:
    Filtered image (AFArray)."
-  ([^AFArray img]
-   (min-filter img 3 3 :zero))
-  ([^AFArray img wind-length wind-width]
-   (min-filter img wind-length wind-width :zero))
-  ([^AFArray img wind-length wind-width edge-pad]
-   (assert-within-arrayfire! "min-filter")
-   (image/minfilt img (long wind-length) (long wind-width) (defs/resolve-edge-pad edge-pad))))
+  [^AFArray img & {:keys [wind-length wind-width edge-pad]
+                   :or {wind-length 3 wind-width 3 edge-pad :zero}}]
+  (assert-within-arrayfire! "min-filter")
+  (image/minfilt img (long wind-length) (long wind-width) (defs/resolve-edge-pad edge-pad)))
 
 (defn max-filter
   "Maximum filter.
@@ -608,13 +576,10 @@
 
    Returns:
    Filtered image (AFArray)."
-  ([^AFArray img]
-   (max-filter img 3 3 :zero))
-  ([^AFArray img wind-length wind-width]
-   (max-filter img wind-length wind-width :zero))
-  ([^AFArray img wind-length wind-width edge-pad]
-   (assert-within-arrayfire! "max-filter")
-   (image/maxfilt img (long wind-length) (long wind-width) (defs/resolve-edge-pad edge-pad))))
+  [^AFArray img & {:keys [wind-length wind-width edge-pad]
+                   :or {wind-length 3 wind-width 3 edge-pad :zero}}]
+  (assert-within-arrayfire! "max-filter")
+  (image/maxfilt img (long wind-length) (long wind-width) (defs/resolve-edge-pad edge-pad)))
 
 (defn gaussian-kernel
   "Generate a Gaussian convolution kernel.
@@ -630,12 +595,10 @@
 
    Example:
    (gaussian-kernel 5 5)
-   (gaussian-kernel 5 5 1.0 1.0)"
-  ([rows cols]
-   (gaussian-kernel rows cols 0.0 0.0))
-  ([rows cols sigma-r sigma-c]
-   (assert-within-arrayfire! "gaussian-kernel")
-   (image/gaussian-kernel (int rows) (int cols) (double sigma-r) (double sigma-c))))
+   (gaussian-kernel 5 5 :sigma-r 1.0 :sigma-c 1.0)"
+  [rows cols & {:keys [sigma-r sigma-c] :or {sigma-r 0.0 sigma-c 0.0}}]
+  (assert-within-arrayfire! "gaussian-kernel")
+  (image/gaussian-kernel (int rows) (int cols) (double sigma-r) (double sigma-c)))
 
 (defn anisotropic-diffusion
   "Anisotropic diffusion for edge-preserving denoising.
@@ -657,16 +620,15 @@
 
    Example:
    (anisotropic-diffusion noisy-img)
-   (anisotropic-diffusion noisy-img 0.125 0.1 20 :exponential :grad)"
-  ([^AFArray img]
-   (anisotropic-diffusion img 0.125 0.1 10 :quadratic :grad))
-  ([^AFArray img dt k iterations]
-   (anisotropic-diffusion img dt k iterations :quadratic :grad))
-  ([^AFArray img dt k iterations flux-fn diffusion-eq]
-   (assert-within-arrayfire! "anisotropic-diffusion")
-   (image/anisotropic-diffusion img (float dt) (float k) (int iterations)
-                                (defs/resolve-flux-fn flux-fn)
-                                (defs/resolve-diffusion-eq diffusion-eq))))
+   (anisotropic-diffusion noisy-img :dt 0.125 :k 0.1 :iterations 20
+                          :flux-fn :exponential :diffusion-eq :grad)"
+  [^AFArray img
+   & {:keys [dt k iterations flux-fn diffusion-eq]
+      :or {dt 0.125 k 0.1 iterations 10 flux-fn :quadratic diffusion-eq :grad}}]
+  (assert-within-arrayfire! "anisotropic-diffusion")
+  (image/anisotropic-diffusion img (float dt) (float k) (int iterations)
+                               (defs/resolve-flux-fn flux-fn)
+                               (defs/resolve-diffusion-eq diffusion-eq)))
 
 ;;;
 ;;; Histogram Operations
@@ -722,11 +684,11 @@
 
    Returns:
    Grayscale image (AFArray, shape [h w 1])."
-  ([^AFArray img]
-   (rgb->gray img 0.2126 0.7152 0.0722))
-  ([^AFArray img r-percent g-percent b-percent]
-   (assert-within-arrayfire! "rgb->gray")
-   (image/rgb->gray img (float r-percent) (float g-percent) (float b-percent))))
+  [^AFArray img
+   & {:keys [r-percent g-percent b-percent]
+      :or {r-percent 0.2126 g-percent 0.7152 b-percent 0.0722}}]
+  (assert-within-arrayfire! "rgb->gray")
+  (image/rgb->gray img (float r-percent) (float g-percent) (float b-percent)))
 
 (defn gray->rgb
   "Convert grayscale image to RGB.
@@ -739,11 +701,11 @@
 
    Returns:
    RGB image (AFArray, shape [h w 3])."
-  ([^AFArray img]
-   (gray->rgb img 1.0 1.0 1.0))
-  ([^AFArray img r-factor g-factor b-factor]
-   (assert-within-arrayfire! "gray->rgb")
-   (image/gray->rgb img (float r-factor) (float g-factor) (float b-factor))))
+  [^AFArray img
+   & {:keys [r-factor g-factor b-factor]
+      :or {r-factor 1.0 g-factor 1.0 b-factor 1.0}}]
+  (assert-within-arrayfire! "gray->rgb")
+  (image/gray->rgb img (float r-factor) (float g-factor) (float b-factor)))
 
 (defn rgb->hsv
   "Convert RGB to HSV color space.
@@ -779,11 +741,9 @@
 
    Returns:
    YCbCr image (AFArray, shape [h w 3])."
-  ([^AFArray img]
-   (rgb->ycbcr img :bt601))
-  ([^AFArray img standard]
-   (assert-within-arrayfire! "rgb->ycbcr")
-   (image/rgb->ycbcr img (defs/resolve-ycc-std standard))))
+  [^AFArray img & {:keys [standard] :or {standard :bt601}}]
+  (assert-within-arrayfire! "rgb->ycbcr")
+  (image/rgb->ycbcr img (defs/resolve-ycc-std standard)))
 
 (defn ycbcr->rgb
   "Convert YCbCr to RGB color space.
@@ -795,11 +755,9 @@
 
    Returns:
    RGB image (AFArray, shape [h w 3])."
-  ([^AFArray img]
-   (ycbcr->rgb img :bt601))
-  ([^AFArray img standard]
-   (assert-within-arrayfire! "ycbcr->rgb")
-   (image/ycbcr->rgb img (defs/resolve-ycc-std standard))))
+  [^AFArray img & {:keys [standard] :or {standard :bt601}}]
+  (assert-within-arrayfire! "ycbcr->rgb")
+  (image/ycbcr->rgb img (defs/resolve-ycc-std standard)))
 
 (defn convert-color-space
   "Convert between arbitrary color spaces.
@@ -834,12 +792,10 @@
 
    Example:
    (regions binary-img)
-   (regions binary-img :8) ; 8-connected"
-  ([^AFArray img]
-   (regions img :4))
-  ([^AFArray img connectivity]
-   (assert-within-arrayfire! "regions")
-   (image/regions img (defs/resolve-connectivity connectivity) 5)))
+   (regions binary-img :connectivity :8) ; 8-connected"
+  [^AFArray img & {:keys [connectivity] :or {connectivity :4}}]
+  (assert-within-arrayfire! "regions")
+  (image/regions img (defs/resolve-connectivity connectivity) 5))
 
 (defn confidence-connected
   "Confidence-connected region growing segmentation.
@@ -886,12 +842,11 @@
 
    Returns:
    Unwrapped patches (AFArray)."
-  ([^AFArray img wx wy sx sy]
-   (unwrap img wx wy sx sy 0 0 true))
-  ([^AFArray img wx wy sx sy px py column?]
-   (assert-within-arrayfire! "unwrap")
-   (image/unwrap img (long wx) (long wy) (long sx) (long sy)
-                 (long px) (long py) column?)))
+  [^AFArray img wx wy sx sy
+   & {:keys [px py column?] :or {px 0 py 0 column? true}}]
+  (assert-within-arrayfire! "unwrap")
+  (image/unwrap img (long wx) (long wy) (long sx) (long sy)
+                (long px) (long py) column?))
 
 (defn wrap
   "Reconstruct image from patches (col2im, inverse of `unwrap`).
@@ -910,12 +865,11 @@
 
    Returns:
    Reconstructed image (AFArray)."
-  ([^AFArray patches ox oy wx wy sx sy]
-   (wrap patches ox oy wx wy sx sy 0 0 true))
-  ([^AFArray patches ox oy wx wy sx sy px py column?]
-   (assert-within-arrayfire! "wrap")
-   (image/wrap patches (long ox) (long oy) (long wx) (long wy)
-              (long sx) (long sy) (long px) (long py) column?)))
+  [^AFArray patches ox oy wx wy sx sy
+   & {:keys [px py column?] :or {px 0 py 0 column? true}}]
+  (assert-within-arrayfire! "wrap")
+  (image/wrap patches (long ox) (long oy) (long wx) (long wy)
+             (long sx) (long sy) (long px) (long py) column?))
 
 ;;;
 ;;; Integral Image
@@ -956,13 +910,12 @@
 
    Returns:
    Deconvolved image (AFArray)."
-  ([^AFArray img ^AFArray kernel iterations]
-   (iterative-deconv img kernel iterations 1.0 :landweber))
-  ([^AFArray img ^AFArray kernel iterations relax-factor algo]
-   (assert-within-arrayfire! "iterative-deconv")
-   (image/iterative-deconv img kernel (int iterations)
-                           (float relax-factor)
-                           (defs/resolve-iterative-deconv-algo algo))))
+  [^AFArray img ^AFArray kernel iterations
+   & {:keys [relax-factor algo] :or {relax-factor 1.0 algo :landweber}}]
+  (assert-within-arrayfire! "iterative-deconv")
+  (image/iterative-deconv img kernel (int iterations)
+                          (float relax-factor)
+                          (defs/resolve-iterative-deconv-algo algo)))
 
 (defn inverse-deconv
   "Inverse filter deconvolution for image restoration.
@@ -975,11 +928,10 @@
 
    Returns:
    Deconvolved image (AFArray)."
-  ([^AFArray img ^AFArray psf]
-   (inverse-deconv img psf 1.0 :tikhonov))
-  ([^AFArray img ^AFArray psf gamma algo]
-   (assert-within-arrayfire! "inverse-deconv")
-   (image/inverse-deconv img psf (float gamma) (defs/resolve-inverse-deconv-algo algo))))
+  [^AFArray img ^AFArray psf
+   & {:keys [gamma algo] :or {gamma 1.0 algo :tikhonov}}]
+  (assert-within-arrayfire! "inverse-deconv")
+  (image/inverse-deconv img psf (float gamma) (defs/resolve-inverse-deconv-algo algo)))
 
 ;;;
 ;;; Image Moments
@@ -1018,11 +970,9 @@
    Example:
    (let [{:keys [m00 m01 m10]} (moments-all img)]
      {:area m00 :centroid-x (/ m01 m00) :centroid-y (/ m10 m00)})"
-  ([^AFArray img]
-   (moments-all img :first-order))
-  ([^AFArray img moment-type]
-   (assert-within-arrayfire! "moments-all")
-   (moments/moments-all img moment-type)))
+  [^AFArray img & {:keys [moment-type] :or {moment-type :first-order}}]
+  (assert-within-arrayfire! "moments-all")
+  (moments/moments-all img moment-type))
 
 (defn centroid
   "Compute the centroid (center of mass) of an image.
@@ -1079,7 +1029,7 @@
   ;; --- Resize ---
   (core/with-arrayfire
     (let [img (core/array [1.0 2.0 3.0 4.0] [2 2] :f32)
-          big (resize img 4 4 :nearest)]
+          big (resize img 4 4 :method :nearest)]
       (core/shape big)))
 
   ;; --- Rotate ---
@@ -1097,7 +1047,7 @@
 
   ;; --- Gaussian kernel ---
   (core/with-arrayfire
-    (let [k (gaussian-kernel 5 5 1.0 1.0)]
+    (let [k (gaussian-kernel 5 5 :sigma-r 1.0 :sigma-c 1.0)]
       {:shape (core/shape k) :values (core/->value k)}))
 
   ;; --- Histogram ---
