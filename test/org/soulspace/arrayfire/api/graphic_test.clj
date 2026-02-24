@@ -78,30 +78,30 @@
   (testing "Accepts 2D keyword arguments (throws outside region, not arity error)"
     (is (throws-outside-region?
          #(gfx/set-axes-limits! :fake-window
-                                :x-range [0.0 10.0]
-                                :y-range [-1.0 1.0]))))
+                                [0.0 10.0]
+                                [-1.0 1.0]))))
   (testing "Accepts 3D keyword arguments with :z-range"
     (is (throws-outside-region?
          #(gfx/set-axes-limits! :fake-window
-                                :x-range [0.0 10.0]
-                                :y-range [-1.0 1.0]
+                                [0.0 10.0]
+                                [-1.0 1.0]
                                 :z-range [0.0 100.0]
                                 :exact? true))))
   (testing "Defaults :exact? to false and :props to nil"
     (is (throws-outside-region?
          #(gfx/set-axes-limits! :fake-window
-                                :x-range [0.0 1.0]
-                                :y-range [0.0 1.0])))))
+                                [0.0 1.0]
+                                [0.0 1.0])))))
 
 (deftest set-axes-limits-from-data!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
          #(gfx/set-axes-limits-from-data! :fake-window
-                                          :x :fake-x :y :fake-y))))
+                                          :fake-x :fake-y))))
   (testing "Accepts optional :z and :exact?"
     (is (throws-outside-region?
          #(gfx/set-axes-limits-from-data! :fake-window
-                                          :x :fake-x :y :fake-y
+                                          :fake-x :fake-y
                                           :z :fake-z :exact? true)))))
 
 (deftest set-axes-titles!-kwargs-test
@@ -132,68 +132,68 @@
 (deftest draw-image!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
-         #(gfx/draw-image! :fake-window :image :fake-image))))
+         #(gfx/draw-image! :fake-window :fake-image))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-image! :fake-window
-                           :image :fake-image
+                           :fake-image
                            :props {:row 0 :col 0})))))
 
 (deftest draw-plot!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
-         #(gfx/draw-plot! :fake-window :points :fake-pts))))
+         #(gfx/draw-plot! :fake-window :fake-pts))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-plot! :fake-window
-                          :points :fake-pts
+                          :fake-pts
                           :props {:title "test"})))))
 
 (deftest draw-plot-2d!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
-         #(gfx/draw-plot-2d! :fake-window :x :fake-x :y :fake-y))))
+         #(gfx/draw-plot-2d! :fake-window :fake-x :fake-y))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-plot-2d! :fake-window
-                             :x :fake-x :y :fake-y
+                             :fake-x :fake-y
                              :props {:title "Signal"})))))
 
 (deftest draw-plot-3d!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
          #(gfx/draw-plot-3d! :fake-window
-                             :x :fake-x :y :fake-y :z :fake-z))))
+                             :fake-x :fake-y :fake-z))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-plot-3d! :fake-window
-                             :x :fake-x :y :fake-y :z :fake-z
+                             :fake-x :fake-y :fake-z
                              :props {:row 0 :col 0})))))
 
 (deftest draw-scatter!-kwargs-test
   (testing "Accepts keyword arguments with default marker"
     (is (throws-outside-region?
-         #(gfx/draw-scatter! :fake-window :points :fake-pts))))
+         #(gfx/draw-scatter! :fake-window :fake-pts))))
   (testing "Accepts explicit :marker"
     (is (throws-outside-region?
          #(gfx/draw-scatter! :fake-window
-                             :points :fake-pts
+                             :fake-pts
                              :marker :circle))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-scatter! :fake-window
-                             :points :fake-pts
+                             :fake-pts
                              :marker :star
                              :props {:title "scatter"})))))
 
 (deftest draw-scatter-2d!-kwargs-test
   (testing "Accepts keyword arguments with default marker"
     (is (throws-outside-region?
-         #(gfx/draw-scatter-2d! :fake-window :x :fake-x :y :fake-y))))
+         #(gfx/draw-scatter-2d! :fake-window :fake-x :fake-y))))
   (testing "Accepts :marker and :props"
     (is (throws-outside-region?
          #(gfx/draw-scatter-2d! :fake-window
-                                :x :fake-x :y :fake-y
+                                :fake-x :fake-y
                                 :marker :triangle
                                 :props {:row 1 :col 0})))))
 
@@ -201,11 +201,11 @@
   (testing "Accepts keyword arguments with default marker"
     (is (throws-outside-region?
          #(gfx/draw-scatter-3d! :fake-window
-                                :x :fake-x :y :fake-y :z :fake-z))))
+                                :fake-x :fake-y :fake-z))))
   (testing "Accepts :marker and :props"
     (is (throws-outside-region?
          #(gfx/draw-scatter-3d! :fake-window
-                                :x :fake-x :y :fake-y :z :fake-z
+                                :fake-x :fake-y :fake-z
                                 :marker :cross
                                 :props {:row 0 :col 1})))))
 
@@ -213,61 +213,57 @@
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
          #(gfx/draw-histogram! :fake-window
-                               :data :fake-data :min 0.0 :max 255.0))))
+                               :fake-data 0.0 255.0))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-histogram! :fake-window
-                               :data :fake-data :min 0.0 :max 1.0
+                               :fake-data 0.0 1.0
                                :props {:title "Histogram"})))))
 
 (deftest draw-surface!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
          #(gfx/draw-surface! :fake-window
-                             :x :fake-x :y :fake-y :z :fake-z))))
+                             :fake-x :fake-y :fake-z))))
   (testing "Accepts :props with colormap"
     (is (throws-outside-region?
          #(gfx/draw-surface! :fake-window
-                             :x :fake-x :y :fake-y :z :fake-z
+                             :fake-x :fake-y :fake-z
                              :props {:colormap :viridis})))))
 
 (deftest draw-vector-field!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
          #(gfx/draw-vector-field! :fake-window
-                                  :points :fake-pts
-                                  :directions :fake-dirs))))
+                                  :fake-pts
+                                  :fake-dirs))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-vector-field! :fake-window
-                                  :points :fake-pts
-                                  :directions :fake-dirs
+                                  :fake-pts
+                                  :fake-dirs
                                   :props {:row 0 :col 0})))))
 
 (deftest draw-vector-field-2d!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
          #(gfx/draw-vector-field-2d! :fake-window
-                                     :x :fx :y :fy
-                                     :x-dirs :dx :y-dirs :dy))))
+                                     :fx :fy :dx :dy))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-vector-field-2d! :fake-window
-                                     :x :fx :y :fy
-                                     :x-dirs :dx :y-dirs :dy
+                                     :fx :fy :dx :dy
                                      :props {:title "Flow"})))))
 
 (deftest draw-vector-field-3d!-kwargs-test
   (testing "Accepts keyword arguments"
     (is (throws-outside-region?
          #(gfx/draw-vector-field-3d! :fake-window
-                                     :x :fx :y :fy :z :fz
-                                     :x-dirs :dx :y-dirs :dy :z-dirs :dz))))
+                                     :fx :fy :fz :dx :dy :dz))))
   (testing "Accepts :props"
     (is (throws-outside-region?
          #(gfx/draw-vector-field-3d! :fake-window
-                                     :x :fx :y :fy :z :fz
-                                     :x-dirs :dx :y-dirs :dy :z-dirs :dz
+                                     :fx :fy :fz :dx :dy :dz
                                      :props {:row 0 :col 0})))))
 
 ;;;
@@ -347,7 +343,7 @@
          (let [x (af/range [50] :f32)
                y (af/sin x)]
            (gfx/set-axes-titles! w :x "x" :y "sin(x)")
-           (gfx/draw-plot-2d! w :x x :y y)
+           (gfx/draw-plot-2d! w x y)
            (gfx/show! w)
            (is true)))))))
 
@@ -358,7 +354,7 @@
        (gfx/with-window [w 300 200 "scatter-2d"]
          (let [x (af/random-normal [30] :f32)
                y (af/random-normal [30] :f32)]
-           (gfx/draw-scatter-2d! w :x x :y y :marker :circle)
+           (gfx/draw-scatter-2d! w x y :marker :circle)
            (gfx/show! w)
            (is true)))))))
 
@@ -367,7 +363,7 @@
    (testing "set-axes-limits! 2D mode with named args"
      (af/with-arrayfire {:backend :cpu}
        (gfx/with-window [w 300 200 "limits-2d"]
-         (gfx/set-axes-limits! w :x-range [0.0 10.0] :y-range [-1.0 1.0])
+         (gfx/set-axes-limits! w [0.0 10.0] [-1.0 1.0])
          (gfx/show! w)
          (is true))))))
 
@@ -377,8 +373,8 @@
      (af/with-arrayfire {:backend :cpu}
        (gfx/with-window [w 300 200 "limits-3d"]
          (gfx/set-axes-limits! w
-                               :x-range [-5.0 5.0]
-                               :y-range [-5.0 5.0]
+                               [-5.0 5.0]
+                               [-5.0 5.0]
                                :z-range [0.0 100.0]
                                :exact? true)
          (gfx/show! w)
@@ -393,9 +389,9 @@
          (let [x  (af/range [50] :f32)
                y1 (af/sin x)
                y2 (af/cos x)]
-           (gfx/draw-plot-2d! w :x x :y y1
+           (gfx/draw-plot-2d! w x y1
                               :props {:row 0 :col 0 :title "sin"})
-           (gfx/draw-plot-2d! w :x x :y y2
+           (gfx/draw-plot-2d! w x y2
                               :props {:row 1 :col 0 :title "cos"})
            (gfx/show! w)
            (is true)))))))
