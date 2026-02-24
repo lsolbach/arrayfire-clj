@@ -613,4 +613,4 @@
    Smith, S.M. and Brady, J.M. (1997)
    'SUSAN - A New Approach to Low Level Image Processing'
    International Journal of Computer Vision, 23(1), 45-78"
-  "af_susan" [::mem/pointer ::mem/pointer ::mem/int ::mem/double ::mem/double ::mem/double ::mem/int] ::mem/int)
+  "af_susan" [::mem/pointer ::mem/pointer ::mem/int ::mem/float ::mem/float ::mem/float ::mem/int] ::mem/int)
