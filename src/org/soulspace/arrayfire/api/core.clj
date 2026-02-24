@@ -431,6 +431,81 @@
   [x dtype]
   (data/constant (double x) [1] dtype))
 
+(def ^:private dtype-rank
+  "Numeric promotion rank for type widening — higher = wider/higher precision."
+  {:b8  0 :u8  1
+   :s16 2 :u16 3
+   :s32 4 :u32 5
+   :s64 6 :u64 7
+   :f32 8 :f64 9
+   :c32 10 :c64 11})
+
+(def ^:private unsigned-signed-widening
+  "Promotion target for same-bit-width unsigned+signed pairs.
+   The wider type can represent all values of both operands.
+   nil indicates no wider signed type exists (pair cannot be promoted safely)."
+  {[:u16 :s16] :s32
+   [:u32 :s32] :s64
+   [:u64 :s64] nil})
+
+(defn- same-width-unsigned-signed-pair
+  "If a and b are the unsigned and signed counterparts of the same bit-width,
+   return [unsigned signed], otherwise nil."
+  [a b]
+  (let [pairs #{[:u16 :s16] [:u32 :s32] [:u64 :s64]}]
+    (or (pairs [a b]) (when (pairs [b a]) [b a]))))
+
+(defn- promote-dtype-kw
+  "Return the wider of two dtype keywords via numeric promotion rules:
+   - Same type                → unchanged
+   - Unsigned+signed width-N  → next wider signed (e.g. u32+s32 → s64);
+                                throws when no wider signed type exists (u64+s64)
+   - Otherwise                → higher-ranked type wins (preserves precision)"
+  [kw-a kw-b]
+  (if (= kw-a kw-b)
+    kw-a
+    (if-let [[u s] (same-width-unsigned-signed-pair kw-a kw-b)]
+      (or (unsigned-signed-widening [u s])
+          (throw (ex-info (str "Cannot promote " u " and " s
+                               ": no wider signed type available")
+                          {:types [u s]})))
+      (if (>= (get dtype-rank kw-a 0) (get dtype-rank kw-b 0))
+        kw-a
+        kw-b))))
+
+(defn match-type
+  "Promote both arrays to a common dtype for binary ArrayFire operations.
+
+   ArrayFire requires both operands of a binary operation to share the same
+   element type — mixing types (e.g. :f32 and :f64) produces an opaque
+   Internal error from the C API. This function determines the wider
+   (higher-precision) type and casts both operands to it as needed.
+
+   Promotion rules (no precision loss):
+   - Same dtype             → both returned unchanged (no copy)
+   - Float + integer        → float wins
+   - Real + complex         → complex wins (real is widened)
+   - Unsigned+signed same width → next wider signed (e.g. u32+s32 → s64);
+                              throws ex-info for u64+s64 (no wider type)
+   - Otherwise              → higher-precision type wins
+
+   Parameters:
+   - lhs: Left-hand AFArray
+   - rhs: Right-hand AFArray
+
+   Returns:
+   [lhs' rhs'] — pair of AFArrays sharing the promoted dtype.
+   Arrays already at the target dtype are returned unchanged (no copy)."
+  [^AFArray lhs ^AFArray rhs]
+  (let [lhs-kw (get defs/dtype-const->kw (array/get-type lhs))
+        rhs-kw (get defs/dtype-const->kw (array/get-type rhs))]
+    (if (= lhs-kw rhs-kw)
+      [lhs rhs]
+      (let [target-kw    (promote-dtype-kw lhs-kw rhs-kw)
+            target-const (defs/resolve-dtype target-kw)]
+        [(if (= lhs-kw target-kw) lhs (arith/cast lhs target-const))
+         (if (= rhs-kw target-kw) rhs (arith/cast rhs target-const))]))))
+
 (defn infer-shape
   "Infer the shape of a nested Clojure data structure (vector of vectors, etc.).
    Used for inferring array dimensions when creating an AFArray from Clojure data.
@@ -2347,7 +2422,8 @@
 
      (and (instance? AFArray lhs) (instance? AFArray rhs))
      (do (assert-within-arrayfire! "+")
-         (arith/add lhs rhs))
+         (let [[lhs' rhs'] (match-type lhs rhs)]
+           (arith/add lhs' rhs')))
 
      (instance? AFArray lhs)
      (do (assert-within-arrayfire! "+")
@@ -2397,7 +2473,8 @@
 
      (and (instance? AFArray lhs) (instance? AFArray rhs))
      (do (assert-within-arrayfire! "-")
-         (arith/sub lhs rhs))
+         (let [[lhs' rhs'] (match-type lhs rhs)]
+           (arith/sub lhs' rhs')))
 
      (instance? AFArray lhs)
      (do (assert-within-arrayfire! "-")
@@ -2445,7 +2522,8 @@
 
      (and (instance? AFArray lhs) (instance? AFArray rhs))
      (do (assert-within-arrayfire! "*")
-         (arith/mul lhs rhs))
+         (let [[lhs' rhs'] (match-type lhs rhs)]
+           (arith/mul lhs' rhs')))
 
      (instance? AFArray lhs)
      (do (assert-within-arrayfire! "*")
@@ -2496,7 +2574,8 @@
 
      (and (instance? AFArray lhs) (instance? AFArray rhs))
      (do (assert-within-arrayfire! "/")
-         (arith/div lhs rhs))
+         (let [[lhs' rhs'] (match-type lhs rhs)]
+           (arith/div lhs' rhs')))
 
      (instance? AFArray lhs)
      (do (assert-within-arrayfire! "/")
@@ -3779,7 +3858,8 @@
   ^AFArray
   [^AFArray lhs ^AFArray rhs]
   (assert-within-arrayfire! "minof")
-  (arith/minof lhs rhs))
+  (let [[lhs' rhs'] (match-type lhs rhs)]
+    (arith/minof lhs' rhs')))
 
 (defn maxof
   "Element-wise maximum of two arrays.
@@ -3797,7 +3877,8 @@
   ^AFArray
   [^AFArray lhs ^AFArray rhs]
   (assert-within-arrayfire! "maxof")
-  (arith/maxof lhs rhs))
+  (let [[lhs' rhs'] (match-type lhs rhs)]
+    (arith/maxof lhs' rhs')))
 
 (defn hypot
   "Element-wise sqrt(lhs² + rhs²), numerically safe against overflow.
