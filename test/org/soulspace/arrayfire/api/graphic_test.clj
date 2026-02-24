@@ -271,6 +271,18 @@
                                      :props {:row 0 :col 0})))))
 
 ;;;
+;;; Availability probe functions
+;;;
+
+(deftest forge-available?-is-boolean-test
+  (testing "forge-available? returns a boolean without throwing"
+    (is (boolean? (gfx/forge-available?)))))
+
+(deftest forge-draw-available?-is-boolean-test
+  (testing "forge-draw-available? returns a boolean without throwing"
+    (is (boolean? (gfx/forge-draw-available?)))))
+
+;;;
 ;;;assert-within-arrayfire! enforcement
 ;;;
 (deftest outside-region-functions-throw-test
@@ -302,39 +314,13 @@
 ;;;   `forge-draw-available?` — an actual draw call succeeds on the CPU backend
 ;;;
 
-;; TODO make available in graphics namespace
-(defn- forge-available?
-  "Return true when Forge window creation and destruction succeed
-   using the CPU backend."
-  []
-  (try
-    (af/with-arrayfire {:backend :cpu}
-      (let [w (gfx/create-window 100 100 "probe")]
-        (gfx/destroy-window! w)
-        true))
-    (catch Exception _ false)))
-
-(defn- forge-draw-available?
-  "Return true when a Forge draw call succeeds using the CPU backend.
-   Forge draw functions require the CPU backend; the CUDA backend does
-   not support Forge GL interop and will block or error."
-  []
-  (try
-    (af/with-arrayfire {:backend :cpu}
-      (gfx/with-window [w 100 100 "draw-probe"]
-        (let [x (af/range [10] :f32)
-              y (af/sin x)]
-          (gfx/draw-plot-2d! w :x x :y y)
-          true)))
-    (catch Exception _ false)))
-
 (defmacro when-forge [& body]
-  `(if (forge-available?)
+  `(if (gfx/forge-available?)
      (do ~@body)
      (println "  [SKIP] Forge not available — skipping display test")))
 
 (defmacro when-forge-draw [& body]
-  `(if (forge-draw-available?)
+  `(if (gfx/forge-draw-available?)
      (do ~@body)
      (println "  [SKIP] Forge draw not available — skipping draw test")))
 
@@ -441,6 +427,8 @@
   (run-test draw-vector-field!-kwargs-test)
   (run-test draw-vector-field-2d!-kwargs-test)
   (run-test draw-vector-field-3d!-kwargs-test)
+  (run-test forge-available?-is-boolean-test)
+  (run-test forge-draw-available?-is-boolean-test)
   (run-test outside-region-functions-throw-test)
   (run-test destroy-window!-no-throw-outside-region-test)
   (run-test forge-window-lifecycle-test)

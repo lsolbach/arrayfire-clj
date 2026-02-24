@@ -76,6 +76,11 @@
             [org.soulspace.arrayfire.integration.unified-api.graphic :as graphic]
             [org.soulspace.arrayfire.api.image-processing :as ip]))
 
+;;; TODO refactor arguments of set axes-* and draw-* functions to use 
+;;;      positional args for *ALL* required parameters (e.g. window handle)
+;;;      and keyword args for optional parameters (e.g. cell props,
+;;;      marker type, etc.
+
 ;;;
 ;;; Private helper: cell-props-seg
 ;;;
@@ -279,11 +284,50 @@
        (finally
          (destroy-window! ~window-sym)))))
 
-;;; TODO refactor arguments of set axes-* and draw-* functions to use 
-;;;      positional args for required parameters (e.g. window handle)
-;;;      and keyword args for optional parameters (e.g. cell props,
-;;;      marker type, etc.
- 
+(defn forge-available?
+  "Return true when the Forge graphics library is available at runtime.
+
+   Probes the runtime by attempting to create and immediately destroy a
+   tiny window using the CPU backend.  Returns false when Forge is not
+   built into the ArrayFire installation, when no display server is
+   reachable, or when any other exception occurs.
+
+   This function does NOT require an enclosing `with-arrayfire` region;
+   it manages its own context internally.
+
+   Returns:
+   Boolean."
+  []
+  (try
+    (af/with-arrayfire {:backend :cpu}
+      (let [w (graphic/create-window 1 1 "forge-probe")]
+        (graphic/destroy-window! w)
+        true))
+    (catch Exception _ false)))
+
+(defn forge-draw-available?
+  "Return true when Forge can perform an actual draw call.
+
+   A superset of `forge-available?`: also verifies that a draw operation
+   completes without error.  Some environments may have a display but
+   fail on the first draw (e.g. limited GL support).
+
+   Uses the CPU backend; the CUDA backend does not support Forge GL
+   interop and will block or fail.
+
+   This function does NOT require an enclosing `with-arrayfire` region.
+
+   Returns:
+   Boolean."
+  []
+  (try
+    (af/with-arrayfire {:backend :cpu}
+      (with-window [w 1 1 "forge-draw-probe"]
+        (let [x (af/range [2] :f32)]
+          (graphic/draw-plot-2d! w x x (graphic/make-cell-props -1 -1))
+          true)))
+    (catch Exception _ false)))
+
 ;;;
 ;;; Axis configuration
 ;;;
