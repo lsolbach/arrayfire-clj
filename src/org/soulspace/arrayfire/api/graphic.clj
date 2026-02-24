@@ -76,17 +76,9 @@
             [org.soulspace.arrayfire.integration.unified-api.graphic :as graphic]
             [org.soulspace.arrayfire.api.image-processing :as ip]))
 
-
-;;; TODO refactor arguments of set axes-* and draw-* functions to use 
-;;;      positional args for required parameters (e.g. window handle)
-;;;      and keyword args for optional parameters (e.g. cell props,
-;;;      marker type, etc.
- 
-
 ;;;
 ;;; Private helper: cell-props-seg
 ;;;
-
 (defn- cell-props-seg
   "Convert a Clojure cell-props map (or nil) to the MemorySegment
    expected by the integration layer's drawing functions.
@@ -287,6 +279,11 @@
        (finally
          (destroy-window! ~window-sym)))))
 
+;;; TODO refactor arguments of set axes-* and draw-* functions to use 
+;;;      positional args for required parameters (e.g. window handle)
+;;;      and keyword args for optional parameters (e.g. cell props,
+;;;      marker type, etc.
+ 
 ;;;
 ;;; Axis configuration
 ;;;
