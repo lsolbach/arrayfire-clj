@@ -11,7 +11,6 @@
    Usage (REPL):
      (run-schroedinger 128 200)   ; 128×128 grid, 200 steps (headless)
      (animate-schroedinger 256)   ; 256×256 with live Forge window"
-  (:refer-clojure :exclude [+ - * / abs range])
   (:require [org.soulspace.arrayfire.api.core :as af]
             [org.soulspace.arrayfire.api.signal-processing :as sp]
             [org.soulspace.arrayfire.api.graphic :as gfx]))
@@ -56,6 +55,7 @@
 (defn- init-wavepacket
   "Normalized Gaussian wavepacket with momentum k0x in the x-direction."
   [N {:keys [xg yg]}]
+  ; TODO scope with result
   (let [r2 (af/+ (af/* xg xg) (af/* yg yg))
         gauss-c (af// -1.0 (af/* 2.0 sigma sigma))
         gauss (af/exp (af/* (af/constant gauss-c [N N]) r2))
@@ -69,6 +69,7 @@
 (defn- split-step
   "One split-operator time step: half-V -> FFT -> K -> IFFT -> half-V."
   [psi phase-V phase-K]
+  ; TODO scope with result
   (let [a (af/* phase-V psi)
         b (sp/fft2 a)
         c (af/* phase-K b)
@@ -96,6 +97,7 @@
 (defn- normalize-density
   "Compute |psi|^2 normalized to [0,1] for display."
   [psi]
+  ; TODO scope with result
   (let [mag (af/abs psi)
         density (af/* mag mag)
         peak (af/max (af/max density))]
@@ -105,17 +107,19 @@
   "Evolve wavepacket with live Forge graphics window.
    Shows probability density |psi(x,y,t)|^2 as a heatmap."
   [N]
-  (af/with-arrayfire {:backend :cpu :converter-fn af/->value}
-    (let [grids (build-grids N)
-          {:keys [phase-V phase-K]} (build-operators N grids)
-          psi0 (init-wavepacket N grids)]
-      (gfx/with-window [w N N "Schroedinger 2D (arrayfire-clj)"]
-        (gfx/set-visibility! w true)
-        (loop [psi psi0]
-          (when-not (gfx/window-closed? w)
-            (gfx/draw-image! w (normalize-density psi))
-            (gfx/show! w)
-            (recur (split-step psi phase-V phase-K))))))))
+  (af/with-arrayfire {:backend :opencl :converter-fn af/->value}
+    (if (and (gfx/forge-available?) (gfx/forge-draw-available?))
+      (let [grids (build-grids N)
+            {:keys [phase-V phase-K]} (build-operators N grids)
+            psi0 (init-wavepacket N grids)]
+        (gfx/with-window [w N N "Schroedinger 2D (arrayfire-clj)"]
+          (gfx/set-visibility! w true)
+          (loop [psi psi0]
+            (when-not (gfx/window-closed? w)
+              (gfx/draw-image! w (normalize-density psi))
+              (gfx/show! w)
+              (recur (split-step psi phase-V phase-K))))))
+      (println "Forge not available, skipping!"))))
 
 (comment
   ;; Headless test: verify norm preservation
