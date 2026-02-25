@@ -9,7 +9,6 @@
 
    Usage (REPL):
      (simulate-circuit 10 [:h-all])  ; 10-qubit equal superposition"
-  (:refer-clojure :exclude [+ - * / abs range])
   (:require [org.soulspace.arrayfire.api.core :as af]))
 
 ;; --- CPU-side gate algebra (small matrices, fast) ---
@@ -43,18 +42,18 @@
   "Build full 2^n × 2^n unitary for gate on qubit k (0-indexed)."
   [gate-key qubit-idx n-qubits]
   (reduce kron
-          (for [k (clojure.core/range n-qubits)]
+          (for [k (range n-qubits)]
             (if (= k qubit-idx) (gates gate-key) (gates :id)))))
 
 (defn- mat->af
   "Upload a CPU row-major complex matrix to GPU as an AFArray."
   [mat]
   (let [n (count mat)
-        re (double-array (for [j (clojure.core/range n)
-                               i (clojure.core/range n)]
+        re (double-array (for [j (range n)
+                               i (range n)]
                            (first (get-in mat [i j]))))
-        im (double-array (for [j (clojure.core/range n)
-                               i (clojure.core/range n)]
+        im (double-array (for [j (range n)
+                               i (range n)]
                            (second (get-in mat [i j]))))]
     (af/complex (af/array re [n n]) (af/array im [n n]))))
 
@@ -73,7 +72,7 @@
 
                     (vector? op)
                     (single-qubit-unitary (first op) (second op) n-qubits)))]
-    (af/with-arrayfire {:backend :opencl :converter-fn af/->value}
+    (af/with-arrayfire {:backend :cpu :converter-fn af/->value}
       (let [psi-re (af/array (double-array (cons 1.0 (repeat (dec dim) 0.0)))
                              [dim 1])
             psi0   (af/complex psi-re (af/constant 0.0 [dim 1]))
@@ -91,12 +90,12 @@
   ;; 10-qubit equal superposition: H on all qubits
   ;; All 1024 amplitudes should be 1/1024 ≈ 0.000977
   (time (let [r (simulate-circuit 10 [:h-all])]
-          (select-keys r [:n-qubits :dim :probabilities :sum])))
+          (select-keys r [:n-qubits :dim  :sum])))
 
   ;; 12-qubit equal superposition: H on all qubits
   ;; All 4096 amplitudes should be 1/4096 ≈ 0.000244
   (time (let [r (simulate-circuit 12 [:h-all])]
-          (select-keys r [:n-qubits :dim :probabilities :sum])))
+          (select-keys r [:n-qubits :dim :sum])))
 
   ;; 3-qubit circuit: H on qubit 0, then X on qubit 1
   (time (simulate-circuit 3 [:h-all [:x 1]]))
