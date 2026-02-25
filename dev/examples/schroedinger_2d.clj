@@ -79,7 +79,7 @@
   "Evolve wavepacket for n-steps, return final probability density and norm.
    Headless (no graphics)."
   [N n-steps]
-  (af/with-arrayfire {:backend :opencl :converter-fn af/->value}
+  (af/with-arrayfire {:backend :cpu :converter-fn af/->value}
     (let [grids (build-grids N)
           {:keys [phase-V phase-K]} (build-operators N grids)
           psi0 (init-wavepacket N grids)
@@ -105,7 +105,7 @@
   "Evolve wavepacket with live Forge graphics window.
    Shows probability density |psi(x,y,t)|^2 as a heatmap."
   [N]
-  (af/with-arrayfire {:backend :opencl :converter-fn af/->value}
+  (af/with-arrayfire {:backend :cpu :converter-fn af/->value}
     (let [grids (build-grids N)
           {:keys [phase-V phase-K]} (build-operators N grids)
           psi0 (init-wavepacket N grids)]
